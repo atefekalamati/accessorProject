@@ -14,6 +14,7 @@ from app.core.config import Settings
 from app.core.errors import (
     ERROR_STATUS,
     AppError,
+    BadRequestError,
     BusinessRuleError,
     ConflictError,
     ErrorCode,
@@ -26,6 +27,7 @@ from app.main import create_app
 from app.shared.money import Toman
 
 SUBCLASSES: list[type[AppError]] = [
+    BadRequestError,
     UnauthorizedError,
     ForbiddenError,
     NotFoundError,

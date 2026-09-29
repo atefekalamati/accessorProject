@@ -128,6 +128,11 @@ class AppError(Exception):
         super().__init__(message)
 
 
+class BadRequestError(AppError):
+    expected_status = 400
+    default_code = ErrorCode.VALIDATION_ERROR
+
+
 class UnauthorizedError(AppError):
     expected_status = 401
     default_code = ErrorCode.UNAUTHORIZED

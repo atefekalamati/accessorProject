@@ -27,14 +27,14 @@
 |---|---|---|---|---|---|---|---|
 | INF-01 | Error code catalog, domain errors, validation → 400 | COMPLETE | HIGH | 3 | FND-02, ADR-008, ADR-011 | 400/422/409 rules tested; OpenAPI updated | ✓ |
 | INF-02 | Integer-Toman money utilities | COMPLETE | HIGH | 2 | ADR-001 | no float; rounding table-tested | ✓ |
-| INF-03 | Pagination & filter/sort allowlist | NOT_STARTED | HIGH | 3 | FND-02 | bad limit/cursor/sort → 400 | ✓ |
+| INF-03 | Pagination & filter/sort allowlist | COMPLETE | HIGH | 3 | FND-02 | bad page/limit/sort/param → 400 | ✓ |
 | INF-04 | Soft delete mixin & helpers | NOT_STARTED | MEDIUM | 1.5 | FND-04 | soft-deleted rows filtered; no migration diff | ✓ |
 | INF-05 | AuditLog writer service | NOT_STARTED | HIGH | 3 | FND-04 | same-transaction audit; secrets redacted | ✓ |
 | INF-06 | Sensitive-data redaction in logs | NOT_STARTED | MEDIUM | 1.5 | FND-02 | OTP/tokens never logged; phone masked | ✓ |
 | DEC-07 | HTTP 410 (D7) | COMPLETE | MEDIUM | 0.5 | — | ADR-008 | ✓ |
 | DEC-12 | Error format, 400 vs 422 (D12) | COMPLETE | HIGH | 0.5 | — | ADR-011 | ✓ |
 
-**Phase 1:** 37h · COMPLETE 16.5h
+**Phase 1:** 37h · COMPLETE 27.5h
 
 ---
 
@@ -69,7 +69,7 @@
 | CAT-04 | Attributes & values (color/size/model) | NOT_STARTED | HIGH | 3 | CAT-03 | variant ↔ attribute values |
 | CAT-05 | Media model + storage interface + local fake | NOT_STARTED | MEDIUM | 4 | CAT-02, ADR-009 | ordered media, main image |
 | CAT-06 | Public GET /categories, /categories/{slug} | NOT_STARTED | HIGH | 3 | CAT-01 | only active categories |
-| CAT-07 | Public product listing with filters/sort/pagination | NOT_STARTED | HIGH | 5 | CAT-03, INF-03 | allowlisted filters; no N+1 |
+| CAT-07 | Public product listing with filters/sort/pagination | NOT_STARTED | HIGH | 6 | CAT-03, INF-03 | allowlisted filters; no N+1; shared paginated-query helper (count + offset, deterministic `id` tie-break) + DB-level pagination tests (no dup/skip across pages, correct total) |
 | CAT-08 | Public product detail GET /products/{slug} | NOT_STARTED | HIGH | 3 | CAT-00, CAT-04, CAT-05 | published only; stable contract |
 | CAT-09 | Category filters endpoint + CategoryFilter | NOT_STARTED | MEDIUM | 3 | CAT-04 | filters from data |
 | CAT-10 | Admin category CRUD + AuditLog | NOT_STARTED | HIGH | 3 | CAT-01, AUTH-10, INF-05 | changes audited |
@@ -102,7 +102,7 @@
 | PRC-05 | Pricing settings (super_admin only) | NOT_STARTED | MEDIUM | 3 | PRC-01, AUTH-10 | others → 403 |
 | PRC-06 | Pricing tests (unit table + tamper API) | NOT_STARTED | HIGH | 3 | PRC-02…05 | client amounts ignored |
 
-**Phase 2:** 128h · COMPLETE 3h
+**Phase 2:** 129h · COMPLETE 3h
 
 ---
 
@@ -253,4 +253,4 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 
 ---
 
-**Grand total:** 406h (estimate) · MVP (Phase 1–3): 265.5h · COMPLETE: 20h
+**Grand total:** 407h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 31h
