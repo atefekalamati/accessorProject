@@ -1,6 +1,6 @@
 # FND-05 — Role seed, dev DB-status route, DBeaver doc
 
-**Status:** COMPLETE · **Priority:** MEDIUM · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** FND-04
+**Status:** COMPLETE · **Priority:** MEDIUM · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** FND-04 · **Level:** LOW
 
 ## Objective
 seed idempotent نقش‌ها، endpoint وضعیت دیتابیس فقط برای development و راهنمای DBeaver.

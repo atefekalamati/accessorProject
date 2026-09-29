@@ -1,6 +1,6 @@
 # INF-04 — Soft delete mixin & helpers
 
-**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 1.5h (estimate) · **Deadline:** — · **Dependencies:** FND-04
+**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 1.5h (estimate) · **Deadline:** — · **Dependencies:** FND-04 · **Level:** MEDIUM
 
 ## Objective
 `SoftDeleteMixin` (ستون `deleted_at`) و helper فیلتر رکوردهای حذف‌نشده، تا Product و Variant (CAT-02 و CAT-03) از آن استفاده کنند.

@@ -1,6 +1,6 @@
 # AUTH-12 — Auth API & security test suite
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** AUTH-05 … AUTH-11
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** AUTH-05 … AUTH-11 · **Level:** HIGH
 
 ## Objective
 پوشش کامل معیارهای پذیرش «هویت و دسترسی» و سناریوهای سوءاستفاده.

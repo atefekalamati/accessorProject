@@ -1,6 +1,6 @@
 # INF-03 — Pagination & filter/sort allowlist
 
-**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-02
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-02 · **Level:** MEDIUM
 
 ## Objective
 dependency و schema مشترک برای pagination با سقف اندازه صفحه، و الگوی allowlist برای sort و filter.

@@ -1,6 +1,6 @@
 # DEC-12 — Unified error format, 400 vs 422 (D12)
 
-**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 0.5h (estimate) · **Deadline:** — · **Dependencies:** —
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 0.5h (estimate) · **Deadline:** — · **Dependencies:** — · **Level:** HIGH
 
 ## Objective
 تأیید فرمت خطا و مرز 400 و 422.

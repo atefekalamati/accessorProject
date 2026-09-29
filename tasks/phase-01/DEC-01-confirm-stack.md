@@ -1,6 +1,6 @@
 # DEC-01 — Confirm technology stack (D1)
 
-**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 0.5h (estimate) · **Deadline:** — · **Dependencies:** —
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 0.5h (estimate) · **Deadline:** — · **Dependencies:** — · **Level:** LOW
 
 ## Objective
 stack موجود در repo به‌عنوان تصمیم نهایی تأیید و ثبت شود.

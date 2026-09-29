@@ -1,6 +1,6 @@
 # FND-03 — Docker/Compose runnable end-to-end
 
-**Status:** COMPLETE (2026-09-29) · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-01, FND-04
+**Status:** COMPLETE (2026-09-29) · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-01, FND-04 · **Level:** MEDIUM
 
 ## Objective
 مسیر مستند README (`.env` → `docker compose up --build`) واقعاً کار کند: API و PostgreSQL سالم، migration و seed داخل container.

@@ -10,7 +10,7 @@
 ```markdown
 # <ID> — <Title>
 
-**Status:** … · **Priority:** HIGH|MEDIUM|LOW · **Estimate:** Nh (estimate) · **Deadline:** … · **Dependencies:** …
+**Status:** … · **Priority:** HIGH|MEDIUM|LOW · **Estimate:** Nh (estimate) · **Deadline:** … · **Dependencies:** … · **Level:** LOW|MEDIUM|HIGH
 
 ## Objective
 ## PRD reference

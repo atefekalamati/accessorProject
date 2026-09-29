@@ -1,6 +1,6 @@
 # FND-07 — CI pipeline
 
-**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** FND-06، ADR-013 (GitHub Actions تأیید شد)
+**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** FND-06، ADR-013 (GitHub Actions تأیید شد) · **Level:** LOW
 
 ## Objective
 هر push و PR به‌صورت خودکار با lint، type-check و تست کامل (با PostgreSQL) بررسی شود.

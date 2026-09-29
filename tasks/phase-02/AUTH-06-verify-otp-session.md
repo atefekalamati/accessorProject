@@ -1,6 +1,6 @@
 # AUTH-06 — POST /api/v1/auth/verify-otp + Session model
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 4h (estimate) · **Deadline:** — · **Dependencies:** AUTH-05, AUTH-02, ADR-012
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 4h (estimate) · **Deadline:** — · **Dependencies:** AUTH-05, AUTH-02, ADR-012 · **Level:** HIGH
 
 ## Objective
 تأیید OTP، ساخت یا فعال‌سازی کاربر، و صدور access token کوتاه‌عمر و refresh token.

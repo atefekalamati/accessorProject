@@ -1,6 +1,6 @@
 # INF-06 — Sensitive-data redaction in logs
 
-**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 1.5h (estimate) · **Deadline:** — · **Dependencies:** FND-02
+**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 1.5h (estimate) · **Deadline:** — · **Dependencies:** FND-02 · **Level:** HIGH
 
 ## Objective
 قبل از شروع auth، مطمئن شویم کد OTP، token و هدر `Authorization` هرگز در log نمی‌آیند و شماره موبایل mask می‌شود.

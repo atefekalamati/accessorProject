@@ -1,6 +1,6 @@
 # FND-01 — App skeleton, settings, /health, API docs
 
-**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 4h (estimate) · **Deadline:** — · **Dependencies:** —
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 4h (estimate) · **Deadline:** — · **Dependencies:** — · **Level:** LOW
 
 ## Objective
 FastAPI app factory، تنظیمات از env با اعتبارسنجی، CORS امن، endpointهای health و مستندات API.

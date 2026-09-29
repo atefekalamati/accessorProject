@@ -1,6 +1,6 @@
 # INF-05 — AuditLog writer service
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-04
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-04 · **Level:** MEDIUM
 
 ## Objective
 یک تابع واحد برای ثبت رخداد حساس در **همان تراکنش** عملیات.

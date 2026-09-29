@@ -1,6 +1,6 @@
 # INF-01 — Error code catalog & domain error classes
 
-**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-02, ADR-008, ADR-011
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-02, ADR-008, ADR-011 · **Level:** HIGH
 
 ## Objective
 کدهای خطای ماشینی ثابت (مثل `INSUFFICIENT_STOCK`، `PRICE_CHANGED`، `RESERVATION_EXPIRED`، `OTP_RATE_LIMITED`) و زیرکلاس‌های `AppError` برای 400، 401، 403، 404، 409، 422 و 429، همه مستند در OpenAPI. طبق ADR-011، validation → 400 و نقض قانون کسب‌وکار → 422. طبق ADR-008، 410 استفاده نمی‌شود.

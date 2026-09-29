@@ -1,6 +1,6 @@
 # AUTH-01 — Align User model with PRD + migration
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** FND-04, ADR-003
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** FND-04, ADR-003 · **Level:** HIGH
 
 ## Objective
 جدول `users` از قبل موجود است (`phone`، `status`، `full_name`، `deleted_at`). این task آن را با فیلدهای PRD هماهنگ می‌کند: `first_name`، `last_name`، `email` (اختیاری) و `mobile_verified_at`.

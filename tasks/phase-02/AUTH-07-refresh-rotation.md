@@ -1,6 +1,6 @@
 # AUTH-07 — POST /api/v1/auth/refresh with rotation
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** AUTH-06, ADR-012
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** AUTH-06, ADR-012 · **Level:** HIGH
 
 ## Objective
 صدور access token جدید با refresh token معتبر، و چرخش (rotation) refresh token.

@@ -1,6 +1,6 @@
 # INF-02 — Integer-Toman money utilities
 
-**Status:** COMPLETE (2026-09-29) · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** D14 (resolved، ADR-001)، D18 (ADR-014)
+**Status:** COMPLETE (2026-09-29) · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** D14 (resolved، ADR-001)، D18 (ADR-014) · **Level:** MEDIUM
 
 ## Objective
 یک نوع و helper واحد برای مبلغ: عدد صحیح تومان، بدون float، و تابع گردکردن که فقط pricing service از آن استفاده می‌کند.

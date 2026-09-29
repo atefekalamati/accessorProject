@@ -1,6 +1,6 @@
 # AUTH-02 — Base roles & permissions seed
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-05, ADR-004
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-05, ADR-004 · **Level:** HIGH
 
 ## Objective
 جدول‌های `roles`، `permissions`، `user_roles` و `role_permissions` از قبل موجودند. این task مجموعه نهایی نقش‌ها و کلیدهای permission را seed می‌کند.

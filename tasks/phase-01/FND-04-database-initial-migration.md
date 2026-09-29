@@ -1,6 +1,6 @@
 # FND-04 — Database layer + initial migration
 
-**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 6h (estimate) · **Deadline:** — · **Dependencies:** FND-01
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 6h (estimate) · **Deadline:** — · **Dependencies:** FND-01 · **Level:** MEDIUM
 
 ## Objective
 SQLAlchemy async، naming convention ثابت، migration اولیه جدول‌های پایه و تست constraintها.

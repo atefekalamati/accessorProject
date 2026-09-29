@@ -1,6 +1,6 @@
 # AUTH-10 — Permission-check dependency
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** AUTH-06, AUTH-02
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** AUTH-06, AUTH-02 · **Level:** HIGH
 
 ## Objective
 `get_current_user` و `require_permission("pricing:update")` به‌عنوان dependencyهای FastAPI، تا همه ماژول‌های بعدی از آن‌ها استفاده کنند.

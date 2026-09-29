@@ -1,6 +1,6 @@
 # AUTH-05 — POST /api/v1/auth/request-otp with rate limit
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 4h (estimate) · **Deadline:** — · **Dependencies:** AUTH-03, AUTH-04, INF-01, INF-06; مسیر طبق ADR-002
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 4h (estimate) · **Deadline:** — · **Dependencies:** AUTH-03, AUTH-04, INF-01, INF-06; مسیر طبق ADR-002 · **Level:** HIGH
 
 ## Objective
 دریافت شماره موبایل، ساخت و ارسال OTP، با محدودیت نرخ برای هر شماره و هر IP.

@@ -1,6 +1,6 @@
 # AUTH-09 — GET /api/v1/auth/me and PATCH /api/v1/users/me
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2.5h (estimate) · **Deadline:** — · **Dependencies:** AUTH-06
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2.5h (estimate) · **Deadline:** — · **Dependencies:** AUTH-06 · **Level:** HIGH
 
 ## Objective
 دریافت کاربر جاری همراه نقش‌ها و permissionها، و تکمیل پروفایل.

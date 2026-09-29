@@ -1,6 +1,6 @@
 # AUTH-11 — Admin user endpoints (list, status, role) + AuditLog
 
-**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 4h (estimate) · **Deadline:** — · **Dependencies:** AUTH-10, INF-03, INF-05, ADR-004
+**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 4h (estimate) · **Deadline:** — · **Dependencies:** AUTH-10, INF-03, INF-05, ADR-004 · **Level:** HIGH
 
 ## Objective
 مدیریت کاربران توسط مدیران مجاز.

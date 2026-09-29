@@ -1,6 +1,6 @@
 # DEC-07 — HTTP 410 for expired reservation (D7)
 
-**Status:** COMPLETE · **Priority:** MEDIUM · **Estimate:** 0.5h (estimate) · **Deadline:** — · **Dependencies:** —
+**Status:** COMPLETE · **Priority:** MEDIUM · **Estimate:** 0.5h (estimate) · **Deadline:** — · **Dependencies:** — · **Level:** HIGH
 
 ## Objective
 تعیین پاسخ API برای رزرو منقضی‌شده.

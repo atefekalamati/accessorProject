@@ -1,6 +1,6 @@
 # AUTH-08 — POST /api/v1/auth/logout
 
-**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 1.5h (estimate) · **Deadline:** — · **Dependencies:** AUTH-07, ADR-012
+**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 1.5h (estimate) · **Deadline:** — · **Dependencies:** AUTH-07, ADR-012 · **Level:** HIGH
 
 ## Objective
 خروج از حساب و باطل‌کردن session.

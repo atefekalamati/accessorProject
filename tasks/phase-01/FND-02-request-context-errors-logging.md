@@ -1,6 +1,6 @@
 # FND-02 — Request-id, JSON logging, unified error handlers
 
-**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-01
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-01 · **Level:** MEDIUM
 
 ## Objective
 هر درخواست یک `request_id` دارد، logها به‌صورت JSON ساختاریافته‌اند و همه خطاها شکل ثابت دارند.

@@ -1,6 +1,6 @@
 # DEC-02 — Role set and extra roles (D2)
 
-**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 0.5h (estimate) · **Deadline:** — · **Dependencies:** —
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 0.5h (estimate) · **Deadline:** — · **Dependencies:** — · **Level:** HIGH
 
 ## Objective
 مجموعه نهایی نقش‌ها.

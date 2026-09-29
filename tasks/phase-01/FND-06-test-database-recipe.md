@@ -1,6 +1,6 @@
 # FND-06 — Reproducible test database recipe
 
-**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 1.5h (estimate) · **Deadline:** — · **Dependencies:** FND-04, ADR-013
+**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 1.5h (estimate) · **Deadline:** — · **Dependencies:** FND-04, ADR-013 · **Level:** LOW
 
 ## Objective
 اجرای تست‌های integration به ساخت دستی دیتابیس وابسته نباشد. تست‌ها کل schema را downgrade می‌کنند، پس دیتابیس تست باید جدا از دیتابیس توسعه باشد.

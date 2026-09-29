@@ -1,6 +1,6 @@
 # AUTH-04 — SMS provider interface + fake
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** — (D9 مانع نیست؛ provider واقعی در OPS-05 اضافه می‌شود)
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** — (D9 مانع نیست؛ provider واقعی در OPS-05 اضافه می‌شود) · **Level:** HIGH
 
 ## Objective
 ارسال OTP پشت یک interface انجام شود تا auth بدون انتخاب provider جلو برود.

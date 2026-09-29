@@ -1,6 +1,6 @@
 # AUTH-03 — OtpCode model (hashed, expiring, attempt-limited)
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** AUTH-01
+**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** AUTH-01 · **Level:** HIGH
 
 ## Objective
 مدل و migration برای کد OTP هش‌شده.
