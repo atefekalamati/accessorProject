@@ -57,7 +57,8 @@
 
 ## Plan changes
 ### 2026-09-29 — INF-04: soft delete و قاعده شاخه
-- **معیار پذیرش جدید:** هر task لیست catalog یا public (CAT-06، CAT-07، CAT-09، CAT-14، CAT-16، CNT-01) تستی دارد که نشان دهد رکورد soft-deleted برنمی‌گردد. قاعده کلی در سرآیند PLAN.md هم ثبت شد.
+- **SD rule** (سرآیند PLAN.md و یک خط در CLAUDE.md): read عمومی (list/detail) رکورد soft-deleted را برنمی‌گرداند (detail → 404 `NOT_FOUND`) و write ارجاع‌دهنده آن را رد می‌کند. «SD rule (test)» به معیار این taskها اضافه شد: CAT-06، CAT-07، CAT-08، CAT-09، CAT-11، CAT-14، CAT-16، INV-07، PRC-04، CART-02، ORD-03، ORD-04، ORD-06، CNT-01، CNT-02 و ACC-04.
+- **AUTH-01:** ستون DB همان `phone` می‌ماند و فیلد API طبق PRD `mobile` است.
 - **ADR-015:** unique روی مدل‌های soft-deletable با partial index و شرط `WHERE deleted_at IS NULL` است و تصمیم هر مدل در task خودش گرفته می‌شود. معیار AUTH-01 به‌روز شد.
 - **Git:** قاعده «یک شاخه برای هر milestone» به «یک شاخه برای هر فاز + PR به `master` در پایان فاز» تغییر کرد (CLAUDE.md و WORKFLOW.md). M1.1 و M1.2 روی `feat/m1.1-repo-foundation` مشترک هستند.
 

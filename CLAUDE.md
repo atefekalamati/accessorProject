@@ -91,7 +91,7 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 - OTP و refresh token هش‌شده؛ OTP یک‌بارمصرف، دارای انقضا و rate-limit (429). refresh فقط در cookie `HttpOnly; Secure; SameSite=Strict` و access در body (ADR-012). ثبت نهایی سفارش فقط با موبایل تأییدشده.
 - RBAC: فقط Super Admin نقش تغییر می‌دهد. بررسی مالکیت برای سفارش، سبد و آدرس.
 - تغییرات حساس (قیمت، موجودی، وضعیت سفارش، نقش، کد تخفیف) در `audit_logs` (حذف آن با trigger ممنوع است).
-- Product و Variant ارجاع‌شده soft delete می‌شوند. Order سه وضعیت مستقل دارد: order، payment، shipment.
+- Product و Variant ارجاع‌شده soft delete می‌شوند. SD rule: read عمومی (list/detail) رکورد soft-deleted را برنمی‌گرداند (detail → 404 `NOT_FOUND`) و write ارجاع‌دهنده (سبد، checkout validate، ایجاد سفارش) آن را رد می‌کند (PLAN.md). Order سه وضعیت مستقل دارد: order، payment، shipment.
 - secretها فقط در `.env` (gitignored). `.env.example` فقط placeholder. `TEST_DATABASE_URL` هرگز به دیتابیس shared/production اشاره نکند (تست‌ها downgrade می‌کنند).
 - پورت محلی اشغال بود: اولین پورت آزاد بعدی را انتخاب کن، در `.env` بگذار (`DB_HOST_PORT`/`API_HOST_PORT`) و فقط گزارش بده؛ هرگز پروسه یا containerی را kill نکن.
 - دستورات مخرب (`docker compose down -v`، `alembic downgrade` روی دیتابیس واقعی، `DROP`) فقط با تأیید صریح.
