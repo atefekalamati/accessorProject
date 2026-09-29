@@ -41,6 +41,8 @@ def _emit(
         "cookie",
         "set_cookie",
         "api_key",
+        "code_hash",
+        "refresh_hash",
     ],
 )
 def test_sensitive_keys_are_redacted_by_substring(

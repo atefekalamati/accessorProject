@@ -4,35 +4,36 @@
 
 ## Current / Next
 - **Phase › Milestone:** 1 Foundation › M1.2 Shared infrastructure
-- **Current Task:** INF-06 — Sensitive-data redaction in logs · COMPLETE → [tasks/phase-01/INF-06-log-redaction.md](../../tasks/phase-01/INF-06-log-redaction.md)
-- **Status:** INF-06 COMPLETE: `app/core/redaction.py` (helper مشترک) و redaction در `JsonFormatter`. pytest 327 passed.
-- **Progress:** 22/140 task COMPLETE · وزنی 9.2% (37.5h / 407h) · MVP 14.1%
+- **Current Task:** INF-05 — AuditLog writer service · COMPLETE → [tasks/phase-01/INF-05-audit-service.md](../../tasks/phase-01/INF-05-audit-service.md)
+- **Status:** INF-05 COMPLETE: `app/shared/audit.py` (`record_audit`). فاز ۱ کامل شد (100%). pytest 345 passed.
+- **Progress:** 23/141 task COMPLETE · وزنی 9.9% (40.5h / 409h) · MVP 15.2%
 - **Blockers:** فاز ۱ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** INF-05 (AuditLog writer، باید از `app/core/redaction.redact` استفاده کند). آخرین task فاز ۱ است و بعد از آن PR فاز ۱ به `master` می‌رود.
+- **Next Action:** بازبینی و merge PR فاز ۱ (`feat/m1.1-repo-foundation` → `master`) توسط کاربر؛ متن PR در [PR-phase-1.md](PR-phase-1.md). بعد از merge: شاخه `feat/phase-2-core-domain` و شروع فاز ۲ (M2.1 Auth & RBAC).
 - **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`). M1.1 و M1.2 هر دو روی این شاخه هستند. قاعده جدید: یک شاخه برای هر فاز و merge به `master` با PR در پایان فاز.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**8.8%** = 36h COMPLETE / 407h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**9.9%** = 40.5h COMPLETE / 409h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
-| 1 Foundation | IN_PROGRESS | 37h | 34h | 91.9% | 2026-10-09 |
+| 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | NOT_STARTED | 129h | 3h | 2.3% | 2026-12-06 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-22 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-19 |
-| 5 Release | NOT_STARTED | 41h | 0 | 0% | 2027-03-10 |
-| 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-28 |
+| 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-11 |
+| 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-29 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 369.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 229h ≈ ۱۶ هفته.
+- باقی‌مانده: 368.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 226h ≈ ۱۵ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-09-29: INF-05 (AuditLog writer service). فاز ۱ کامل شد.
 - 2026-09-29: INF-06 (Sensitive-data redaction in logs).
 - 2026-09-29: FND-07 (CI pipeline).
 - 2026-09-29: FND-06 (Reproducible test database recipe).
@@ -45,7 +46,7 @@
 - 2026-09-13: FND-01، FND-02، FND-04، FND-05 (تأیید با اجرای تست‌ها در 2026-09-29).
 
 ## Remaining Work
-- فاز ۱: INF-05.
+- فاز ۱: هیچ (PR به `master` منتظر بازبینی کاربر).
 - فاز ۲ تا ۶: طبق [PLAN.md](PLAN.md).
 
 ## Blockers
@@ -59,6 +60,10 @@
 ---
 
 ## Plan changes
+### 2026-09-29 — INF-05: SEC-04 و trusted-proxy
+- task جدید **SEC-04** (فاز ۵، Level HIGH، 2h): append-only در سطح DB برای `audit_logs` (trigger بلاک UPDATE؛ trigger بلاک DELETE از FND-04 موجود است) + تست integration. کل: 141 task، 409h؛ فاز ۵: 43h؛ forecast فاز ۵ و ۶ یک روز جلو رفت.
+- معیار **OPS-04**: پیکربندی trusted-proxy تا IP در audit و log، IP واقعی کلاینت باشد و headerهای forwarded فقط از proxyهای تنظیم‌شده پذیرفته شوند.
+- اصلاح: جمع «Overall Progress» (قبلاً 8.8% / 36h) با هدر هماهنگ شد.
 ### 2026-09-29 — INF-06: شماره سفارش
 - **ORD-01:** معیار پذیرش جدید: شماره سفارش قالبی دارد که نمی‌تواند شبیه شماره موبایل باشد (مثلاً `ORD-YYYY-NNNNNN`). دلیل: mask موبایل در log ترجیحاً بیش از حد mask می‌کند (فقط رقم مجاور مانع mask است).
 
@@ -87,6 +92,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-09-29 — INF-05 COMPLETE (فاز ۱ کامل)
+- **انجام شد:** `app/shared/audit.py` (`record_audit`، `build_diff`)؛ `"hash"` در `SENSITIVE_KEY_PARTS`؛ `metadata.actor = "system"` برای actor خالی؛ fixtureهای DB به `tests/conftest.py`؛ `tests/test_audit.py` (۱۴ unit + ۲ integration).
+- **اعتبارسنجی:** pytest 345 passed و 0 skipped (postgres-test)؛ ruff، format و mypy سبز.
+- **بعدی:** PR فاز ۱ به `master` (بازبینی کاربر).
+
 ### 2026-09-29 — INF-06 COMPLETE
 - **انجام شد:**
   - `app/core/redaction.py`:

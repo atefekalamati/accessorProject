@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 
 import pytest
 import pytest_asyncio
+from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 # app.main intentionally validates required settings at import time. Tests supply
 # isolated startup values before importing the application factory.
@@ -16,6 +18,7 @@ os.environ.setdefault(
 )
 os.environ.setdefault("JWT_SECRET", "test-secret-that-is-at-least-32-characters")
 
+from alembic import command
 from app.core.config import Environment, Settings
 from app.main import create_app
 
@@ -67,3 +70,41 @@ async def client(settings: Settings) -> AsyncIterator[AsyncClient]:
         transport = ASGITransport(app=application)
         async with AsyncClient(transport=transport, base_url="http://testserver") as test_client:
             yield test_client
+
+
+@pytest.fixture(scope="session")
+def database_url() -> str:
+    value = os.getenv("TEST_DATABASE_URL")
+    if not value:
+        pytest.skip("TEST_DATABASE_URL is required for PostgreSQL integration tests")
+    # The database name itself is validated once per session in conftest.pytest_sessionstart.
+    return value
+
+
+@pytest.fixture(scope="session")
+def migrated_database(database_url: str) -> Iterator[str]:
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
+
+    command.downgrade(config, "base")
+    command.upgrade(config, "head")
+    command.downgrade(config, "base")
+    command.upgrade(config, "head")
+    yield database_url
+
+
+@pytest_asyncio.fixture
+async def db_engine(migrated_database: str) -> AsyncIterator[AsyncEngine]:
+    engine = create_async_engine(
+        migrated_database,
+        connect_args={"server_settings": {"timezone": "UTC"}},
+    )
+    yield engine
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def db_session(db_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
+    async with AsyncSession(db_engine, expire_on_commit=False) as session:
+        yield session
+        await session.rollback()
