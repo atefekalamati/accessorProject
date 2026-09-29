@@ -4,11 +4,11 @@
 
 ## Current / Next
 - **Phase › Milestone:** 1 Foundation › M1.2 Shared infrastructure
-- **Current Task:** FND-06 — Reproducible test database recipe · COMPLETE → [tasks/phase-01/FND-06-test-database-recipe.md](../../tasks/phase-01/FND-06-test-database-recipe.md)
-- **Status:** FND-06 COMPLETE: سرویس `postgres-test` (profile `test`، پورت `TEST_DB_HOST_PORT`، پیش‌فرض 55432) و guard نام `_test` در `tests/conftest.py`.
+- **Current Task:** FND-07 — CI pipeline · IN_PROGRESS → [tasks/phase-01/FND-07-ci-pipeline.md](../../tasks/phase-01/FND-07-ci-pipeline.md)
+- **Status:** FND-07 مرحله ۱: `.github/workflows/ci.yml` نوشته، محلی بررسی و push شد. منتظر سبز شدن اجرای GitHub Actions (آخرین معیار پذیرش).
 - **Progress:** 20/140 task COMPLETE · وزنی 8.4% (34h / 407h) · MVP 12.8%
 - **Blockers:** فاز ۱ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** قدم بعدی فاز ۱ (FND-07 CI یا INF-05) — بررسی task، پیشنهاد plan و گرفتن تأیید.
+- **Next Action:** بررسی نتیجه Actions روی `feat/m1.1-repo-foundation`؛ اگر سبز بود → مرحله ۲ `/done` و COMPLETE کردن FND-07. سپس INF-05 یا INF-06.
 - **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`). M1.1 و M1.2 هر دو روی این شاخه هستند. قاعده جدید: یک شاخه برای هر فاز و merge به `master` با PR در پایان فاز.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
@@ -82,6 +82,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-09-29 — FND-07 IN_PROGRESS (مرحله ۱)
+- **انجام شد:** `.github/workflows/ci.yml`: push روی همه شاخه‌ها و PR به `master`؛ `permissions: contents: read`؛ `concurrency`؛ service `postgres:16-alpine` (`project_ak_test`)؛ گام‌های ruff check، ruff format --check، mypy و pytest؛ گام ضد-skip از روی junit XML. actionها pin شده روی `checkout@v4` و `setup-python@v5`.
+- **اعتبارسنجی:** محلی: pytest 284 passed و 0 skipped؛ ruff، format و mypy سبز؛ اسکریپت ضد-skip بدون DB با exit 1 fail شد (10 skip). اعتبارسنجی روی GitHub در انتظار است.
+- **بعدی:** بررسی Actions و مرحله ۲ `/done`.
+
 ### 2026-09-29 — FND-06 COMPLETE
 - **انجام شد:** سرویس `postgres-test` در `docker-compose.yml` (profile `test`، `127.0.0.1:${TEST_DB_HOST_PORT:-55432}`، بدون volume). `TEST_DB_HOST_PORT` در `.env.example`. guard در `tests/conftest.py`: نام دیتابیس باید با `_test` تمام شود، وگرنه session با exit 3 abort می‌شود. تست‌ها در `tests/test_database_guard.py`. README و CLAUDE.md به‌روز شدند.
 - **اعتبارسنجی:** pytest 284 passed بدون skip (روی `postgres-test`)؛ ruff، format و mypy سبز؛ `postgres-test` در سرویس‌های پیش‌فرض compose نیست؛ volume توسعه دست‌نخورده ماند.

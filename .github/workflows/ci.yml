@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: project_ak_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d project_ak_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://postgres:test@localhost:5432/project_ak_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Lint
+        run: python -m ruff check .
+
+      - name: Format check
+        run: python -m ruff format --check .
+
+      - name: Type check
+        run: python -m mypy app tests
+
+      - name: Tests
+        run: python -m pytest -q -rs --junitxml=pytest-report.xml
+
+      # Integration tests skip silently without a database; in CI every test must run.
+      - name: Fail on skipped tests
+        run: |
+          python - <<'EOF'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.parse("pytest-report.xml").getroot()
+          skipped = [
+              f"{case.get('classname')}::{case.get('name')}"
+              for case in root.iter("testcase")
+              if case.find("skipped") is not None
+          ]
+          if skipped:
+              print(f"{len(skipped)} test(s) skipped in CI:")
+              print("\n".join(skipped))
+              sys.exit(1)
+          print("No skipped tests.")
+          EOF
