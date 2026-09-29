@@ -15,7 +15,7 @@
 |---|---|---|---|---|---|---|---|
 | FND-01 | App skeleton, settings, /health, API docs | COMPLETE | HIGH | 4 | — | health/settings tests green | ✓ |
 | FND-02 | Request-id, JSON logging, unified error handlers | COMPLETE | HIGH | 3 | FND-01 | error-contract test green | ✓ |
-| FND-03 | Docker/Compose runnable end-to-end | IN_PROGRESS | HIGH | 3 | FND-01, FND-04 | compose up healthy; migrate + seed in container | ✓ |
+| FND-03 | Docker/Compose runnable end-to-end | COMPLETE | HIGH | 3 | FND-01, FND-04 | compose up healthy; migrate + seed in container | ✓ |
 | FND-04 | Database layer + initial migration | COMPLETE | HIGH | 6 | FND-01 | 24 tests green on PG16 | ✓ |
 | FND-05 | Role seed, dev DB-status route, DBeaver doc | COMPLETE | MEDIUM | 2 | FND-04 | seed idempotent test green | ✓ |
 | FND-06 | Test DB via compose `profiles: [test]` | NOT_STARTED | MEDIUM | 1.5 | FND-04, ADR-013 | one command → all tests | ✓ |

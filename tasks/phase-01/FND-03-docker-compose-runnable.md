@@ -1,6 +1,6 @@
 # FND-03 — Docker/Compose runnable end-to-end
 
-**Status:** IN_PROGRESS · **Priority:** HIGH · **Estimate:** 3h (estimate؛ ~1h باقی) · **Deadline:** — · **Dependencies:** FND-01, FND-04
+**Status:** COMPLETE (2026-09-29) · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-01, FND-04
 
 ## Objective
 مسیر مستند README (`.env` → `docker compose up --build`) واقعاً کار کند: API و PostgreSQL سالم، migration و seed داخل container.
@@ -15,9 +15,9 @@
 - [x] `.env` محلی ساخته شد: secretهای تصادفی، `DB_HOST_PORT=5435`، `API_HOST_PORT=8001`، و `DATABASE_URL` سمت host روی `localhost:5435`. در git ignore است.
 - [x] سرویس `postgres` در compose healthy است (`127.0.0.1:5435`). `alembic upgrade head` و seed (دو بار) از host موفق بودند.
 - [x] هر ۲۴ تست، شامل integration روی دیتابیس تست موقت (55432)، پاس شدند. ruff، format و mypy سبز بودند.
-- [ ] `docker compose up --build -d` هر دو سرویس را healthy بالا می‌آورد. **مانع:** build ایمیج api به‌خاطر شبکه ناپایدار PyPI شکست می‌خورد.
-- [ ] `alembic upgrade head` و `python -m app.db.seed` داخل container `api` اجرا می‌شوند.
-- [ ] `/health`، `/ready` و `/docs` از طریق compose (پورت 8001) پاسخ 200 می‌دهند.
+- [x] `docker compose up --build -d` هر دو سرویس را بالا می‌آورد؛ postgres healthy و api روی 8001 پاسخ می‌دهد (2026-09-29).
+- [x] `alembic upgrade head` (head: `20260913_0001`) و `python -m app.db.seed` (دو بار، exit 0، ۵ نقش) داخل container `api` اجرا شدند. container با کاربر `app` اجرا می‌شود.
+- [x] `/health`، `/ready` و `/docs` از طریق compose (پورت 8001) پاسخ 200 دادند؛ `/ready` دیتابیس را `available` گزارش کرد.
 - [x] README به‌روز شد. پایان کار با `docker compose down` (بدون `-v`)؛ volume `atk_postgres_data` حفظ شد.
 
 ## Implementation Notes
@@ -46,3 +46,7 @@ docker compose down
   - `PIP_DEFAULT_TIMEOUT=120` و `PIP_RETRIES=10` به Dockerfile اضافه شد (کمک کرد ولی کافی نبود).
   - Dockerfile سالم است: در ابتدای همین جلسه build موفق بود.
   - گزینه‌ها: (۱) تلاش مجدد وقتی شبکه پایدار است؛ (۲) build arg اختیاری `PIP_INDEX_URL` برای mirror داخلی (انتخاب mirror با کاربر)؛ (۳) proxy یا VPN برای Docker.
+- 2026-09-29: build مقاوم شد و با یک تلاش موفق بود (حدود ۴ دقیقه):
+  - Dockerfile: حذف `PIP_NO_CACHE_DIR`، نصب با `RUN --mount=type=cache,target=/root/.cache/pip` تا retry دانلودهای قبلی را دوباره استفاده کند؛ `PIP_DEFAULT_TIMEOUT=120` و `PIP_RETRIES=10` حفظ شد.
+  - `PIP_INDEX_URL` به‌صورت build arg از `.env` (پیش‌فرض PyPI رسمی) در `docker-compose.yml`، با یادداشت در `.env.example`.
+  - اعتبارسنجی: up، migrate، seed (دو بار)، `/health`، `/ready`، `/docs` = 200، سپس `docker compose down` بدون `-v` (volume حفظ شد). pytest با دیتابیس تست موقت: 24 passed؛ ruff، format و mypy سبز.
