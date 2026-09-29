@@ -12,7 +12,6 @@ from alembic.config import Config
 from alembic.migration import MigrationContext
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import inspect, select, text
-from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
@@ -42,11 +41,9 @@ EXPECTED_TABLES = {
 @pytest.fixture(scope="session")
 def database_url() -> str:
     value = os.getenv("TEST_DATABASE_URL")
-    if value is None:
+    if not value:
         pytest.skip("TEST_DATABASE_URL is required for PostgreSQL integration tests")
-    database_name = make_url(value).database
-    if database_name is None or "test" not in database_name.lower():
-        pytest.fail("TEST_DATABASE_URL must point to a database whose name contains 'test'")
+    # The database name itself is validated once per session in conftest.pytest_sessionstart.
     return value
 
 

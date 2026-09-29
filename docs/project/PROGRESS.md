@@ -4,23 +4,23 @@
 
 ## Current / Next
 - **Phase › Milestone:** 1 Foundation › M1.2 Shared infrastructure
-- **Current Task:** INF-04 — Soft delete mixin & helpers · COMPLETE → [tasks/phase-01/INF-04-soft-delete-mixin.md](../../tasks/phase-01/INF-04-soft-delete-mixin.md)
-- **Status:** INF-04 COMPLETE: `SoftDeleteMixin` + `not_deleted()`، `User` روی mixin، بدون migration. ADR-015 (partial unique روی مدل‌های soft-deletable) ثبت شد.
-- **Progress:** 19/140 task COMPLETE · وزنی 8.0% (32.5h / 407h) · MVP 12.2%
+- **Current Task:** FND-06 — Reproducible test database recipe · COMPLETE → [tasks/phase-01/FND-06-test-database-recipe.md](../../tasks/phase-01/FND-06-test-database-recipe.md)
+- **Status:** FND-06 COMPLETE: سرویس `postgres-test` (profile `test`، پورت `TEST_DB_HOST_PORT`، پیش‌فرض 55432) و guard نام `_test` در `tests/conftest.py`.
+- **Progress:** 20/140 task COMPLETE · وزنی 8.4% (34h / 407h) · MVP 12.8%
 - **Blockers:** فاز ۱ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** قدم بعدی فاز ۱ (INF-05 یا FND-06) — بررسی task، پیشنهاد plan و گرفتن تأیید.
+- **Next Action:** قدم بعدی فاز ۱ (FND-07 CI یا INF-05) — بررسی task، پیشنهاد plan و گرفتن تأیید.
 - **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`). M1.1 و M1.2 هر دو روی این شاخه هستند. قاعده جدید: یک شاخه برای هر فاز و merge به `master` با PR در پایان فاز.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**8.0%** = 32.5h COMPLETE / 407h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**8.4%** = 34h COMPLETE / 407h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
-| 1 Foundation | IN_PROGRESS | 37h | 29h | 78.4% | 2026-10-09 |
+| 1 Foundation | IN_PROGRESS | 37h | 30.5h | 82.4% | 2026-10-09 |
 | 2 Core domain | NOT_STARTED | 129h | 3h | 2.3% | 2026-12-06 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-22 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-19 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 374.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 234h ≈ ۱۶ هفته.
+- باقی‌مانده: 373h ≈ ۲۵ هفته. MVP باقی‌مانده: 232.5h ≈ ۱۶ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-09-29: FND-06 (Reproducible test database recipe).
 - 2026-09-29: INF-04 (Soft delete mixin & helpers)؛ DEC ثبت‌شده: D19 (ADR-015).
 - 2026-09-29: INF-03 (Page/limit pagination, sort & query-param allowlist).
 - 2026-09-29: INF-01 (Error code catalog, domain errors, validation → 400).
@@ -42,7 +43,7 @@
 - 2026-09-13: FND-01، FND-02، FND-04، FND-05 (تأیید با اجرای تست‌ها در 2026-09-29).
 
 ## Remaining Work
-- فاز ۱: FND-06، FND-07، INF-05، INF-06.
+- فاز ۱: FND-07، INF-05، INF-06.
 - فاز ۲ تا ۶: طبق [PLAN.md](PLAN.md).
 
 ## Blockers
@@ -81,6 +82,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-09-29 — FND-06 COMPLETE
+- **انجام شد:** سرویس `postgres-test` در `docker-compose.yml` (profile `test`، `127.0.0.1:${TEST_DB_HOST_PORT:-55432}`، بدون volume). `TEST_DB_HOST_PORT` در `.env.example`. guard در `tests/conftest.py`: نام دیتابیس باید با `_test` تمام شود، وگرنه session با exit 3 abort می‌شود. تست‌ها در `tests/test_database_guard.py`. README و CLAUDE.md به‌روز شدند.
+- **اعتبارسنجی:** pytest 284 passed بدون skip (روی `postgres-test`)؛ ruff، format و mypy سبز؛ `postgres-test` در سرویس‌های پیش‌فرض compose نیست؛ volume توسعه دست‌نخورده ماند.
+- **بعدی:** FND-07 یا INF-05.
+
 ### 2026-09-29 — INF-04 COMPLETE
 - **انجام شد:** `SoftDeleteMixin` (`deleted_at` با index، `is_deleted`، `soft_delete()` idempotent) و `not_deleted(model)` در `app/db/models/common.py`. `User` به mixin منتقل شد و migration لازم نشد. تست‌ها در `tests/test_soft_delete.py` و `tests/test_database.py`. ADR-015 ثبت شد.
 - **اعتبارسنجی:** pytest 272 passed (دیتابیس تست موقت)؛ ruff، format و mypy سبز؛ `compare_metadata` بدون تفاوت.

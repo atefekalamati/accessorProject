@@ -56,14 +56,17 @@ python -m app.db.seed
 
 Migration اولیه جدول‌های پایه، constraintها و seed نقش‌های سیستمی را می‌سازد. راهنمای کامل اتصال و queryهای بررسی در [`docs/dbeaver.md`](docs/dbeaver.md) قرار دارد.
 
-برای اجرای تست‌های integration روی یک دیتابیس PostgreSQL خالی و اختصاصی:
+برای اجرای تست‌های integration، سرویس یک‌بارمصرف `postgres-test` (profile `test`، بدون volume) را بالا بیاورید. پورت host از `TEST_DB_HOST_PORT` در `.env` خوانده می‌شود (پیش‌فرض `55432`). `docker compose up` معمولی این سرویس را بالا نمی‌آورد.
 
 ```powershell
-$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres@localhost:5432/project_ak_test"
+docker compose --profile test up -d --wait postgres-test
+$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:55432/project_ak_test"  # پورت = TEST_DB_HOST_PORT
 pytest
+docker compose --profile test stop postgres-test
+docker compose --profile test rm -f postgres-test
 ```
 
-این تست‌ها چرخه `upgrade -> downgrade -> upgrade` را اجرا می‌کنند؛ هرگز `TEST_DATABASE_URL` را به دیتابیس shared یا production متصل نکنید.
+این تست‌ها چرخه `upgrade -> downgrade -> upgrade` را اجرا می‌کنند. اگر نام دیتابیس در `TEST_DATABASE_URL` با `_test` تمام نشود، کل session تست قبل از اجرای هر تستی متوقف می‌شود (exit code 3). هرگز `TEST_DATABASE_URL` را به دیتابیس shared یا production متصل نکنید.
 
 ## مستندات API
 

@@ -50,13 +50,13 @@ python -m app.db.seed                    # seed idempotent نقش‌ها
 docker compose up --build                # API + PostgreSQL؛ پورت‌های host از DB_HOST_PORT و API_HOST_PORT در .env
 ```
 
-دیتابیس تست یک‌بارمصرف (تأییدشده؛ نام دیتابیس باید شامل `test` باشد):
+دیتابیس تست یک‌بارمصرف: سرویس `postgres-test` با profile `test` و بدون volume. پورت host از `TEST_DB_HOST_PORT` خوانده می‌شود (پیش‌فرض 55432). نام دیتابیس باید با `_test` تمام شود، وگرنه `conftest` کل session را abort می‌کند (exit 3):
 
 ```powershell
-docker run --rm -d --name atk-test-pg -p 127.0.0.1:55432:5432 -e POSTGRES_PASSWORD=test -e POSTGRES_DB=project_ak_test postgres:16-alpine
-$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:55432/project_ak_test"
-python -m pytest            # همه ۲۴ تست
-docker stop atk-test-pg
+docker compose --profile test up -d --wait postgres-test
+$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:55432/project_ak_test"  # پورت = TEST_DB_HOST_PORT
+python -m pytest -q
+docker compose --profile test stop postgres-test; docker compose --profile test rm -f postgres-test
 ```
 
 Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "..."` (قرارداد نام‌گذاری موجود)، سپس خروجی را دستی بازبینی کن.
