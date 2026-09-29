@@ -24,6 +24,7 @@
 | D15 | مسیرهای API | — | — | resolved (ADR-002) |
 | D16 | انتقال refresh token | DEC-16 | — | resolved (ADR-012) |
 | D17 | دیتابیس تست و CI | — | — | resolved (ADR-013) |
+| D18 | modeهای گردکردن مبلغ | — | — | resolved (ADR-014) |
 
 ## ADR
 
@@ -93,6 +94,12 @@
 - تاریخ: 2026-09-29
 - تصمیم: سرویس `postgres-test` در `docker-compose.yml` با `profiles: ["test"]`؛ CI با GitHub Actions.
 - پیامدها: FND-06، FND-07.
+
+### ADR-014 — modeهای گردکردن مبلغ (D18)
+- تاریخ: 2026-09-29
+- زمینه: PRD («قیمت و مالیات») فقط فیلدهای `roundingMode` و `roundingStep` را نام می‌برد، بدون فهرست modeها.
+- تصمیم: سه mode: `up` (ceil)، `down` (floor)، `nearest` (half-up). mode جداگانه `none` وجود ندارد؛ «بدون گردکردن» یعنی `nearest` با `step=1`. پیش‌فرض: `nearest`، `step=1`. مبلغ‌ها نامنفی‌اند؛ تخفیف به‌صورت مبلغ مثبت ذخیره و کم می‌شود.
+- پیامدها: INF-02 (`app/shared/money.py`)، PRC-01 (مقدار پیش‌فرض PricingSetting)، PRC-02.
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).

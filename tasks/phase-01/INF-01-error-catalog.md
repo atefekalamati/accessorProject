@@ -14,7 +14,7 @@
 - [ ] `validation_error_handler` کد **400** با `code: VALIDATION_ERROR` برمی‌گرداند (امروز 422 است). کلاس `BusinessRuleError` کد 422 برمی‌گرداند.
 - [ ] رزرو منقضی: `ConflictError` با `code: RESERVATION_EXPIRED` (409).
 - [ ] `responses` در `create_app` به‌روز شده است: 400 = validation، 422 = business rule، به‌علاوه 401، 403، 409 و 429.
-- [ ] شکل پاسخ خطا تغییر نکرده است. تست جدید وضعیت 400 برای ورودی نامعتبر را پوشش می‌دهد.
+- [ ] شکل پاسخ خطا تغییر نکرده است. تست جدید وضعیت 400 برای ورودی نامعتبر را پوشش می‌دهد، از جمله فیلد مبلغ `Toman` (float، رشته، bool، منفی) که از INF-02 به اینجا منتقل شد.
 
 ## Implementation Notes
 `app/core/errors.py`، `app/main.py`، `tests/test_errors.py` (فایل جدید و برنامه‌ریزی‌شده).

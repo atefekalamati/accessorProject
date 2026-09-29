@@ -4,22 +4,22 @@
 
 ## Current / Next
 - **Phase › Milestone:** 1 Foundation › M1.2 Shared infrastructure
-- **Current Task:** INF-02 — Integer-Toman money utilities · NOT_STARTED → [tasks/phase-01/INF-02-money-utils.md](../../tasks/phase-01/INF-02-money-utils.md)
-- **Status:** FND-03 COMPLETE: کل مسیر compose (build، migrate، seed، health/ready/docs) در container کار می‌کند.
-- **Progress:** 15/140 task COMPLETE · وزنی 5.7% (23h / 406h) · MVP 8.7%
+- **Current Task:** INF-01 — Error code catalog, domain errors, validation → 400 · NOT_STARTED → [tasks/phase-01/INF-01-error-catalog.md](../../tasks/phase-01/INF-01-error-catalog.md)
+- **Status:** INF-02 COMPLETE: `app/shared/money.py` (نوع `Toman`، `round_amount`، `non_negative_check`)؛ modeهای گردکردن در ADR-014.
+- **Progress:** 16/140 task COMPLETE · وزنی 6.2% (25h / 406h) · MVP 9.4%
 - **Blockers:** فاز ۱ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** INF-02 — بررسی task، پیشنهاد plan و گرفتن تأیید. گزینه موازی: FND-06.
+- **Next Action:** INF-01 — بررسی task، پیشنهاد plan و گرفتن تأیید (شامل تست 400 برای فیلد `Toman`). گزینه موازی: FND-06.
 - **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`)
 
 ---
 
 ## Overall Progress
-**5.7%** = 23h COMPLETE / 406h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**6.2%** = 25h COMPLETE / 406h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
-| 1 Foundation | IN_PROGRESS | 37h | 19.5h | 52.7% | 2026-10-09 |
+| 1 Foundation | IN_PROGRESS | 37h | 21.5h | 58.1% | 2026-10-09 |
 | 2 Core domain | NOT_STARTED | 128h | 3h | 2.3% | 2026-12-06 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-22 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-19 |
@@ -28,16 +28,17 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 383h ≈ ۲۵.۵ هفته. MVP باقی‌مانده: 242.5h ≈ ۱۶ هفته.
+- باقی‌مانده: 381h ≈ ۲۵.۵ هفته. MVP باقی‌مانده: 240.5h ≈ ۱۶ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-09-29: INF-02 (Integer-Toman money utilities)؛ DEC ثبت‌شده: D18 (ADR-014).
 - 2026-09-29: FND-03 (Docker/Compose end-to-end).
 - 2026-09-29: DEC-01، DEC-02، DEC-03، DEC-04، DEC-05، DEC-06، DEC-07، DEC-11، DEC-12، DEC-16 (ADR-003 تا ADR-013).
 - 2026-09-13: FND-01، FND-02، FND-04، FND-05 (تأیید با اجرای تست‌ها در 2026-09-29).
 
 ## Remaining Work
-- فاز ۱: FND-06، FND-07، INF-01 تا INF-06.
+- فاز ۱: FND-06، FND-07، INF-01، INF-03 تا INF-06.
 - فاز ۲ تا ۶: طبق [PLAN.md](PLAN.md).
 
 ## Blockers
@@ -65,6 +66,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-09-29 — INF-02 COMPLETE
+- **انجام شد:** `app/shared/money.py` و `tests/test_money.py` (۴۸ تست). تصمیم D18 (ADR-014): modeهای `up`، `down`، `nearest` (half-up)، پیش‌فرض `nearest`/step=1. معیار HTTP 400 به INF-01 منتقل شد.
+- **اعتبارسنجی:** pytest کامل با دیتابیس تست موقت؛ ruff، format و mypy سبز.
+- **بعدی:** INF-01.
+
 ### 2026-09-29 — FND-03 COMPLETE
 - **انجام شد:** Dockerfile با pip cache mount و `PIP_INDEX_URL` قابل تنظیم (build arg از `.env`). build با یک تلاش موفق شد. up، migrate، seed و `/health`، `/ready`، `/docs` (200) روی 8001 تأیید شد. هدر گزارش در CLAUDE.md بدون emoji شد. slash commandهای `/next`، `/done`، `/status`، `/blocked` اضافه شدند.
 - **اعتبارسنجی:** pytest 24 passed (دیتابیس تست موقت)؛ ruff، format و mypy سبز.

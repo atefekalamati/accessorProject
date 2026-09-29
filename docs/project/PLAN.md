@@ -26,7 +26,7 @@
 | ID | Title | Status | Pri | Est | Deps | Done when | فایل |
 |---|---|---|---|---|---|---|---|
 | INF-01 | Error code catalog, domain errors, validation → 400 | NOT_STARTED | HIGH | 3 | FND-02, ADR-008, ADR-011 | 400/422/409 rules tested; OpenAPI updated | ✓ |
-| INF-02 | Integer-Toman money utilities | NOT_STARTED | HIGH | 2 | ADR-001 | no float; rounding table-tested | ✓ |
+| INF-02 | Integer-Toman money utilities | COMPLETE | HIGH | 2 | ADR-001 | no float; rounding table-tested | ✓ |
 | INF-03 | Pagination & filter/sort allowlist | NOT_STARTED | HIGH | 3 | FND-02 | bad limit/cursor/sort → 400 | ✓ |
 | INF-04 | Soft delete mixin & helpers | NOT_STARTED | MEDIUM | 1.5 | FND-04 | soft-deleted rows filtered; no migration diff | ✓ |
 | INF-05 | AuditLog writer service | NOT_STARTED | HIGH | 3 | FND-04 | same-transaction audit; secrets redacted | ✓ |
