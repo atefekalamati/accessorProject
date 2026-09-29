@@ -7,8 +7,8 @@
 - **Current Task:** FND-03 — Docker/Compose runnable end-to-end · IN_PROGRESS → [tasks/phase-01/FND-03-docker-compose-runnable.md](../../tasks/phase-01/FND-03-docker-compose-runnable.md)
 - **Status:** foundation موجود و سبز. همه تصمیم‌های لازم برای فاز ۱ تا ۴ گرفته شده‌اند.
 - **Progress:** 14/140 task COMPLETE · وزنی 4.9% (20h / 406h) · MVP 7.5%
-- **Blockers:** FND-03 به‌خاطر اشغال پورت‌های 5432 (PostgreSQL محلی) و 8000 (`wslrelay`) متوقف شد و منتظر تصمیم کاربر است. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** FND-03 — بعد از تصمیم کاربر (آزادکردن پورت‌ها یا پورت‌های host قابل تنظیم در compose): ساخت `.env` محلی، `docker compose up --build -d`، migrate و seed داخل container، بررسی `/health` و `/ready`، و `docker compose down` (بدون `-v`). بدون مانع و قابل انجام به‌صورت موازی: FND-06 یا INF-02.
+- **Blockers:** FND-03: پورت `DB_HOST_PORT=5433` را container دیگری از Docker اشغال کرده و منتظر انتخاب پورت دیگر توسط کاربر است (5435 آزاد است). در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
+- **Next Action:** FND-03 — تغییر `DB_HOST_PORT` (و پورت داخل `DATABASE_URL`) در `.env` به پورت آزاد، سپس `docker compose up --build -d`، migrate و seed داخل container، بررسی `/health` و `/ready` روی 8001، و `docker compose down` (بدون `-v`). بدون مانع و قابل انجام به‌صورت موازی: FND-06 یا INF-02.
 - **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`)
 
 ---

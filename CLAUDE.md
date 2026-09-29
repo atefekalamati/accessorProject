@@ -47,7 +47,7 @@ python -m ruff format --check .          # بررسی format   (اعمال: pyth
 python -m mypy app tests                 # type-check
 alembic upgrade head | alembic current | alembic downgrade -1
 python -m app.db.seed                    # seed idempotent نقش‌ها
-docker compose up --build                # API + PostgreSQL (نیاز به .env؛ فعلاً .env محلی وجود ندارد)
+docker compose up --build                # API + PostgreSQL؛ پورت‌های host از DB_HOST_PORT و API_HOST_PORT در .env
 ```
 
 دیتابیس تست یک‌بارمصرف (تأییدشده؛ نام دیتابیس باید شامل `test` باشد):
@@ -111,46 +111,9 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 - تعارض: بخش مرجع برنده است. اگر هنوز مبهم بود → ثبت در `DECISIONS.md` و پرسیدن از کاربر.
 - `sources/backend-roadmap-fastapi.md` نقشه راه قدیمی است (مرحله ۰ و ۱ آن انجام شده). فقط مرجع جزئیات؛ نقشه راه معتبر `docs/project/ROADMAP.md` است.
 
-## ۱۱. فایل‌های برنامه‌ریزی
+## ۱۱. برنامه‌ریزی و گردش کار
 
-| فایل | کاربرد |
-|---|---|
-| `docs/project/ROADMAP.md` | ۶ فاز: هدف، وضعیت، برآورد، درصد، ددلاین، verdict زمان‌بندی |
-| `docs/project/PLAN.md` | فهرست همه milestoneها و taskها (ID، وضعیت، اولویت، برآورد، وابستگی، done when) |
-| `docs/project/PROGRESS.md` | **منبع واحد «کجاییم؟»**: task جاری، درصد، blockerها، Next Action، Plan changes، log |
-| `docs/project/DECISIONS.md` | تصمیم‌های D1… (با task `DEC-NN` و taskهایی که مسدود می‌کنند) و ADRها |
-| `tasks/phase-0N/<ID>-<slug>.md` | جزئیات task؛ قالب و قواعد در `tasks/README.md` |
-
-وضعیت‌ها: `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` (منتظر تصمیم باز) / `COMPLETE` / `CANCELLED`. درصد = ساعت برآوردی COMPLETE ÷ کل ساعت (CANCELLED حذف می‌شود). هرگز تاریخ یا ددلاین حدسی ننویس.
-
-## ۱۲. گردش کار
-
-**ادامه بعد از وقفه:** طبق «پروتکل جلسه» پایین.
-
-**برای هر task:**
-1. فایل task و فقط بخش مرتبط PRD را بخوان و کد مرتبط را بررسی کن.
-2. برای کار غیربدیهی، plan کوتاه (فایل‌ها، چرا، ریسک‌ها) بده و منتظر تأیید بمان.
-3. کوچک‌ترین تغییر مناسب را پیاده کن.
-4. معیارهای پذیرش را بررسی کن و تست، lint و type-check را اجرا کن.
-5. وضعیت و Log فایل task را به‌روز کن.
-6. PROGRESS.md (درصد، Next Action) و در صورت نیاز PLAN.md و ROADMAP.md را به‌روز کن.
-7. تصمیم معماری جدید را در DECISIONS.md ثبت کن.
-8. به فارسی گزارش بده.
-بدون validation هرگز COMPLETE نزن. اگر نیازمندی مبهم است، در DECISIONS.md ثبت کن و قبل از هر تغییر برگشت‌ناپذیر بپرس.
-
-**تغییر برنامه:** تاریخچه را بی‌صدا بازنویسی نکن. task حذف‌شده `CANCELLED` با دلیل می‌شود، task جدید ID جدید می‌گیرد، و یک ورودی تاریخ‌دار در «Plan changes» در PROGRESS.md ثبت می‌شود.
-
-**درخواست‌های رایج — همیشه از فایل‌ها جواب بده، نه از حافظه گفت‌وگو:**
-| درخواست | منبع |
-|---|---|
-| «کجاییم؟» / Where are we? · «وضعیت پروژه» / Show project status | PROGRESS.md (+ ROADMAP.md) |
-| «قدم بعدی؟» / What's next? · «از جایی که ماندیم ادامه بده» / Continue | PROGRESS.md → Next Action → فایل task |
-| «چه چیزی جلوی ما را گرفته؟» / What's blocking us? | PROGRESS.md › Blockers + DECISIONS.md |
-| «چقدر مانده؟» / How much remains? | PROGRESS.md › Overall Progress + ROADMAP.md |
-| «فاز بعد را برنامه‌ریزی کن» / Plan the next phase | PLAN.md → ساخت فایل‌های task آن milestone |
-| «این feature را به task بشکن» / Break into tasks | PLAN.md (ID جدید) + فایل task |
-| «این task تمام شد» / Mark complete | validation → فایل task → PROGRESS.md → PLAN.md/ROADMAP.md |
-| «برنامه را به‌روز کن» / Update the plan | همه فایل‌ها + Plan changes |
+فایل‌های برنامه‌ریزی، مراحل هر task، قواعد تغییر برنامه و نگاشت درخواست‌های رایج («کجاییم؟»، «قدم بعدی؟» و…) در [docs/project/WORKFLOW.md](docs/project/WORKFLOW.md) هستند. بدون validation هرگز COMPLETE نزن و به درخواست‌های وضعیت همیشه از فایل‌ها جواب بده.
 
 ## ارتباط با کاربر
 

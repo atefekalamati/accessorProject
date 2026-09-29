@@ -15,7 +15,7 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-سرویس API روی `http://localhost:8000` و PostgreSQL روی پورت `5432` در دسترس‌اند. دیتای PostgreSQL در volume نام‌دار `postgres_data` پایدار می‌ماند.
+سرویس API روی `http://localhost:8000` و PostgreSQL روی پورت `5432` در دسترس‌اند. دیتای PostgreSQL در volume نام‌دار `postgres_data` پایدار می‌ماند. اگر این پورت‌ها روی سیستم شما اشغال‌اند، `API_HOST_PORT` و `DB_HOST_PORT` را در `.env` تغییر دهید (مثلاً 8001 و 5433) و در آدرس‌های زیر همان پورت‌ها را به کار ببرید.
 
 ```powershell
 Invoke-RestMethod http://localhost:8000/health
@@ -24,7 +24,7 @@ Invoke-RestMethod http://localhost:8000/api/v1/health
 
 ## اجرای محلی
 
-برای اجرای API روی host، مقدار host در `DATABASE_URL` را از `postgres` به `localhost` تغییر دهید.
+برای اجرای API یا Alembic روی host، در `DATABASE_URL` مقدار host را از `postgres` به `localhost` و پورت را به مقدار `DB_HOST_PORT` تغییر دهید.
 
 ```powershell
 py -3.12 -m venv .venv

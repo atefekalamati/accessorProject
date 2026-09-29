@@ -11,8 +11,9 @@
 ## Acceptance Criteria
 - [x] `Dockerfile` کاربر non-root دارد و `docker build` موفق است (2026-09-29).
 - [x] `docker compose config` معتبر است (2026-09-29).
-- [ ] `.env` محلی از `.env.example` ساخته شده و `JWT_SECRET` و `POSTGRES_PASSWORD` مقدار محلی دارند (secret در گزارش یا git نمی‌آید).
-- [ ] `docker compose up --build -d` هر دو سرویس را healthy بالا می‌آورد (پورت‌های 5432 و 8000 آزاد باشند).
+- [x] پورت‌های host در compose قابل تنظیم‌اند: `${DB_HOST_PORT:-5432}` و `${API_HOST_PORT:-8000}`. `.env.example`، README و `docs/dbeaver.md` به‌روز شدند.
+- [x] `.env` محلی ساخته شد: secretهای تصادفی، `DB_HOST_PORT=5433`، `API_HOST_PORT=8001`، و `DATABASE_URL` سمت host روی `localhost:5433`. در git ignore است.
+- [ ] `docker compose up --build -d` هر دو سرویس را healthy بالا می‌آورد.
 - [ ] `alembic upgrade head` و `python -m app.db.seed` داخل container `api` اجرا می‌شوند.
 - [ ] `/health`، `/ready` و `/docs` از طریق compose پاسخ 200 می‌دهند.
 - [ ] اگر شکافی پیدا شد، README به‌روز شود. پایان کار با `docker compose down` (بدون `-v`).
@@ -26,8 +27,8 @@
 docker compose up --build -d
 docker compose exec api alembic upgrade head
 docker compose exec api python -m app.db.seed
-Invoke-RestMethod http://localhost:8000/health
-Invoke-RestMethod http://localhost:8000/ready
+Invoke-RestMethod http://localhost:8001/health   # API_HOST_PORT
+Invoke-RestMethod http://localhost:8001/ready
 docker compose down
 ```
 
@@ -35,3 +36,4 @@ docker compose down
 - 2026-09-29: از `tasks/M0-01-local-env-verification.md` منتقل شد. build و config موفق بودند. `up` به دلیل نبود `.env` اجرا نشد.
 - 2026-09-29: متوقف شد، چون پورت‌ها اشغال‌اند: 5432 (PostgreSQL محلی روی host، pid 6756) و 8000 (`wslrelay`، یعنی سرویسی داخل WSL). طبق دستور کاربر چیزی kill نشد. `.env` و container ساخته نشد.
   - گزینه‌ها: (۱) کاربر سرویس‌های اشغال‌کننده را خودش متوقف کند؛ (۲) پیشنهاد: پورت‌های host در `docker-compose.yml` قابل تنظیم شوند، مثلاً `127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432` و `${API_HOST_PORT:-8000}:8000`، و در `.env` مقدارهای 5433 و 8001 گذاشته شوند (تغییر کوچک، نیاز به تأیید).
+- 2026-09-29: کاربر گزینه (۲) را با نام‌های `DB_HOST_PORT` و `API_HOST_PORT` تأیید کرد. پیاده‌سازی شد و `docker compose config` پورت‌های 5433 و 8001 را نشان داد. **دوباره متوقف شد:** 5433 را یک container دیگر Docker (`com.docker.backend`) اشغال کرده و 5434 هم اشغال است. 5435 و 15432 آزادند. 8001 آزاد است. منتظر انتخاب پورت دیتابیس توسط کاربر.
