@@ -93,6 +93,7 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 - تغییرات حساس (قیمت، موجودی، وضعیت سفارش، نقش، کد تخفیف) در `audit_logs` (حذف آن با trigger ممنوع است).
 - Product و Variant ارجاع‌شده soft delete می‌شوند. Order سه وضعیت مستقل دارد: order، payment، shipment.
 - secretها فقط در `.env` (gitignored). `.env.example` فقط placeholder. `TEST_DATABASE_URL` هرگز به دیتابیس shared/production اشاره نکند (تست‌ها downgrade می‌کنند).
+- پورت محلی اشغال بود: اولین پورت آزاد بعدی را انتخاب کن، در `.env` بگذار (`DB_HOST_PORT`/`API_HOST_PORT`) و فقط گزارش بده؛ هرگز پروسه یا containerی را kill نکن.
 - دستورات مخرب (`docker compose down -v`، `alembic downgrade` روی دیتابیس واقعی، `DROP`) فقط با تأیید صریح.
 
 ## ۹. Git و مدیریت تغییر
