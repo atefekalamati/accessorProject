@@ -100,7 +100,7 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 
 - شاخه اصلی `master` است. یک شاخه برای هر milestone، مثل `feat/m2.1-auth`.
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`).
-- بدون درخواست صریح: هرگز push، force-push، `reset --hard`، rebase روی `master`، یا ویرایش migration commit‌شده.
+- بدون درخواست صریح: هرگز push (به‌جز push بعد از `/done`، بخش ۱۱)، force-push، `reset --hard`، rebase روی `master`، یا ویرایش migration commit‌شده.
 - تغییر schema فقط با migration جدید.
 
 ## ۱۰. استفاده از PRD
@@ -115,6 +115,11 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 ## ۱۱. برنامه‌ریزی و گردش کار
 
 فایل‌های برنامه‌ریزی، مراحل هر task، قواعد تغییر برنامه و نگاشت درخواست‌های رایج («کجاییم؟»، «قدم بعدی؟» و…) در [docs/project/WORKFLOW.md](docs/project/WORKFLOW.md) هستند. بدون validation هرگز COMPLETE نزن و به درخواست‌های وضعیت همیشه از فایل‌ها جواب بده.
+
+- هر task قبل از اجرا plan تأییدشده توسط کاربر لازم دارد.
+- هر فایل task یک خط `Level: LOW|MEDIUM|HIGH` دارد.
+- HIGH شامل این موارد است: موجودی/رزرو، پرداخت، OTP/token/auth، ویرایش PRD و تغییر رفتار API. plan این taskها باید ریسک‌ها، مراحل rollback و تست‌های اضافه را هم فهرست کند.
+- بعد از هر `/done`، شاخه فعلی push شود (`git push`، بدون force).
 
 ## ارتباط با کاربر
 
