@@ -5,7 +5,7 @@ import logging
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import Settings
-from app.core.errors import AppError
+from app.core.errors import AppError, ErrorCode
 from app.shared.database.repository import DatabaseHealthRepository
 from app.shared.database.schemas import DatabaseReadinessResponse, DatabaseStatusResponse
 
@@ -26,9 +26,8 @@ class DatabaseHealthService:
 
         if not available:
             raise AppError(
-                code="DATABASE_UNAVAILABLE",
+                code=ErrorCode.DATABASE_UNAVAILABLE,
                 message="Database is unavailable",
-                status_code=503,
             )
 
         return DatabaseReadinessResponse(
@@ -43,9 +42,8 @@ class DatabaseHealthService:
         except SQLAlchemyError as exc:
             logger.warning("database.status_failed", extra={"request_id": request_id})
             raise AppError(
-                code="DATABASE_UNAVAILABLE",
+                code=ErrorCode.DATABASE_UNAVAILABLE,
                 message="Database is unavailable",
-                status_code=503,
             ) from exc
 
         return DatabaseStatusResponse(

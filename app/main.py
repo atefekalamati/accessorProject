@@ -35,9 +35,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url="/redoc",
         openapi_url="/openapi.json",
         responses={
-            400: {"model": ErrorResponse, "description": "Bad request"},
+            400: {"model": ErrorResponse, "description": "Validation error"},
+            401: {"model": ErrorResponse, "description": "Authentication required"},
+            403: {"model": ErrorResponse, "description": "Permission denied"},
             404: {"model": ErrorResponse, "description": "Resource not found"},
-            422: {"model": ErrorResponse, "description": "Validation error"},
+            409: {"model": ErrorResponse, "description": "Conflicting state"},
+            422: {"model": ErrorResponse, "description": "Business rule violation"},
+            429: {
+                "model": ErrorResponse,
+                "description": "Too many requests (see Retry-After header)",
+            },
             500: {"model": ErrorResponse, "description": "Internal server error"},
             503: {"model": ErrorResponse, "description": "Service unavailable"},
         },

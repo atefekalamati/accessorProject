@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from collections.abc import Mapping
+from enum import StrEnum
+from types import MappingProxyType
+from typing import Any, ClassVar
 from uuid import uuid4
 
 from fastapi import FastAPI
@@ -10,6 +13,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.requests import Request
+
+from app.core.middleware import REQUEST_ID_HEADER
 
 logger = logging.getLogger("app.error")
 
@@ -25,20 +30,148 @@ class ErrorResponse(BaseModel):
     request_id: str
 
 
+class ErrorCode(StrEnum):
+    """Stable machine-readable error codes (PRD "key errors", ADR-008, ADR-011)."""
+
+    # 400 — request validation
+    VALIDATION_ERROR = "VALIDATION_ERROR"
+    # 401 — authentication
+    UNAUTHORIZED = "UNAUTHORIZED"
+    OTP_INVALID = "OTP_INVALID"
+    OTP_EXPIRED = "OTP_EXPIRED"
+    MOBILE_NOT_VERIFIED = "MOBILE_NOT_VERIFIED"
+    # 403 — authorization
+    FORBIDDEN = "FORBIDDEN"
+    # 404 — missing resource
+    NOT_FOUND = "NOT_FOUND"
+    # 409 — conflicting state
+    CONFLICT = "CONFLICT"
+    INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK"
+    PRICE_CHANGED = "PRICE_CHANGED"
+    RESERVATION_EXPIRED = "RESERVATION_EXPIRED"
+    RESERVATION_ALREADY_CONSUMED = "RESERVATION_ALREADY_CONSUMED"
+    DUPLICATE_SLUG = "DUPLICATE_SLUG"
+    MOBILE_ALREADY_REGISTERED = "MOBILE_ALREADY_REGISTERED"
+    # 422 — business rule violation
+    BUSINESS_RULE_VIOLATION = "BUSINESS_RULE_VIOLATION"
+    INVALID_STATE_TRANSITION = "INVALID_STATE_TRANSITION"
+    DISCOUNT_NOT_APPLICABLE = "DISCOUNT_NOT_APPLICABLE"
+    # 429 — rate limiting
+    RATE_LIMITED = "RATE_LIMITED"
+    OTP_RATE_LIMITED = "OTP_RATE_LIMITED"
+    # 5xx — server side
+    INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+    DATABASE_UNAVAILABLE = "DATABASE_UNAVAILABLE"
+
+
+ERROR_STATUS: Mapping[ErrorCode, int] = MappingProxyType(
+    {
+        ErrorCode.VALIDATION_ERROR: 400,
+        ErrorCode.UNAUTHORIZED: 401,
+        ErrorCode.OTP_INVALID: 401,
+        ErrorCode.OTP_EXPIRED: 401,
+        ErrorCode.MOBILE_NOT_VERIFIED: 401,
+        ErrorCode.FORBIDDEN: 403,
+        ErrorCode.NOT_FOUND: 404,
+        ErrorCode.CONFLICT: 409,
+        ErrorCode.INSUFFICIENT_STOCK: 409,
+        ErrorCode.PRICE_CHANGED: 409,
+        ErrorCode.RESERVATION_EXPIRED: 409,
+        ErrorCode.RESERVATION_ALREADY_CONSUMED: 409,
+        ErrorCode.DUPLICATE_SLUG: 409,
+        ErrorCode.MOBILE_ALREADY_REGISTERED: 409,
+        ErrorCode.BUSINESS_RULE_VIOLATION: 422,
+        ErrorCode.INVALID_STATE_TRANSITION: 422,
+        ErrorCode.DISCOUNT_NOT_APPLICABLE: 422,
+        ErrorCode.RATE_LIMITED: 429,
+        ErrorCode.OTP_RATE_LIMITED: 429,
+        ErrorCode.INTERNAL_SERVER_ERROR: 500,
+        ErrorCode.DATABASE_UNAVAILABLE: 503,
+    }
+)
+"""Single source of truth: every ErrorCode maps to exactly one HTTP status."""
+
+
 class AppError(Exception):
+    """Base application error; the HTTP status always comes from ``ERROR_STATUS``.
+
+    Subclasses pin ``expected_status``; constructing one with a code mapped to a
+    different status raises ``ValueError`` (a programming error, not a client error).
+    """
+
+    expected_status: ClassVar[int | None] = None
+    default_code: ClassVar[ErrorCode | None] = None
+
     def __init__(
         self,
         *,
-        code: str,
+        code: ErrorCode | None = None,
         message: str,
-        status_code: int = 400,
+        status_code: int | None = None,
+        details: list[Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        resolved = code or self.default_code
+        if resolved is None:
+            raise ValueError(f"{type(self).__name__} requires an error code")
+        status = ERROR_STATUS[resolved]
+        for claimed in (status_code, self.expected_status):
+            if claimed is not None and claimed != status:
+                raise ValueError(
+                    f"{type(self).__name__}: {resolved} maps to {status}, not {claimed}"
+                )
+        self.code = resolved
+        self.message = message
+        self.status_code = status
+        self.details = details or []
+        self.headers = headers or {}
+        super().__init__(message)
+
+
+class UnauthorizedError(AppError):
+    expected_status = 401
+    default_code = ErrorCode.UNAUTHORIZED
+
+
+class ForbiddenError(AppError):
+    expected_status = 403
+    default_code = ErrorCode.FORBIDDEN
+
+
+class NotFoundError(AppError):
+    expected_status = 404
+    default_code = ErrorCode.NOT_FOUND
+
+
+class ConflictError(AppError):
+    expected_status = 409
+    default_code = ErrorCode.CONFLICT
+
+
+class BusinessRuleError(AppError):
+    expected_status = 422
+    default_code = ErrorCode.BUSINESS_RULE_VIOLATION
+
+
+class RateLimitedError(AppError):
+    expected_status = 429
+    default_code = ErrorCode.RATE_LIMITED
+
+    def __init__(
+        self,
+        *,
+        retry_after: int,
+        code: ErrorCode | None = None,
+        message: str = "Too many requests",
         details: list[Any] | None = None,
     ) -> None:
-        self.code = code
-        self.message = message
-        self.status_code = status_code
-        self.details = details or []
-        super().__init__(message)
+        super().__init__(
+            code=code,
+            message=message,
+            details=details,
+            headers={"Retry-After": str(retry_after)},
+        )
+        self.retry_after = retry_after
 
 
 def _request_id(request: Request) -> str:
@@ -46,14 +179,22 @@ def _request_id(request: Request) -> str:
 
 
 def _error_response(
-    *, request: Request, status_code: int, code: str, message: str, details: list[Any]
+    *,
+    request: Request,
+    status_code: int,
+    code: str,
+    message: str,
+    details: list[Any],
+    headers: dict[str, str] | None = None,
+    request_id: str | None = None,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
         content={
             "error": {"code": code, "message": message, "details": details},
-            "request_id": _request_id(request),
+            "request_id": request_id or _request_id(request),
         },
+        headers=headers,
     )
 
 
@@ -64,6 +205,7 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         code=exc.code,
         message=exc.message,
         details=exc.details,
+        headers=exc.headers or None,
     )
 
 
@@ -89,23 +231,25 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
     ]
     return _error_response(
         request=request,
-        status_code=422,
-        code="VALIDATION_ERROR",
+        status_code=ERROR_STATUS[ErrorCode.VALIDATION_ERROR],
+        code=ErrorCode.VALIDATION_ERROR,
         message="Request validation failed",
         details=details,
     )
 
 
 async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.exception(
-        "unhandled.exception", extra={"request_id": _request_id(request)}, exc_info=exc
-    )
+    # Exceptions bypass RequestContextMiddleware, so echo the request id here.
+    request_id = _request_id(request)
+    logger.exception("unhandled.exception", extra={"request_id": request_id}, exc_info=exc)
     return _error_response(
         request=request,
-        status_code=500,
-        code="INTERNAL_SERVER_ERROR",
+        status_code=ERROR_STATUS[ErrorCode.INTERNAL_SERVER_ERROR],
+        code=ErrorCode.INTERNAL_SERVER_ERROR,
         message="An unexpected error occurred",
         details=[],
+        headers={REQUEST_ID_HEADER: request_id},
+        request_id=request_id,
     )
 
 

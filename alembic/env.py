@@ -13,7 +13,7 @@ from app.db.models import Address, AppSetting, AuditLog, Permission, Role, User
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 database_url = config.get_main_option("sqlalchemy.url")
 if not database_url:
