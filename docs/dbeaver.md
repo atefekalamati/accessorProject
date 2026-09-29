@@ -6,14 +6,14 @@
 |---|---|
 | Driver | PostgreSQL |
 | Host | `localhost` |
-| Port | `5432` |
+| Port | مقدار `DB_HOST_PORT` در `.env` (پیش‌فرض `5432`) |
 | Database | `project_ak` |
 | Username | `project_ak` |
 | Password | مقدار `POSTGRES_PASSWORD` در فایل محلی `.env` |
 
 در DBeaver گزینه **New Database Connection** و سپس PostgreSQL را انتخاب کنید. مقادیر جدول بالا را وارد کنید، در صورت درخواست driver را دانلود کنید و با **Test Connection** اتصال را بررسی کنید. TLS برای Compose محلی غیرفعال است؛ در staging و production باید تنظیمات TLS همان محیط استفاده شود.
 
-PostgreSQL در Compose فقط روی `127.0.0.1:5432` منتشر شده و از شبکه خارجی قابل دسترسی نیست.
+PostgreSQL در Compose فقط روی `127.0.0.1:${DB_HOST_PORT}` منتشر شده و از شبکه خارجی قابل دسترسی نیست.
 
 ## Entityها
 

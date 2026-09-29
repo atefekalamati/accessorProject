@@ -2,12 +2,14 @@ services:
   api:
     build:
       context: .
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
     env_file:
       - ${APP_ENV_FILE:-.env}
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     ports:
-      - "8000:8000"
+      - "${API_HOST_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -20,7 +22,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${DB_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
