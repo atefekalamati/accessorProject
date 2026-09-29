@@ -4,11 +4,11 @@
 
 ## Current / Next
 - **Phase › Milestone:** 1 Foundation › M1.2 Shared infrastructure
-- **Current Task:** FND-07 — CI pipeline · COMPLETE → [tasks/phase-01/FND-07-ci-pipeline.md](../../tasks/phase-01/FND-07-ci-pipeline.md)
-- **Status:** FND-07 COMPLETE: `.github/workflows/ci.yml` (lint، format، mypy، pytest روی PG16 و گام ضد-skip). اجرای GitHub برای `8c7bf9b` سبز شد.
-- **Progress:** 21/140 task COMPLETE · وزنی 8.8% (36h / 407h) · MVP 13.5%
+- **Current Task:** INF-06 — Sensitive-data redaction in logs · COMPLETE → [tasks/phase-01/INF-06-log-redaction.md](../../tasks/phase-01/INF-06-log-redaction.md)
+- **Status:** INF-06 COMPLETE: `app/core/redaction.py` (helper مشترک) و redaction در `JsonFormatter`. pytest 327 passed.
+- **Progress:** 22/140 task COMPLETE · وزنی 9.2% (37.5h / 407h) · MVP 14.1%
 - **Blockers:** فاز ۱ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** قدم بعدی فاز ۱ (INF-05 Audit service یا INF-06 log redaction) — بررسی task، پیشنهاد plan و گرفتن تأیید.
+- **Next Action:** INF-05 (AuditLog writer، باید از `app/core/redaction.redact` استفاده کند). آخرین task فاز ۱ است و بعد از آن PR فاز ۱ به `master` می‌رود.
 - **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`). M1.1 و M1.2 هر دو روی این شاخه هستند. قاعده جدید: یک شاخه برای هر فاز و merge به `master` با PR در پایان فاز.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
@@ -20,7 +20,7 @@
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
-| 1 Foundation | IN_PROGRESS | 37h | 32.5h | 87.8% | 2026-10-09 |
+| 1 Foundation | IN_PROGRESS | 37h | 34h | 91.9% | 2026-10-09 |
 | 2 Core domain | NOT_STARTED | 129h | 3h | 2.3% | 2026-12-06 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-22 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-19 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 371h ≈ ۲۵ هفته. MVP باقی‌مانده: 230.5h ≈ ۱۶ هفته.
+- باقی‌مانده: 369.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 229h ≈ ۱۶ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-09-29: INF-06 (Sensitive-data redaction in logs).
 - 2026-09-29: FND-07 (CI pipeline).
 - 2026-09-29: FND-06 (Reproducible test database recipe).
 - 2026-09-29: INF-04 (Soft delete mixin & helpers)؛ DEC ثبت‌شده: D19 (ADR-015).
@@ -44,7 +45,7 @@
 - 2026-09-13: FND-01، FND-02، FND-04، FND-05 (تأیید با اجرای تست‌ها در 2026-09-29).
 
 ## Remaining Work
-- فاز ۱: INF-05، INF-06.
+- فاز ۱: INF-05.
 - فاز ۲ تا ۶: طبق [PLAN.md](PLAN.md).
 
 ## Blockers
@@ -58,6 +59,9 @@
 ---
 
 ## Plan changes
+### 2026-09-29 — INF-06: شماره سفارش
+- **ORD-01:** معیار پذیرش جدید: شماره سفارش قالبی دارد که نمی‌تواند شبیه شماره موبایل باشد (مثلاً `ORD-YYYY-NNNNNN`). دلیل: mask موبایل در log ترجیحاً بیش از حد mask می‌کند (فقط رقم مجاور مانع mask است).
+
 ### 2026-09-29 — INF-04: soft delete و قاعده شاخه
 - **SD rule** (سرآیند PLAN.md و یک خط در CLAUDE.md): read عمومی (list/detail) رکورد soft-deleted را برنمی‌گرداند (detail → 404 `NOT_FOUND`) و write ارجاع‌دهنده آن را رد می‌کند. «SD rule (test)» به معیار این taskها اضافه شد: CAT-06، CAT-07، CAT-08، CAT-09، CAT-11، CAT-14، CAT-16، INV-07، PRC-04، CART-02، ORD-03، ORD-04، ORD-06، CNT-01، CNT-02 و ACC-04.
 - **AUTH-01:** ستون DB همان `phone` می‌ماند و فیلد API طبق PRD `mobile` است.
@@ -83,6 +87,18 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-09-29 — INF-06 COMPLETE
+- **انجام شد:**
+  - `app/core/redaction.py`:
+    - کلید حساس با substring پیدا می‌شود.
+    - `code` فقط اگر ۴ تا ۸ رقم باشد redact می‌شود.
+    - Bearer، JWT و موبایل (رقم لاتین، فارسی و عربی) mask می‌شوند.
+    - mask موبایل فقط وقتی رقم مجاور باشد انجام نمی‌شود.
+  - `JsonFormatter` redaction را روی message، extras، traceback و `str()` آبجکت‌ها اعمال می‌کند و هرگز خطا نمی‌دهد (fallback: `log.redaction_failed`).
+  - `tests/test_logging.py` (۴۳ تست، همه روی رشته خروجی نهایی).
+- **اعتبارسنجی:** pytest 327 passed و 0 skipped (postgres-test)؛ ruff، format و mypy سبز.
+- **بعدی:** INF-05.
+
 ### 2026-09-29 — FND-07 COMPLETE
 - **انجام شد:** `.github/workflows/ci.yml`: push روی همه شاخه‌ها و PR به `master`؛ `permissions: contents: read`؛ `concurrency`؛ service `postgres:16-alpine` (`project_ak_test`)؛ گام‌های ruff check، ruff format --check، mypy و pytest؛ گام ضد-skip از روی junit XML. actionها pin شده روی `checkout@v4` و `setup-python@v5`.
 - **اعتبارسنجی:** محلی: pytest 284 passed و 0 skipped؛ ruff، format و mypy سبز؛ اسکریپت ضد-skip بدون DB با exit 1 fail شد (10 skip). GitHub Actions برای `8c7bf9b` سبز شد.

@@ -32,11 +32,11 @@
 | INF-03 | Pagination & filter/sort allowlist | COMPLETE | HIGH | MEDIUM | 3 | FND-02 | bad page/limit/sort/param → 400 | ✓ |
 | INF-04 | Soft delete mixin & helpers | COMPLETE | MEDIUM | MEDIUM | 1.5 | FND-04 | soft-deleted rows filtered; no migration diff | ✓ |
 | INF-05 | AuditLog writer service | NOT_STARTED | HIGH | MEDIUM | 3 | FND-04 | same-transaction audit; secrets redacted | ✓ |
-| INF-06 | Sensitive-data redaction in logs | NOT_STARTED | MEDIUM | HIGH | 1.5 | FND-02 | OTP/tokens never logged; phone masked | ✓ |
+| INF-06 | Sensitive-data redaction in logs | COMPLETE | MEDIUM | HIGH | 1.5 | FND-02 | OTP/tokens never logged; phone masked | ✓ |
 | DEC-07 | HTTP 410 (D7) | COMPLETE | MEDIUM | HIGH | 0.5 | — | ADR-008 | ✓ |
 | DEC-12 | Error format, 400 vs 422 (D12) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-011 | ✓ |
 
-**Phase 1:** 37h · COMPLETE 29h
+**Phase 1:** 37h · COMPLETE 34h
 
 ---
 
@@ -144,7 +144,7 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | ORD-00 | Rewrite checkout & order requirements | NOT_STARTED | HIGH | HIGH | 2 | ADR-006, ADR-007 | PRD sections ✓ بازبینی‌شده + approved |
-| ORD-01 | Order, OrderItem snapshot, OrderPriceSnapshot, address snapshot | NOT_STARTED | HIGH | HIGH | 5 | ORD-00, PRC-01 | past orders immune to product changes |
+| ORD-01 | Order, OrderItem snapshot, OrderPriceSnapshot, address snapshot | NOT_STARTED | HIGH | HIGH | 5 | ORD-00, PRC-01 | past orders immune to product changes; order number format cannot resemble a mobile number (e.g. `ORD-YYYY-NNNNNN`) |
 | ORD-02 | Idempotency-Key infrastructure | NOT_STARTED | HIGH | HIGH | 3 | INF-01 | same key → same result |
 | ORD-03 | POST /checkout/validate | NOT_STARTED | HIGH | HIGH | 3 | CART-03, DSC-03, ADDR-02 | price/stock/discount/shipping re-checked; SD rule (test) |
 | ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | NOT_STARTED | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional; SD rule (test) |
@@ -255,4 +255,4 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 
 ---
 
-**Grand total:** 407h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 36h
+**Grand total:** 407h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 37.5h
