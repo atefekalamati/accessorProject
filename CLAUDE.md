@@ -50,13 +50,13 @@ python -m app.db.seed                    # seed idempotent نقش‌ها
 docker compose up --build                # API + PostgreSQL؛ پورت‌های host از DB_HOST_PORT و API_HOST_PORT در .env
 ```
 
-دیتابیس تست یک‌بارمصرف (تأییدشده؛ نام دیتابیس باید شامل `test` باشد):
+دیتابیس تست یک‌بارمصرف: سرویس `postgres-test` با profile `test` و بدون volume. پورت host از `TEST_DB_HOST_PORT` خوانده می‌شود (پیش‌فرض 55432). نام دیتابیس باید با `_test` تمام شود، وگرنه `conftest` کل session را abort می‌کند (exit 3):
 
 ```powershell
-docker run --rm -d --name atk-test-pg -p 127.0.0.1:55432:5432 -e POSTGRES_PASSWORD=test -e POSTGRES_DB=project_ak_test postgres:16-alpine
-$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:55432/project_ak_test"
-python -m pytest            # همه ۲۴ تست
-docker stop atk-test-pg
+docker compose --profile test up -d --wait postgres-test
+$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:55432/project_ak_test"  # پورت = TEST_DB_HOST_PORT
+python -m pytest -q
+docker compose --profile test stop postgres-test; docker compose --profile test rm -f postgres-test
 ```
 
 Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "..."` (قرارداد نام‌گذاری موجود)، سپس خروجی را دستی بازبینی کن.
@@ -91,14 +91,14 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 - OTP و refresh token هش‌شده؛ OTP یک‌بارمصرف، دارای انقضا و rate-limit (429). refresh فقط در cookie `HttpOnly; Secure; SameSite=Strict` و access در body (ADR-012). ثبت نهایی سفارش فقط با موبایل تأییدشده.
 - RBAC: فقط Super Admin نقش تغییر می‌دهد. بررسی مالکیت برای سفارش، سبد و آدرس.
 - تغییرات حساس (قیمت، موجودی، وضعیت سفارش، نقش، کد تخفیف) در `audit_logs` (حذف آن با trigger ممنوع است).
-- Product و Variant ارجاع‌شده soft delete می‌شوند. Order سه وضعیت مستقل دارد: order، payment، shipment.
+- Product و Variant ارجاع‌شده soft delete می‌شوند. SD rule: read عمومی (list/detail) رکورد soft-deleted را برنمی‌گرداند (detail → 404 `NOT_FOUND`) و write ارجاع‌دهنده (سبد، checkout validate، ایجاد سفارش) آن را رد می‌کند (PLAN.md). Order سه وضعیت مستقل دارد: order، payment، shipment.
 - secretها فقط در `.env` (gitignored). `.env.example` فقط placeholder. `TEST_DATABASE_URL` هرگز به دیتابیس shared/production اشاره نکند (تست‌ها downgrade می‌کنند).
 - پورت محلی اشغال بود: اولین پورت آزاد بعدی را انتخاب کن، در `.env` بگذار (`DB_HOST_PORT`/`API_HOST_PORT`) و فقط گزارش بده؛ هرگز پروسه یا containerی را kill نکن.
 - دستورات مخرب (`docker compose down -v`، `alembic downgrade` روی دیتابیس واقعی، `DROP`) فقط با تأیید صریح.
 
 ## ۹. Git و مدیریت تغییر
 
-- شاخه اصلی `master` است. یک شاخه برای هر milestone، مثل `feat/m2.1-auth`.
+- شاخه اصلی `master` است. یک شاخه برای هر فاز، مثل `feat/phase-2-core-domain`. در پایان فاز، شاخه از طریق PR در `master` merge می‌شود. استثنا: فاز ۱ روی `feat/m1.1-repo-foundation` است (M1.1 و M1.2 مشترک).
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`).
 - بدون درخواست صریح: هرگز push (به‌جز push بعد از `/done`، بخش ۱۱)، force-push، `reset --hard`، rebase روی `master`، یا ویرایش migration commit‌شده.
 - تغییر schema فقط با migration جدید.

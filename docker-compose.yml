@@ -33,5 +33,22 @@ services:
       start_period: 5s
     restart: unless-stopped
 
+  # Disposable integration-test database (ADR-013). Only starts with --profile test;
+  # no volume, so every recreate is empty. Tests downgrade the whole schema here.
+  postgres-test:
+    image: postgres:16-alpine
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: project_ak_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: test
+    ports:
+      - "127.0.0.1:${TEST_DB_HOST_PORT:-55432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d project_ak_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
 volumes:
   postgres_data:

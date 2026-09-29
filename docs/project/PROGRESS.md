@@ -4,23 +4,23 @@
 
 ## Current / Next
 - **Phase › Milestone:** 1 Foundation › M1.2 Shared infrastructure
-- **Current Task:** INF-03 — Pagination & filter/sort allowlist · COMPLETE → [tasks/phase-01/INF-03-pagination-allowlist.md](../../tasks/phase-01/INF-03-pagination-allowlist.md)
-- **Status:** INF-03 COMPLETE: `app/shared/pagination.py` (page/limit برای public با سقف 48 و admin با سقف 100، `Page[T]`، sort و query-param allowlist)؛ `BadRequestError` (400).
-- **Progress:** 18/140 task COMPLETE · وزنی 7.6% (31h / 407h) · MVP 11.6%
+- **Current Task:** INF-06 — Sensitive-data redaction in logs · COMPLETE → [tasks/phase-01/INF-06-log-redaction.md](../../tasks/phase-01/INF-06-log-redaction.md)
+- **Status:** INF-06 COMPLETE: `app/core/redaction.py` (helper مشترک) و redaction در `JsonFormatter`. pytest 327 passed.
+- **Progress:** 22/140 task COMPLETE · وزنی 9.2% (37.5h / 407h) · MVP 14.1%
 - **Blockers:** فاز ۱ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** قدم بعدی فاز ۱ (INF-04 یا FND-06) — بررسی task، پیشنهاد plan و گرفتن تأیید.
-- **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`)
+- **Next Action:** INF-05 (AuditLog writer، باید از `app/core/redaction.redact` استفاده کند). آخرین task فاز ۱ است و بعد از آن PR فاز ۱ به `master` می‌رود.
+- **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`). M1.1 و M1.2 هر دو روی این شاخه هستند. قاعده جدید: یک شاخه برای هر فاز و merge به `master` با PR در پایان فاز.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**7.6%** = 31h COMPLETE / 407h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**8.8%** = 36h COMPLETE / 407h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
-| 1 Foundation | IN_PROGRESS | 37h | 27.5h | 74.3% | 2026-10-09 |
+| 1 Foundation | IN_PROGRESS | 37h | 34h | 91.9% | 2026-10-09 |
 | 2 Core domain | NOT_STARTED | 129h | 3h | 2.3% | 2026-12-06 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-22 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-19 |
@@ -29,10 +29,14 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 376h ≈ ۲۵ هفته. MVP باقی‌مانده: 235.5h ≈ ۱۶ هفته.
+- باقی‌مانده: 369.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 229h ≈ ۱۶ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-09-29: INF-06 (Sensitive-data redaction in logs).
+- 2026-09-29: FND-07 (CI pipeline).
+- 2026-09-29: FND-06 (Reproducible test database recipe).
+- 2026-09-29: INF-04 (Soft delete mixin & helpers)؛ DEC ثبت‌شده: D19 (ADR-015).
 - 2026-09-29: INF-03 (Page/limit pagination, sort & query-param allowlist).
 - 2026-09-29: INF-01 (Error code catalog, domain errors, validation → 400).
 - 2026-09-29: INF-02 (Integer-Toman money utilities)؛ DEC ثبت‌شده: D18 (ADR-014).
@@ -41,7 +45,7 @@
 - 2026-09-13: FND-01، FND-02، FND-04، FND-05 (تأیید با اجرای تست‌ها در 2026-09-29).
 
 ## Remaining Work
-- فاز ۱: FND-06، FND-07، INF-04 تا INF-06.
+- فاز ۱: INF-05.
 - فاز ۲ تا ۶: طبق [PLAN.md](PLAN.md).
 
 ## Blockers
@@ -55,6 +59,15 @@
 ---
 
 ## Plan changes
+### 2026-09-29 — INF-06: شماره سفارش
+- **ORD-01:** معیار پذیرش جدید: شماره سفارش قالبی دارد که نمی‌تواند شبیه شماره موبایل باشد (مثلاً `ORD-YYYY-NNNNNN`). دلیل: mask موبایل در log ترجیحاً بیش از حد mask می‌کند (فقط رقم مجاور مانع mask است).
+
+### 2026-09-29 — INF-04: soft delete و قاعده شاخه
+- **SD rule** (سرآیند PLAN.md و یک خط در CLAUDE.md): read عمومی (list/detail) رکورد soft-deleted را برنمی‌گرداند (detail → 404 `NOT_FOUND`) و write ارجاع‌دهنده آن را رد می‌کند. «SD rule (test)» به معیار این taskها اضافه شد: CAT-06، CAT-07، CAT-08، CAT-09، CAT-11، CAT-14، CAT-16، INV-07، PRC-04، CART-02، ORD-03، ORD-04، ORD-06، CNT-01، CNT-02 و ACC-04.
+- **AUTH-01:** ستون DB همان `phone` می‌ماند و فیلد API طبق PRD `mobile` است.
+- **ADR-015:** unique روی مدل‌های soft-deletable با partial index و شرط `WHERE deleted_at IS NULL` است و تصمیم هر مدل در task خودش گرفته می‌شود. معیار AUTH-01 به‌روز شد.
+- **Git:** قاعده «یک شاخه برای هر milestone» به «یک شاخه برای هر فاز + PR به `master` در پایان فاز» تغییر کرد (CLAUDE.md و WORKFLOW.md). M1.1 و M1.2 روی `feat/m1.1-repo-foundation` مشترک هستند.
+
 ### 2026-09-29 — INF-03: سبک pagination
 - PRD («دسته‌بندی محصولات» ✓) صراحتاً `page`/`limit` و «تعداد کل» و «اطلاعات صفحه‌بندی» می‌خواهد، پس لیست‌های عمومی هم page/limit شدند (نه cursor). سقف limit برای public ۴۸ و برای admin ۱۰۰ است و page حداکثر ۱۰۰۰.
 - **CAT-07:** معیار پذیرش جدید اضافه شد: helper مشترک برای کوئری صفحه‌بندی‌شده (count + offset، مرتب‌سازی قطعی با `id` برای شکستن تساوی) و تست pagination در سطح DB. برآورد از 5h به 6h رسید و کل برآورد از 406h به 407h. به‌جای helper از نوع keyset، helper از نوع offset ثبت شد، چون cursor حذف شده است.
@@ -74,6 +87,33 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-09-29 — INF-06 COMPLETE
+- **انجام شد:**
+  - `app/core/redaction.py`:
+    - کلید حساس با substring پیدا می‌شود.
+    - `code` فقط اگر ۴ تا ۸ رقم باشد redact می‌شود.
+    - Bearer، JWT و موبایل (رقم لاتین، فارسی و عربی) mask می‌شوند.
+    - mask موبایل فقط وقتی رقم مجاور باشد انجام نمی‌شود.
+  - `JsonFormatter` redaction را روی message، extras، traceback و `str()` آبجکت‌ها اعمال می‌کند و هرگز خطا نمی‌دهد (fallback: `log.redaction_failed`).
+  - `tests/test_logging.py` (۴۳ تست، همه روی رشته خروجی نهایی).
+- **اعتبارسنجی:** pytest 327 passed و 0 skipped (postgres-test)؛ ruff، format و mypy سبز.
+- **بعدی:** INF-05.
+
+### 2026-09-29 — FND-07 COMPLETE
+- **انجام شد:** `.github/workflows/ci.yml`: push روی همه شاخه‌ها و PR به `master`؛ `permissions: contents: read`؛ `concurrency`؛ service `postgres:16-alpine` (`project_ak_test`)؛ گام‌های ruff check، ruff format --check، mypy و pytest؛ گام ضد-skip از روی junit XML. actionها pin شده روی `checkout@v4` و `setup-python@v5`.
+- **اعتبارسنجی:** محلی: pytest 284 passed و 0 skipped؛ ruff، format و mypy سبز؛ اسکریپت ضد-skip بدون DB با exit 1 fail شد (10 skip). GitHub Actions برای `8c7bf9b` سبز شد.
+- **بعدی:** INF-05 یا INF-06.
+
+### 2026-09-29 — FND-06 COMPLETE
+- **انجام شد:** سرویس `postgres-test` در `docker-compose.yml` (profile `test`، `127.0.0.1:${TEST_DB_HOST_PORT:-55432}`، بدون volume). `TEST_DB_HOST_PORT` در `.env.example`. guard در `tests/conftest.py`: نام دیتابیس باید با `_test` تمام شود، وگرنه session با exit 3 abort می‌شود. تست‌ها در `tests/test_database_guard.py`. README و CLAUDE.md به‌روز شدند.
+- **اعتبارسنجی:** pytest 284 passed بدون skip (روی `postgres-test`)؛ ruff، format و mypy سبز؛ `postgres-test` در سرویس‌های پیش‌فرض compose نیست؛ volume توسعه دست‌نخورده ماند.
+- **بعدی:** FND-07 یا INF-05.
+
+### 2026-09-29 — INF-04 COMPLETE
+- **انجام شد:** `SoftDeleteMixin` (`deleted_at` با index، `is_deleted`، `soft_delete()` idempotent) و `not_deleted(model)` در `app/db/models/common.py`. `User` به mixin منتقل شد و migration لازم نشد. تست‌ها در `tests/test_soft_delete.py` و `tests/test_database.py`. ADR-015 ثبت شد.
+- **اعتبارسنجی:** pytest 272 passed (دیتابیس تست موقت)؛ ruff، format و mypy سبز؛ `compare_metadata` بدون تفاوت.
+- **بعدی:** INF-05 یا FND-06.
+
 ### 2026-09-29 — INF-03 COMPLETE
 - **انجام شد:** `app/shared/pagination.py` شامل `PageParams`، `page_params()` و `public_page_params`/`admin_page_params`، `Page[T]` (`items`، `total`، `page`، `limit`، `pages`)، `resolve_sort` (کلید عمومی ← ordering سمت سرور) و `allowed_query_params`. همچنین `BadRequestError` در `app/core/errors.py`. تست‌ها در `tests/test_pagination.py`.
 - **اعتبارسنجی:** pytest 268 passed (دیتابیس تست موقت)؛ ruff، format و mypy سبز.
