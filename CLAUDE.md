@@ -118,7 +118,7 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 
 - هر task قبل از اجرا plan تأییدشده توسط کاربر لازم دارد.
 - هر فایل task یک خط `Level: LOW|MEDIUM|HIGH` دارد.
-- HIGH شامل این موارد است: موجودی/رزرو، پرداخت، OTP/token/auth، ویرایش PRD و تغییر رفتار API. plan این taskها باید ریسک‌ها، مراحل rollback و تست‌های اضافه را هم فهرست کند.
+- HIGH شامل این موارد است: موجودی/رزرو، پرداخت، OTP/token/auth، ویرایش PRD، تغییر رفتار API، و هر task که مبلغ پولی، موجودی، مصرف کد تخفیف یا وضعیت سفارش/پرداخت را محاسبه یا ذخیره کند. plan این taskها باید ریسک‌ها، مراحل rollback و تست‌های اضافه را هم فهرست کند.
 - بعد از هر `/done`، شاخه فعلی push شود (`git push`، بدون force).
 
 ## ارتباط با کاربر

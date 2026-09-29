@@ -10,6 +10,7 @@
 - **Blockers:** فاز ۱ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** قدم بعدی فاز ۱ (INF-04 یا FND-06) — بررسی task، پیشنهاد plan و گرفتن تأیید.
 - **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`)
+- **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 

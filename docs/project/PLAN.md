@@ -27,7 +27,7 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when | فایل |
 |---|---|---|---|---|---|---|---|---|
 | INF-01 | Error code catalog, domain errors, validation → 400 | COMPLETE | HIGH | HIGH | 3 | FND-02, ADR-008, ADR-011 | 400/422/409 rules tested; OpenAPI updated | ✓ |
-| INF-02 | Integer-Toman money utilities | COMPLETE | HIGH | MEDIUM | 2 | ADR-001 | no float; rounding table-tested | ✓ |
+| INF-02 | Integer-Toman money utilities | COMPLETE | HIGH | HIGH | 2 | ADR-001 | no float; rounding table-tested | ✓ |
 | INF-03 | Pagination & filter/sort allowlist | COMPLETE | HIGH | MEDIUM | 3 | FND-02 | bad page/limit/sort/param → 400 | ✓ |
 | INF-04 | Soft delete mixin & helpers | NOT_STARTED | MEDIUM | MEDIUM | 1.5 | FND-04 | soft-deleted rows filtered; no migration diff | ✓ |
 | INF-05 | AuditLog writer service | NOT_STARTED | HIGH | MEDIUM | 3 | FND-04 | same-transaction audit; secrets redacted | ✓ |
@@ -88,7 +88,7 @@
 | INV-04 | Reservation models + reserve service (row lock), used by POST /orders | NOT_STARTED | HIGH | HIGH | 5 | INV-03, ADR-007 | 15-min; SELECT … FOR UPDATE |
 | INV-05 | Commit / release services (idempotent, internal) | NOT_STARTED | HIGH | HIGH | 3 | INV-04, ADR-008 | expired → 409 RESERVATION_EXPIRED |
 | INV-06 | Expiry release job / lazy release | NOT_STARTED | HIGH | HIGH | 3 | INV-05 | expired reservations free stock |
-| INV-07 | GET /products/{id}/availability | NOT_STARTED | MEDIUM | MEDIUM | 2 | INV-03, CAT-08 | in/low/out status |
+| INV-07 | GET /products/{id}/availability | NOT_STARTED | MEDIUM | HIGH | 2 | INV-03, CAT-08 | in/low/out status |
 | INV-08 | Admin inventory endpoints (list, patch, reservations, history) | NOT_STARTED | MEDIUM | HIGH | 4 | INV-02, AUTH-10 | inventory:update enforced |
 | INV-09 | Concurrency test: no oversell | NOT_STARTED | HIGH | HIGH | 3 | INV-04 | parallel buyers never go negative |
 
@@ -96,12 +96,12 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | DEC-11 | Tax in v1 (D11) | COMPLETE | MEDIUM | LOW | 0.5 | — | ADR-010 |
-| PRC-01 | Variant price fields + PricingSetting (tax_enabled=false) + migration | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-03, INF-02 | salePrice ≤ basePrice constraint |
+| PRC-01 | Variant price fields + PricingSetting (tax_enabled=false) + migration | NOT_STARTED | HIGH | HIGH | 3 | CAT-03, INF-02 | salePrice ≤ basePrice constraint |
 | PRC-02 | Pure pricing function (sale window, discounts, tax, shipping, single rounding) | NOT_STARTED | HIGH | HIGH | 5 | INF-02 | table-driven unit tests |
-| PRC-03 | PriceHistory + admin price change + AuditLog | NOT_STARTED | HIGH | MEDIUM | 4 | PRC-01, INF-05, AUTH-10 | every change in history + audit |
-| PRC-04 | GET /products/{id}/pricing | NOT_STARTED | MEDIUM | MEDIUM | 2 | PRC-02 | server-computed only |
-| PRC-05 | Pricing settings (super_admin only) | NOT_STARTED | MEDIUM | MEDIUM | 3 | PRC-01, AUTH-10 | others → 403 |
-| PRC-06 | Pricing tests (unit table + tamper API) | NOT_STARTED | HIGH | MEDIUM | 3 | PRC-02…05 | client amounts ignored |
+| PRC-03 | PriceHistory + admin price change + AuditLog | NOT_STARTED | HIGH | HIGH | 4 | PRC-01, INF-05, AUTH-10 | every change in history + audit |
+| PRC-04 | GET /products/{id}/pricing | NOT_STARTED | MEDIUM | HIGH | 2 | PRC-02 | server-computed only |
+| PRC-05 | Pricing settings (super_admin only) | NOT_STARTED | MEDIUM | HIGH | 3 | PRC-01, AUTH-10 | others → 403 |
+| PRC-06 | Pricing tests (unit table + tamper API) | NOT_STARTED | HIGH | HIGH | 3 | PRC-02…05 | client amounts ignored |
 
 **Phase 2:** 129h · COMPLETE 3h
 
@@ -115,8 +115,8 @@
 | DEC-05 | Validate endpoints (D5) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-006 |
 | CART-00 | Rewrite cart & guest-checkout requirements | NOT_STARTED | HIGH | HIGH | 2 | ADR-006 | PRD sections ✓ بازبینی‌شده + approved |
 | CART-01 | Cart & CartItem models + secure guest cart token | NOT_STARTED | HIGH | MEDIUM | 4 | CART-00, CAT-03 | guest and user carts |
-| CART-02 | Add/update/remove items with free-stock check (no reservation) | NOT_STARTED | HIGH | MEDIUM | 4 | CART-01, INV-03 | qty ≤ free stock; add ≠ reserve |
-| CART-03 | GET /cart computed server-side with price/stock change flags | NOT_STARTED | HIGH | MEDIUM | 3 | CART-02, PRC-02 | changes reported |
+| CART-02 | Add/update/remove items with free-stock check (no reservation) | NOT_STARTED | HIGH | HIGH | 4 | CART-01, INV-03 | qty ≤ free stock; add ≠ reserve |
+| CART-03 | GET /cart computed server-side with price/stock change flags | NOT_STARTED | HIGH | HIGH | 3 | CART-02, PRC-02 | changes reported |
 | CART-04 | Guest → user cart merge on login | NOT_STARTED | HIGH | MEDIUM | 3 | CART-01, AUTH-06 | deterministic merge |
 | CART-05 | Cart tests | NOT_STARTED | HIGH | MEDIUM | 3 | CART-02…04 | ownership 403/404 covered |
 
@@ -124,10 +124,10 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | DSC-00 | Rewrite discount requirements | NOT_STARTED | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
-| DSC-01 | DiscountCode & redemption models | NOT_STARTED | HIGH | MEDIUM | 3 | DSC-00 | limits modeled |
-| DSC-02 | Pure discount validation/calculation | NOT_STARTED | HIGH | MEDIUM | 4 | DSC-01, PRC-02 | expired/used/ineligible → 422 |
-| DSC-03 | Apply/remove code on cart | NOT_STARTED | HIGH | MEDIUM | 3 | DSC-02, CART-03 | recalculated server-side |
-| DSC-04 | Admin discount CRUD + AuditLog | NOT_STARTED | MEDIUM | MEDIUM | 3 | DSC-01, AUTH-10, INF-05 | audited |
+| DSC-01 | DiscountCode & redemption models | NOT_STARTED | HIGH | HIGH | 3 | DSC-00 | limits modeled |
+| DSC-02 | Pure discount validation/calculation | NOT_STARTED | HIGH | HIGH | 4 | DSC-01, PRC-02 | expired/used/ineligible → 422 |
+| DSC-03 | Apply/remove code on cart | NOT_STARTED | HIGH | HIGH | 3 | DSC-02, CART-03 | recalculated server-side |
+| DSC-04 | Admin discount CRUD + AuditLog | NOT_STARTED | MEDIUM | HIGH | 3 | DSC-01, AUTH-10, INF-05 | audited |
 | DSC-05 | Concurrent usage-cap test | NOT_STARTED | HIGH | HIGH | 2 | DSC-03 | cap never exceeded |
 
 ### M3.3 Address & shipping — PRD «آدرس»، «شیوه ارسال» (قالبی)
@@ -135,8 +135,8 @@
 |---|---|---|---|---|---|---|---|
 | ADDR-00 | Rewrite address & shipping requirements | NOT_STARTED | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
 | ADDR-01 | Address CRUD with ownership (table exists) | NOT_STARTED | HIGH | MEDIUM | 3 | ADDR-00, AUTH-10 | own addresses only; one default |
-| ADDR-02 | ShippingMethod + shipping calculator interface | NOT_STARTED | HIGH | MEDIUM | 3 | ADDR-00, INF-02 | cost from backend |
-| ADDR-03 | Admin shipping methods | NOT_STARTED | MEDIUM | MEDIUM | 2 | ADDR-02, AUTH-10 | audited |
+| ADDR-02 | ShippingMethod + shipping calculator interface | NOT_STARTED | HIGH | HIGH | 3 | ADDR-00, INF-02 | cost from backend |
+| ADDR-03 | Admin shipping methods | NOT_STARTED | MEDIUM | HIGH | 2 | ADDR-02, AUTH-10 | audited |
 | ADDR-04 | Address & shipping tests | NOT_STARTED | HIGH | MEDIUM | 2 | ADDR-01…03 | ownership + validation |
 
 ### M3.4 Checkout & orders — PRD «نتیجه سفارش»، «مدیریت سفارش» (قالبی) + «معماری سیستم» ✓
@@ -145,10 +145,10 @@
 | ORD-00 | Rewrite checkout & order requirements | NOT_STARTED | HIGH | HIGH | 2 | ADR-006, ADR-007 | PRD sections ✓ بازبینی‌شده + approved |
 | ORD-01 | Order, OrderItem snapshot, OrderPriceSnapshot, address snapshot | NOT_STARTED | HIGH | HIGH | 5 | ORD-00, PRC-01 | past orders immune to product changes |
 | ORD-02 | Idempotency-Key infrastructure | NOT_STARTED | HIGH | HIGH | 3 | INF-01 | same key → same result |
-| ORD-03 | POST /checkout/validate | NOT_STARTED | HIGH | MEDIUM | 3 | CART-03, DSC-03, ADDR-02 | price/stock/discount/shipping re-checked |
+| ORD-03 | POST /checkout/validate | NOT_STARTED | HIGH | HIGH | 3 | CART-03, DSC-03, ADDR-02 | price/stock/discount/shipping re-checked |
 | ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | NOT_STARTED | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional |
 | ORD-05 | Order state machine (order/payment/shipment) | NOT_STARTED | HIGH | HIGH | 4 | ORD-01 | invalid transitions → 422 |
-| ORD-06 | Order tests (idempotency, price-changed, insufficient stock) | NOT_STARTED | HIGH | MEDIUM | 3 | ORD-03…05 | duplicate create → one order |
+| ORD-06 | Order tests (idempotency, price-changed, insufficient stock) | NOT_STARTED | HIGH | HIGH | 3 | ORD-03…05 | duplicate create → one order |
 
 ### M3.5 Payment — PRD «پرداخت» (قالبی) + «معماری سیستم» ✓
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -182,8 +182,8 @@
 | ADM-01 | Admin order list/detail/filter | NOT_STARTED | HIGH | MEDIUM | 4 | ADM-00, ORD-05 | paginated, permission-checked |
 | ADM-02 | Order status change + shipment tracking + AuditLog | NOT_STARTED | HIGH | HIGH | 4 | ADM-01 | valid transitions only; audited |
 | ADM-03 | Customer list/detail (admin, support) | NOT_STARTED | MEDIUM | MEDIUM | 3 | ADM-00 | no secrets exposed |
-| ADM-04 | Dashboard metrics | NOT_STARTED | MEDIUM | MEDIUM | 4 | ADM-01 | metrics from backend |
-| ADM-05 | Sales reports | NOT_STARTED | MEDIUM | MEDIUM | 4 | ADM-04 | integer Toman totals |
+| ADM-04 | Dashboard metrics | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-01 | metrics from backend |
+| ADM-05 | Sales reports | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-04 | integer Toman totals |
 | ADM-06 | Audit log viewer | NOT_STARTED | MEDIUM | MEDIUM | 3 | INF-05 | super_admin only |
 | ADM-07 | Role × endpoint matrix tests (5 roles) | NOT_STARTED | HIGH | MEDIUM | 4 | ADM-01…06 | every admin route checked |
 
