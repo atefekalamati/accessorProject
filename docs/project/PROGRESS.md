@@ -4,23 +4,23 @@
 
 ## Current / Next
 - **Phase › Milestone:** 1 Foundation › M1.2 Shared infrastructure
-- **Current Task:** INF-03 — Pagination & filter/sort allowlist · COMPLETE → [tasks/phase-01/INF-03-pagination-allowlist.md](../../tasks/phase-01/INF-03-pagination-allowlist.md)
-- **Status:** INF-03 COMPLETE: `app/shared/pagination.py` (page/limit برای public با سقف 48 و admin با سقف 100، `Page[T]`، sort و query-param allowlist)؛ `BadRequestError` (400).
-- **Progress:** 18/140 task COMPLETE · وزنی 7.6% (31h / 407h) · MVP 11.6%
+- **Current Task:** INF-04 — Soft delete mixin & helpers · COMPLETE → [tasks/phase-01/INF-04-soft-delete-mixin.md](../../tasks/phase-01/INF-04-soft-delete-mixin.md)
+- **Status:** INF-04 COMPLETE: `SoftDeleteMixin` + `not_deleted()`، `User` روی mixin، بدون migration. ADR-015 (partial unique روی مدل‌های soft-deletable) ثبت شد.
+- **Progress:** 19/140 task COMPLETE · وزنی 8.0% (32.5h / 407h) · MVP 12.2%
 - **Blockers:** فاز ۱ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** قدم بعدی فاز ۱ (INF-04 یا FND-06) — بررسی task، پیشنهاد plan و گرفتن تأیید.
-- **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`)
+- **Next Action:** قدم بعدی فاز ۱ (INF-05 یا FND-06) — بررسی task، پیشنهاد plan و گرفتن تأیید.
+- **Branch:** `feat/m1.1-repo-foundation` (از `docs/project-planning`). M1.1 و M1.2 هر دو روی این شاخه هستند. قاعده جدید: یک شاخه برای هر فاز و merge به `master` با PR در پایان فاز.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**7.6%** = 31h COMPLETE / 407h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**8.0%** = 32.5h COMPLETE / 407h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
-| 1 Foundation | IN_PROGRESS | 37h | 27.5h | 74.3% | 2026-10-09 |
+| 1 Foundation | IN_PROGRESS | 37h | 29h | 78.4% | 2026-10-09 |
 | 2 Core domain | NOT_STARTED | 129h | 3h | 2.3% | 2026-12-06 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-22 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-19 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 376h ≈ ۲۵ هفته. MVP باقی‌مانده: 235.5h ≈ ۱۶ هفته.
+- باقی‌مانده: 374.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 234h ≈ ۱۶ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-09-29: INF-04 (Soft delete mixin & helpers)؛ DEC ثبت‌شده: D19 (ADR-015).
 - 2026-09-29: INF-03 (Page/limit pagination, sort & query-param allowlist).
 - 2026-09-29: INF-01 (Error code catalog, domain errors, validation → 400).
 - 2026-09-29: INF-02 (Integer-Toman money utilities)؛ DEC ثبت‌شده: D18 (ADR-014).
@@ -41,7 +42,7 @@
 - 2026-09-13: FND-01، FND-02، FND-04، FND-05 (تأیید با اجرای تست‌ها در 2026-09-29).
 
 ## Remaining Work
-- فاز ۱: FND-06، FND-07، INF-04 تا INF-06.
+- فاز ۱: FND-06، FND-07، INF-05، INF-06.
 - فاز ۲ تا ۶: طبق [PLAN.md](PLAN.md).
 
 ## Blockers
@@ -55,6 +56,11 @@
 ---
 
 ## Plan changes
+### 2026-09-29 — INF-04: soft delete و قاعده شاخه
+- **معیار پذیرش جدید:** هر task لیست catalog یا public (CAT-06، CAT-07، CAT-09، CAT-14، CAT-16، CNT-01) تستی دارد که نشان دهد رکورد soft-deleted برنمی‌گردد. قاعده کلی در سرآیند PLAN.md هم ثبت شد.
+- **ADR-015:** unique روی مدل‌های soft-deletable با partial index و شرط `WHERE deleted_at IS NULL` است و تصمیم هر مدل در task خودش گرفته می‌شود. معیار AUTH-01 به‌روز شد.
+- **Git:** قاعده «یک شاخه برای هر milestone» به «یک شاخه برای هر فاز + PR به `master` در پایان فاز» تغییر کرد (CLAUDE.md و WORKFLOW.md). M1.1 و M1.2 روی `feat/m1.1-repo-foundation` مشترک هستند.
+
 ### 2026-09-29 — INF-03: سبک pagination
 - PRD («دسته‌بندی محصولات» ✓) صراحتاً `page`/`limit` و «تعداد کل» و «اطلاعات صفحه‌بندی» می‌خواهد، پس لیست‌های عمومی هم page/limit شدند (نه cursor). سقف limit برای public ۴۸ و برای admin ۱۰۰ است و page حداکثر ۱۰۰۰.
 - **CAT-07:** معیار پذیرش جدید اضافه شد: helper مشترک برای کوئری صفحه‌بندی‌شده (count + offset، مرتب‌سازی قطعی با `id` برای شکستن تساوی) و تست pagination در سطح DB. برآورد از 5h به 6h رسید و کل برآورد از 406h به 407h. به‌جای helper از نوع keyset، helper از نوع offset ثبت شد، چون cursor حذف شده است.
@@ -74,6 +80,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-09-29 — INF-04 COMPLETE
+- **انجام شد:** `SoftDeleteMixin` (`deleted_at` با index، `is_deleted`، `soft_delete()` idempotent) و `not_deleted(model)` در `app/db/models/common.py`. `User` به mixin منتقل شد و migration لازم نشد. تست‌ها در `tests/test_soft_delete.py` و `tests/test_database.py`. ADR-015 ثبت شد.
+- **اعتبارسنجی:** pytest 272 passed (دیتابیس تست موقت)؛ ruff، format و mypy سبز؛ `compare_metadata` بدون تفاوت.
+- **بعدی:** INF-05 یا FND-06.
+
 ### 2026-09-29 — INF-03 COMPLETE
 - **انجام شد:** `app/shared/pagination.py` شامل `PageParams`، `page_params()` و `public_page_params`/`admin_page_params`، `Page[T]` (`items`، `total`، `page`، `limit`، `pages`)، `resolve_sort` (کلید عمومی ← ordering سمت سرور) و `allowed_query_params`. همچنین `BadRequestError` در `app/core/errors.py`. تست‌ها در `tests/test_pagination.py`.
 - **اعتبارسنجی:** pytest 268 passed (دیتابیس تست موقت)؛ ruff، format و mypy سبز.

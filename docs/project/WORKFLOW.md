@@ -24,7 +24,7 @@
 5. وضعیت و Log فایل task را به‌روز کن.
 6. PROGRESS.md (Current / Next، درصد) و در صورت نیاز PLAN.md و ROADMAP.md را به‌روز کن.
 7. تصمیم معماری جدید را در DECISIONS.md ثبت کن.
-8. commit کن (Conventional Commits، روی شاخه milestone) و گزارش کوتاه بده.
+8. commit کن (Conventional Commits، روی شاخه فاز) و گزارش کوتاه بده.
 
 بدون validation هرگز COMPLETE نزن. اگر نیازمندی مبهم است، در DECISIONS.md ثبت کن و قبل از هر تغییر برگشت‌ناپذیر بپرس.
 

@@ -20,6 +20,7 @@ from alembic import command
 from app.core.config import Environment, Settings
 from app.db.base import Base
 from app.db.models import Address, AuditLog, Role, User
+from app.db.models.common import not_deleted
 from app.db.seed import DEFAULT_ROLES, seed_roles
 from app.main import create_app
 
@@ -133,6 +134,26 @@ async def test_unique_user_phone_and_utc_timestamps(db_session: AsyncSession) ->
     db_session.add(User(phone=phone))
     with pytest.raises(IntegrityError):
         await db_session.flush()
+
+
+async def test_not_deleted_excludes_soft_deleted_rows(db_session: AsyncSession) -> None:
+    active_user = User(phone=f"+989{uuid4().int % 10_000_000_000:010d}"[:13])
+    deleted_user = User(phone=f"+989{uuid4().int % 10_000_000_000:010d}"[:13])
+    db_session.add_all([active_user, deleted_user])
+    await db_session.flush()
+
+    deleted_user.soft_delete()
+    await db_session.flush()
+    await db_session.refresh(deleted_user)
+
+    ids = {active_user.id, deleted_user.id}
+    visible_ids = set(
+        (await db_session.scalars(select(User.id).where(User.id.in_(ids), not_deleted(User)))).all()
+    )
+
+    assert visible_ids == {active_user.id}
+    assert deleted_user.deleted_at is not None
+    assert deleted_user.deleted_at.utcoffset() == timedelta(0)
 
 
 async def test_address_requires_an_existing_user(db_session: AsyncSession) -> None:

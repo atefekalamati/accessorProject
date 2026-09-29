@@ -4,6 +4,7 @@
 - وضعیت‌ها: `NOT_STARTED` · `IN_PROGRESS` · `BLOCKED` (منتظر تصمیم باز) · `COMPLETE` · `CANCELLED`.
 - **همه برآوردها (h) تخمین هستند.** ددلاین‌ها **پیش‌بینی (forecast)** هستند، نه تعهد. فرض: کار تنها و پاره‌وقت، ۱۵ ساعت در هفته، شروع 2026-09-29، بدون buffer. پیش‌بینی فقط در سطح فاز است.
 - ستون **Level** (LOW/MEDIUM/HIGH) سطح ریسک task است، نه اولویت (Pri). plan هر task با Level=HIGH باید ریسک‌ها، مراحل rollback و تست‌های اضافه را هم فهرست کند (CLAUDE.md بخش ۱۱).
+- قاعده soft delete: هر task لیست catalog یا public باید تستی داشته باشد که نشان دهد رکورد soft-deleted برنمی‌گردد. فیلد unique روی مدل soft-deletable طبق ADR-015 partial unique index با شرط `WHERE deleted_at IS NULL` است و تصمیم هر مدل در task خودش گرفته می‌شود.
 - قاعده خطا (ADR-011): validation → **400**، نقض قانون کسب‌وکار → **422**.
 - task `-00` (نیازمندی) بخش **قالبی** PRD همان ماژول را بازنویسی می‌کند، عنوان آن بخش را «✓ بازبینی‌شده» می‌کند، ردیفی به «PRD changes» در DECISIONS.md اضافه می‌کند و به تأیید کاربر نیاز دارد.
 
@@ -29,13 +30,13 @@
 | INF-01 | Error code catalog, domain errors, validation → 400 | COMPLETE | HIGH | HIGH | 3 | FND-02, ADR-008, ADR-011 | 400/422/409 rules tested; OpenAPI updated | ✓ |
 | INF-02 | Integer-Toman money utilities | COMPLETE | HIGH | HIGH | 2 | ADR-001 | no float; rounding table-tested | ✓ |
 | INF-03 | Pagination & filter/sort allowlist | COMPLETE | HIGH | MEDIUM | 3 | FND-02 | bad page/limit/sort/param → 400 | ✓ |
-| INF-04 | Soft delete mixin & helpers | NOT_STARTED | MEDIUM | MEDIUM | 1.5 | FND-04 | soft-deleted rows filtered; no migration diff | ✓ |
+| INF-04 | Soft delete mixin & helpers | COMPLETE | MEDIUM | MEDIUM | 1.5 | FND-04 | soft-deleted rows filtered; no migration diff | ✓ |
 | INF-05 | AuditLog writer service | NOT_STARTED | HIGH | MEDIUM | 3 | FND-04 | same-transaction audit; secrets redacted | ✓ |
 | INF-06 | Sensitive-data redaction in logs | NOT_STARTED | MEDIUM | HIGH | 1.5 | FND-02 | OTP/tokens never logged; phone masked | ✓ |
 | DEC-07 | HTTP 410 (D7) | COMPLETE | MEDIUM | HIGH | 0.5 | — | ADR-008 | ✓ |
 | DEC-12 | Error format, 400 vs 422 (D12) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-011 | ✓ |
 
-**Phase 1:** 37h · COMPLETE 27.5h
+**Phase 1:** 37h · COMPLETE 29h
 
 ---
 
@@ -69,10 +70,10 @@
 | CAT-03 | ProductVariant model (SKU, active, purchasable; no stock column) | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-02, ADR-005 | unique SKU |
 | CAT-04 | Attributes & values (color/size/model) | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-03 | variant ↔ attribute values |
 | CAT-05 | Media model + storage interface + local fake | NOT_STARTED | MEDIUM | MEDIUM | 4 | CAT-02, ADR-009 | ordered media, main image |
-| CAT-06 | Public GET /categories, /categories/{slug} | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-01 | only active categories |
-| CAT-07 | Public product listing with filters/sort/pagination | NOT_STARTED | HIGH | MEDIUM | 6 | CAT-03, INF-03 | allowlisted filters; no N+1; shared paginated-query helper (count + offset, deterministic `id` tie-break) + DB-level pagination tests (no dup/skip across pages, correct total) |
+| CAT-06 | Public GET /categories, /categories/{slug} | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-01 | only active categories; soft-deleted rows excluded (test) |
+| CAT-07 | Public product listing with filters/sort/pagination | NOT_STARTED | HIGH | MEDIUM | 6 | CAT-03, INF-03 | allowlisted filters; no N+1; shared paginated-query helper (count + offset, deterministic `id` tie-break) + DB-level pagination tests (no dup/skip across pages, correct total); soft-deleted rows excluded (test) |
 | CAT-08 | Public product detail GET /products/{slug} | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-00, CAT-04, CAT-05 | published only; stable contract |
-| CAT-09 | Category filters endpoint + CategoryFilter | NOT_STARTED | MEDIUM | MEDIUM | 3 | CAT-04 | filters from data |
+| CAT-09 | Category filters endpoint + CategoryFilter | NOT_STARTED | MEDIUM | MEDIUM | 3 | CAT-04 | filters from data; soft-deleted rows excluded (test) |
 | CAT-10 | Admin category CRUD + AuditLog | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-01, AUTH-10, INF-05 | changes audited |
 | CAT-11 | Admin product/variant CRUD + publish rules | NOT_STARTED | HIGH | MEDIUM | 5 | CAT-03, CAT-05, AUTH-10 | published needs active variant + main media |
 | CAT-12 | Catalog API tests | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-06…11 | 400/401/403/404/409/422 covered |
@@ -191,7 +192,7 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | CNT-00 | Rewrite content requirements | NOT_STARTED | MEDIUM | HIGH | 3 | — | PRD sections ✓ بازبینی‌شده + approved |
-| CNT-01 | HomeSection/items + GET /home | NOT_STARTED | HIGH | MEDIUM | 5 | CAT-08 | only published, in-window content |
+| CNT-01 | HomeSection/items + GET /home | NOT_STARTED | HIGH | MEDIUM | 5 | CAT-08 | only published, in-window content; soft-deleted rows excluded (test) |
 | CNT-02 | Admin home sections CRUD (content_manager) | NOT_STARTED | MEDIUM | MEDIUM | 3 | CNT-01, AUTH-10 | ordering controllable; audited |
 | CNT-03 | Banner model + admin | NOT_STARTED | MEDIUM | MEDIUM | 3 | CNT-00, CAT-05 | schedule respected |
 | CNT-04 | Static pages (about, terms, privacy) | NOT_STARTED | LOW | LOW | 3 | CNT-00 | published only |
@@ -240,9 +241,9 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 | Milestone | ID | Title | Status | Pri | Level | Est | Deps |
 |---|---|---|---|---|---|---|---|
 | M6.1 Collections | CAT-13 | Rewrite «کالکشن‌ها» requirements | NOT_STARTED | LOW | HIGH | 2 | — |
-| M6.1 Collections | CAT-14 | Collections implementation | NOT_STARTED | LOW | MEDIUM | 5 | CAT-13 |
+| M6.1 Collections | CAT-14 | Collections implementation | NOT_STARTED | LOW | MEDIUM | 5 | CAT-13 · done when: soft-deleted rows excluded (test) |
 | M6.2 Search | CAT-15 | Rewrite «جست‌وجو» requirements | NOT_STARTED | LOW | HIGH | 2 | — |
-| M6.2 Search | CAT-16 | Advanced search implementation | NOT_STARTED | LOW | MEDIUM | 6 | CAT-15 |
+| M6.2 Search | CAT-16 | Advanced search implementation | NOT_STARTED | LOW | MEDIUM | 6 | CAT-15 · done when: soft-deleted rows excluded (test) |
 | M6.3 Wishlist | ACC-03 | Rewrite «علاقه‌مندی‌ها» requirements | NOT_STARTED | LOW | HIGH | 1.5 | — |
 | M6.3 Wishlist | ACC-04 | Wishlist implementation | NOT_STARTED | LOW | MEDIUM | 4 | ACC-03 |
 | M6.4 Returns | ORD-07 | Rewrite «مرجوعی» requirements | NOT_STARTED | LOW | HIGH | 2 | — |
@@ -254,4 +255,4 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 
 ---
 
-**Grand total:** 407h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 31h
+**Grand total:** 407h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 32.5h
