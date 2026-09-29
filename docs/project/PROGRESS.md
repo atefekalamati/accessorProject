@@ -1,0 +1,79 @@
+# PROGRESS — منبع واحد «کجاییم؟»
+
+**Last Updated:** 2026-09-29
+
+## Current / Next
+- **Phase › Milestone:** 1 Foundation › M1.1 Repo foundation
+- **Current Task:** FND-03 — Docker/Compose runnable end-to-end · IN_PROGRESS → [tasks/phase-01/FND-03-docker-compose-runnable.md](../../tasks/phase-01/FND-03-docker-compose-runnable.md)
+- **Status:** foundation موجود و سبز. همه تصمیم‌های لازم برای فاز ۱ تا ۴ گرفته شده‌اند.
+- **Progress:** 14/140 task COMPLETE · وزنی 4.9% (20h / 406h) · MVP 7.5%
+- **Blockers:** هیچ‌کدام برای فاز ۱ تا ۴. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
+- **Next Action:** FND-03 — ساخت `.env` محلی، سپس `docker compose up --build -d`، migrate و seed داخل container، بررسی `/health` و `/ready`، و در پایان `docker compose down` (بدون `-v`).
+
+---
+
+## Overall Progress
+**4.9%** = 20h COMPLETE / 406h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+
+## Phase Progress
+| Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
+|---|---|---|---|---|---|
+| 1 Foundation | IN_PROGRESS | 37h | 16.5h | 44.6% | 2026-10-09 |
+| 2 Core domain | NOT_STARTED | 128h | 3h | 2.3% | 2026-12-06 |
+| 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-22 |
+| 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-19 |
+| 5 Release | NOT_STARTED | 41h | 0 | 0% | 2027-03-10 |
+| 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-28 |
+
+## Deadlines & Schedule
+- فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
+- باقی‌مانده: 386h ≈ ۲۶ هفته. MVP باقی‌مانده: 245.5h ≈ ۱۶ هفته.
+- **Verdict:** on track نسبت به forecast (بدون buffer).
+
+## Completed Recently
+- 2026-09-29: DEC-01، DEC-02، DEC-03، DEC-04، DEC-05، DEC-06، DEC-07، DEC-11، DEC-12، DEC-16 (ADR-003 تا ADR-013).
+- 2026-09-13: FND-01، FND-02، FND-04، FND-05 (تأیید با اجرای تست‌ها در 2026-09-29).
+
+## Remaining Work
+- فاز ۱: FND-03 (~1h باقی)، FND-06، FND-07، INF-01 تا INF-06.
+- فاز ۲ تا ۶: طبق [PLAN.md](PLAN.md).
+
+## Blockers
+| Blocked task | Cause |
+|---|---|
+| PAY-07 | D8 — انتخاب درگاه واقعی (قبل از فاز ۵) |
+| OPS-05 | D9 — انتخاب SMS provider (قبل از فاز ۵) |
+| OPS-07 | D10 — انتخاب file storage (قبل از فاز ۵) |
+| OPS-04 | D13 — محیط production (deferred به فاز ۵) |
+
+---
+
+## Plan changes
+### 2026-09-29 — تصمیم‌های کاربر
+- همه تصمیم‌های D1 تا D16 به‌جز D13 resolved شدند (ADR-001 تا ADR-013). D13 deferred شد. همه taskهای BLOCKED فاز ۱ تا ۴ به NOT_STARTED منتقل شدند.
+- **تغییر نسبت به پیشنهاد قبلی:** validation → 400 و قانون کسب‌وکار → 422 (ADR-011). INF-01 رفتار فعلی repo را تغییر می‌دهد.
+- **task جدید:** HANDOFF-01 (آخر فاز ۳، 3h) و OPS-07 (adapter واقعی storage، 3h).
+- **جابه‌جایی:** DEC-10 از M2.2 به M5.2 منتقل شد و عنوانش به «Choose real file storage» تغییر کرد. DEC-08 و DEC-09 هم به «Choose real …» تغییر نام دادند.
+- **PRD:** شش بخش مرجع طبق D2، D3، D4، D5، D6، D7 و D16 ویرایش شدند (جدول «PRD changes» در DECISIONS.md). taskهای `-00` از این به بعد بخش قالبی خود را بازنویسی و «✓ بازبینی‌شده» می‌کنند.
+- **زمان‌بندی:** forecast بر اساس ۱۵ ساعت در هفته اضافه شد.
+
+### 2026-09-29 — مهاجرت به ساختار فازبندی
+- ساختار `M0`/`M1` به ۶ فاز، ۲۱ milestone و ۱۳۸ task منتقل شد (اکنون ۱۴۰ task).
+- نگاشت فایل‌های قدیمی (محتوا منتقل شد، فایل‌های قدیمی حذف شدند): M0-01 → FND-03، M0-02 → FND-06، M0-03 → FND-07، M1-01 → INF-01، M1-02 → INF-02، M1-03 → INF-03، M1-04 → INF-04، M1-05 → INF-05.
+- INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
+
+## Log (جدیدترین بالا)
+### 2026-09-29 — ثبت تصمیم‌ها و ویرایش PRD
+- **انجام شد:** DECISIONS.md (ADR-003 تا ADR-013 و جدول PRD changes)، ۲۳ ویرایش در بخش‌های مرجع PRD، به‌روزرسانی PLAN، ROADMAP و taskها، پروتکل جلسه در CLAUDE.md، و یادداشت تاریخی روی نقشه راه قدیمی.
+- **بعدی:** FND-03.
+
+### 2026-09-29 — مهاجرت سیستم برنامه‌ریزی
+- بازنویسی فایل‌های برنامه‌ریزی؛ ساخت `tasks/phase-01/` (۱۶ فایل) و `tasks/phase-02/` (۱۴ فایل).
+
+### 2026-09-29 — راه‌اندازی سیستم برنامه‌ریزی
+- **اعتبارسنجی:**
+  - `pytest` با PostgreSQL 16 موقت: 24 passed.
+  - ruff، format و mypy: سبز.
+  - چرخه alembic downgrade/upgrade: موفق.
+  - seed، `docker compose config` و `docker build`: موفق.
+  - smoke test با `uvicorn`: `/health` و `/api/v1/ready` پاسخ 200 دادند.

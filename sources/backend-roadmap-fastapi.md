@@ -1,5 +1,7 @@
 # نقشه اجرای بک‌اند Project AK
 
+> **سند تاریخی؛ مرجع فعلی `docs/project/` است.** (از 2026-09-29) برخی تصمیم‌های این سند مثل ریال، نقش‌ها و لحظه رزرو با ADRهای `docs/project/DECISIONS.md` جایگزین شده‌اند.
+
 ## هدف و قرارداد اجرا
 
 بک‌اند فروشگاه با `Python 3.12`، `FastAPI`، `PostgreSQL 16`، `SQLAlchemy 2`، `Alembic`، `Pydantic v2`، `pytest` و `Docker Compose` ساخته می‌شود. معماری نسخه اول **Modular Monolith** است؛ APIها زیر `/api/v1`، مستندات Swagger در `/docs` و قرارداد OpenAPI در `/openapi.json` قرار می‌گیرند.
