@@ -20,8 +20,8 @@
 | FND-03 | Docker/Compose runnable end-to-end | COMPLETE | HIGH | MEDIUM | 3 | FND-01, FND-04 | compose up healthy; migrate + seed in container | ✓ |
 | FND-04 | Database layer + initial migration | COMPLETE | HIGH | MEDIUM | 6 | FND-01 | 24 tests green on PG16 | ✓ |
 | FND-05 | Role seed, dev DB-status route, DBeaver doc | COMPLETE | MEDIUM | LOW | 2 | FND-04 | seed idempotent test green | ✓ |
-| FND-06 | Test DB via compose `profiles: [test]` | NOT_STARTED | MEDIUM | LOW | 1.5 | FND-04, ADR-013 | one command → all tests | ✓ |
-| FND-07 | CI with GitHub Actions | NOT_STARTED | MEDIUM | LOW | 2 | FND-06, ADR-013 | CI green | ✓ |
+| FND-06 | Test DB via compose `profiles: [test]` | COMPLETE | MEDIUM | LOW | 1.5 | FND-04, ADR-013 | one command → all tests | ✓ |
+| FND-07 | CI with GitHub Actions | COMPLETE | MEDIUM | LOW | 2 | FND-06, ADR-013 | CI green | ✓ |
 | DEC-01 | Confirm stack (D1) | COMPLETE | HIGH | LOW | 0.5 | — | ADR-003 | ✓ |
 
 ### M1.2 Shared infrastructure
@@ -255,4 +255,4 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 
 ---
 
-**Grand total:** 407h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 32.5h
+**Grand total:** 407h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 36h
