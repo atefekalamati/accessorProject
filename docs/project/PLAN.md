@@ -40,19 +40,20 @@
 
 ---
 
-## Phase 2 — Core domain · forecast: 2026-12-06
+## Phase 2 — Core domain · forecast: 2026-12-07
 
 ### M2.1 Auth & RBAC — PRD «هویت و دسترسی» ✓
 | ID | Title | Status | Pri | Level | Est | Deps | Done when | فایل |
 |---|---|---|---|---|---|---|---|---|
 | DEC-02 | Role set (D2) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-004 | ✓ |
 | DEC-16 | Token transport (D16) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-012 | ✓ |
+| SEC-05 | Secret scanning in CI (gitleaks, pinned, allowlist for fake fixtures) | NOT_STARTED | HIGH | MEDIUM | 2 | FND-07 | CI fails on findings; history scan clean | ✓ |
 | AUTH-01 | Align User model with PRD + migration | NOT_STARTED | HIGH | HIGH | 2 | FND-04 | new migration; one active account per mobile | ✓ |
 | AUTH-02 | Roles & permissions seed (5 roles) | NOT_STARTED | HIGH | HIGH | 3 | FND-05, ADR-004 | idempotent seed incl. super_admin | ✓ |
 | AUTH-03 | OtpCode model (hashed, expiring, attempts) | NOT_STARTED | HIGH | HIGH | 2 | AUTH-01 | no plaintext OTP column | ✓ |
 | AUTH-04 | SMS provider interface + fake | NOT_STARTED | HIGH | HIGH | 2 | ADR-009 | fake injectable in tests | ✓ |
 | AUTH-05 | POST /auth/request-otp + rate limit (429) | NOT_STARTED | HIGH | HIGH | 4 | AUTH-03, AUTH-04, INF-01, INF-06 | per-mobile & per-IP 429 tested | ✓ |
-| AUTH-06 | POST /auth/verify-otp + Session + token service | NOT_STARTED | HIGH | HIGH | 4 | AUTH-05, AUTH-02, ADR-012 | single-use OTP; refresh cookie; hashed | ✓ |
+| AUTH-06 | POST /auth/verify-otp + Session + token service | NOT_STARTED | HIGH | HIGH | 4 | AUTH-05, AUTH-02, ADR-012, SEC-05 | single-use OTP; refresh cookie; hashed | ✓ |
 | AUTH-07 | POST /auth/refresh with rotation | NOT_STARTED | HIGH | HIGH | 3 | AUTH-06 | rotation + reuse detection | ✓ |
 | AUTH-08 | POST /auth/logout | NOT_STARTED | MEDIUM | HIGH | 1.5 | AUTH-07 | cookie cleared; refresh → 401 | ✓ |
 | AUTH-09 | GET /auth/me, PATCH /users/me | NOT_STARTED | HIGH | HIGH | 2.5 | AUTH-06 | system fields rejected (400) | ✓ |
@@ -104,11 +105,11 @@
 | PRC-05 | Pricing settings (super_admin only) | NOT_STARTED | MEDIUM | HIGH | 3 | PRC-01, AUTH-10 | others → 403 |
 | PRC-06 | Pricing tests (unit table + tamper API) | NOT_STARTED | HIGH | HIGH | 3 | PRC-02…05 | client amounts ignored |
 
-**Phase 2:** 129h · COMPLETE 3h
+**Phase 2:** 131h · COMPLETE 3h
 
 ---
 
-## Phase 3 — Purchase flow (MVP line) · forecast: 2027-01-22
+## Phase 3 — Purchase flow (MVP line) · forecast: 2027-01-23
 
 ### M3.1 Cart — PRD «سبد خرید»، «ورود یا خرید مهمان» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -167,7 +168,7 @@
 
 ---
 
-## Phase 4 — Account & admin · forecast: 2027-02-19
+## Phase 4 — Account & admin · forecast: 2027-02-20
 
 ### M4.1 Customer account — PRD «پروفایل»، «سفارش‌ها» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -204,7 +205,7 @@
 
 ---
 
-## Phase 5 — Release · forecast: 2027-03-11
+## Phase 5 — Release · forecast: 2027-03-12
 
 ### M5.1 Security — PRD «امنیت»، «تست و پذیرش»، «حالت‌های رابط» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -235,7 +236,7 @@
 
 ---
 
-## Phase 6 — Post-core · forecast: 2027-03-29 (پیشنهاد؛ PRD همه را نسخه اول می‌داند)
+## Phase 6 — Post-core · forecast: 2027-03-30 (پیشنهاد؛ PRD همه را نسخه اول می‌داند)
 
 taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به taskهای کوچک‌تر شکسته می‌شوند.
 
@@ -256,4 +257,4 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 
 ---
 
-**Grand total:** 409h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 40.5h
+**Grand total:** 411h (estimate) · MVP (Phase 1–3): 268.5h · COMPLETE: 40.5h
