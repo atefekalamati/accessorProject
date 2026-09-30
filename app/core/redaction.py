@@ -18,6 +18,7 @@ SENSITIVE_KEY_PARTS: Final = (
     "authorization",
     "cookie",
     "api_key",
+    "hash",
 )
 
 # ASCII, Persian (U+06F0-U+06F9) and Arabic-Indic (U+0660-U+0669) digits.

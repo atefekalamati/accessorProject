@@ -31,12 +31,12 @@
 | INF-02 | Integer-Toman money utilities | COMPLETE | HIGH | HIGH | 2 | ADR-001 | no float; rounding table-tested | ✓ |
 | INF-03 | Pagination & filter/sort allowlist | COMPLETE | HIGH | MEDIUM | 3 | FND-02 | bad page/limit/sort/param → 400 | ✓ |
 | INF-04 | Soft delete mixin & helpers | COMPLETE | MEDIUM | MEDIUM | 1.5 | FND-04 | soft-deleted rows filtered; no migration diff | ✓ |
-| INF-05 | AuditLog writer service | NOT_STARTED | HIGH | MEDIUM | 3 | FND-04 | same-transaction audit; secrets redacted | ✓ |
+| INF-05 | AuditLog writer service | COMPLETE | HIGH | MEDIUM | 3 | FND-04 | same-transaction audit; secrets redacted | ✓ |
 | INF-06 | Sensitive-data redaction in logs | COMPLETE | MEDIUM | HIGH | 1.5 | FND-02 | OTP/tokens never logged; phone masked | ✓ |
 | DEC-07 | HTTP 410 (D7) | COMPLETE | MEDIUM | HIGH | 0.5 | — | ADR-008 | ✓ |
 | DEC-12 | Error format, 400 vs 422 (D12) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-011 | ✓ |
 
-**Phase 1:** 37h · COMPLETE 34h
+**Phase 1:** 37h · COMPLETE 37h
 
 ---
 
@@ -204,7 +204,7 @@
 
 ---
 
-## Phase 5 — Release · forecast: 2027-03-10
+## Phase 5 — Release · forecast: 2027-03-11
 
 ### M5.1 Security — PRD «امنیت»، «تست و پذیرش»، «حالت‌های رابط» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -213,6 +213,7 @@
 | SEC-01 | Global rate limiting | NOT_STARTED | HIGH | HIGH | 3 | SEC-00 | 429 on abuse |
 | SEC-02 | Security headers + request size limit | NOT_STARTED | HIGH | HIGH | 2 | SEC-00 | headers tested |
 | SEC-03 | Security review & tests (authz, IDOR, tampering) | NOT_STARTED | HIGH | HIGH | 5 | Phase 3 | findings fixed or tracked |
+| SEC-04 | DB-level append-only audit_logs (trigger blocks UPDATE; DELETE trigger exists since FND-04) | NOT_STARTED | HIGH | HIGH | 2 | INF-05 | UPDATE/DELETE rejected by DB (integration test) |
 
 ### M5.2 Operations — PRD «پایش و رخدادها» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -224,17 +225,17 @@
 | OPS-01 | Metrics + error-tracking adapter | NOT_STARTED | MEDIUM | MEDIUM | 4 | — | metrics endpoint |
 | OPS-02 | Monitoring & alerts | NOT_STARTED | MEDIUM | MEDIUM | 3 | OPS-01 | alerts defined |
 | OPS-03 | Backup/restore runbook | NOT_STARTED | HIGH | HIGH | 3 | — | restore rehearsed |
-| OPS-04 | Deployment docs + production config | BLOCKED | HIGH | HIGH | 4 | D13 | checklist complete |
+| OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | BLOCKED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies |
 | OPS-05 | Real SMS provider adapter | BLOCKED | HIGH | HIGH | 3 | AUTH-04, D9 | works behind interface |
 | OPS-06 | OpenAPI export & versioning | NOT_STARTED | MEDIUM | LOW | 2 | HANDOFF-01 | versioned file |
 | OPS-07 | Real file storage adapter | BLOCKED | HIGH | MEDIUM | 3 | CAT-05, D10 | works behind interface |
 | PAY-07 | Real payment gateway adapter (Toman→Rial here) | BLOCKED | HIGH | HIGH | 5 | PAY-01, D8 | verify + callback on sandbox |
 
-**Phase 5:** 41h
+**Phase 5:** 43h
 
 ---
 
-## Phase 6 — Post-core · forecast: 2027-03-28 (پیشنهاد؛ PRD همه را نسخه اول می‌داند)
+## Phase 6 — Post-core · forecast: 2027-03-29 (پیشنهاد؛ PRD همه را نسخه اول می‌داند)
 
 taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به taskهای کوچک‌تر شکسته می‌شوند.
 
@@ -255,4 +256,4 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 
 ---
 
-**Grand total:** 407h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 37.5h
+**Grand total:** 409h (estimate) · MVP (Phase 1–3): 266.5h · COMPLETE: 40.5h

@@ -4,9 +4,9 @@
 |---|---|
 | **Work mode (فرض قابل تغییر)** | تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت |
 | **Forecast MVP (پایان فاز ۳)** | **پیش‌بینی:** 2027-01-22 |
-| **Forecast کل پروژه** | **پیش‌بینی:** 2027-03-28 |
-| **Total estimated effort** | 407h (estimate) · MVP: 266.5h |
-| **Completed effort** | 37.5h (9.2%) · MVP: 14.1% |
+| **Forecast کل پروژه** | **پیش‌بینی:** 2027-03-29 |
+| **Total estimated effort** | 409h (estimate) · MVP: 266.5h |
+| **Completed effort** | 40.5h (9.9%) · MVP: 15.2% |
 | **Schedule verdict** | ددلاین سختی وجود ندارد، پس verdict فقط نسبت به forecast است: **on track** (شروع 2026-09-29). forecast هیچ buffer ندارد. اگر برآوردها ۲۰ تا ۳۰٪ بیشتر شوند، پایان MVP حدود فوریه تا مارس 2027 می‌شود. |
 
 - **روش forecast:** ساعت باقی‌مانده تجمعی ÷ ۱۵ ساعت در هفته، از 2026-09-29. همه تاریخ‌ها **پیش‌بینی** هستند و با هر تغییر برآورد یا سرعت واقعی به‌روز می‌شوند.
@@ -15,12 +15,12 @@
 
 | Phase | Name | Status | Deadline (پیش‌بینی) | Effort (est.) | Done | Deps (phases / decisions) |
 |---|---|---|---|---|---|---|
-| 1 | Foundation | IN_PROGRESS | 2026-10-09 | 37h | 91.9% | — |
+| 1 | Foundation | COMPLETE | 2026-10-09 | 37h | 100% | — |
 | 2 | Core domain | NOT_STARTED | 2026-12-06 | 129h | 2.3% | 1 |
 | 3 | Purchase flow (MVP line) | NOT_STARTED | 2027-01-22 | 100.5h | 0.5% | 2 |
 | 4 | Account & admin | NOT_STARTED | 2027-02-19 | 61h | 0% | 3 |
-| 5 | Release | NOT_STARTED | 2027-03-10 | 41h | 0% | 3–4 / D8، D9، D10 (انتخاب واقعی)، D13 |
-| 6 | Post-core (suggestion) | NOT_STARTED | 2027-03-28 | 38.5h | 0% | 3 |
+| 5 | Release | NOT_STARTED | 2027-03-11 | 43h | 0% | 3–4 / D8، D9، D10 (انتخاب واقعی)، D13 |
+| 6 | Post-core (suggestion) | NOT_STARTED | 2027-03-29 | 38.5h | 0% | 3 |
 
 ## Phase 1 — Foundation
 - **Objective:** repo قابل اجرا، دیتابیس، migration، تست و lint، و زیرساخت مشترک.
