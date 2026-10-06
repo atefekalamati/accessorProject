@@ -1,6 +1,6 @@
 from typing import Annotated, Final
 
-from fastapi import APIRouter, Cookie, Depends, Request, Response
+from fastapi import APIRouter, Cookie, Depends, Request, Response, status
 
 from app.core.errors import UnauthorizedError
 from app.core.time import utc_now
@@ -87,3 +87,28 @@ async def refresh(
         raise UnauthorizedError(message="Invalid or expired session")
     tokens = await service.refresh(refresh_token, _client_info(request), request)
     return _token_response(response, tokens)
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Revoke the current session and clear the refresh cookie",
+)
+async def logout(
+    request: Request,
+    response: Response,
+    service: Annotated[AuthService, Depends(get_auth_service)],
+    refresh_token: Annotated[str | None, Cookie(alias=REFRESH_COOKIE_NAME)] = None,
+) -> None:
+    # Idempotent: a missing, unknown or already revoked cookie still gets cleared.
+    if refresh_token:
+        await service.logout(refresh_token, request)
+    # Same name and attributes as when set, or the browser keeps the cookie.
+    response.delete_cookie(
+        REFRESH_COOKIE_NAME,
+        path=REFRESH_COOKIE_PATH,
+        secure=True,
+        httponly=True,
+        samesite="strict",
+    )
+    response.headers["Cache-Control"] = "no-store"

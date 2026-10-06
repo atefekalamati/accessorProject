@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.1 Auth & RBAC
-- **Current Task:** AUTH-08 — POST /auth/logout · NOT_STARTED (batch AUTH-06/07 COMPLETE) → [tasks/phase-02/AUTH-08-logout.md](../../tasks/phase-02/AUTH-08-logout.md)
+- **Current Task:** AUTH-10 — Permission dependency · IN_PROGRESS (batch AUTH-08/10/09) → [tasks/phase-02/AUTH-10-permission-dependency.md](../../tasks/phase-02/AUTH-10-permission-dependency.md)
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 31/142 task COMPLETE · وزنی 15.2% (62.5h / 412h) · MVP 23.2%
+- **Progress:** 32/142 task COMPLETE · وزنی 15.5% (64h / 412h) · MVP 23.7%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** CI batch AUTH-06/07 سبز است. دیتابیس توسعه به `20261006_0004` (head) ارتقا یافت. batch بعدی پیشنهادی: AUTH-08 + AUTH-09 + AUTH-10 (7h). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
@@ -15,13 +15,13 @@
 ---
 
 ## Overall Progress
-**15.2%** = 62.5h COMPLETE / 412h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**15.5%** = 64h COMPLETE / 412h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 132h | 25h | 18.9% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 132h | 26.5h | 20.1% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 349.5h ≈ ۲۳ هفته. MVP باقی‌مانده: 207h ≈ ۱۴ هفته.
+- باقی‌مانده: 348h ≈ ۲۳ هفته. MVP باقی‌مانده: 205.5h ≈ ۱۴ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-06: AUTH-08 (POST /auth/logout, idempotent, cookie cleared, audit auth.logout).
 - 2026-10-06: AUTH-07 (POST /auth/refresh, rotation + family reuse detection; ADR-017).
 - 2026-10-06: AUTH-06 (POST /auth/verify-otp, sessions, JWT HS256, refresh cookie; ADR-017).
 - 2026-10-06: AUTH-05 (POST /auth/request-otp, per-mobile/IP/global 429; ADR-016).

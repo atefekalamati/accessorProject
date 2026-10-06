@@ -276,6 +276,32 @@ class AuthService:
             raise _session_invalid()
         return tokens
 
+    async def logout(self, refresh_token: str, audit_request: Request | None) -> None:
+        """Revoke the session of ``refresh_token``; unknown or revoked tokens are a no-op.
+
+        Unlike refresh, presenting a revoked token here is not treated as reuse, so a
+        repeated logout stays idempotent.
+        """
+        async with self._session.begin():
+            current = await self._sessions.lock_by_token_hash(hash_refresh_token(refresh_token))
+            if current is None or current.revoked_at is not None:
+                return
+            now = utc_now()
+            # Rotation already revoked the older sessions of the family; revoking the
+            # whole family also covers any session left active (ADR-017).
+            await self._sessions.revoke_family(current.family_id, now)
+            await record_audit(
+                self._session,
+                actor_id=current.user_id,
+                action="auth.logout",
+                entity_type="user",
+                entity_id=current.user_id,
+                before=None,
+                after={"session_id": current.id, "family_id": current.family_id},
+                request=audit_request,
+            )
+        logger.info("auth.logout", extra={"session_id": str(current.id)})
+
     def _check_otp(
         self, otp: OtpCode | None, code: str, mobile: str, key: bytes, now: datetime
     ) -> _Outcome:
