@@ -17,7 +17,7 @@ PostgreSQL در Compose فقط روی `127.0.0.1:${DB_HOST_PORT}` منتشر ش�
 
 ## Entityها
 
-- `users`: حساب کاربر؛ `phone` یکتا و تنها entity دارای `deleted_at` برای soft delete.
+- `users`: حساب کاربر؛ `phone` فقط به شکل E.164 (`+989XXXXXXXXX`، CHECK `ck_users_phone_format`) و بین حساب‌های فعال یکتاست (partial unique index `uq_users_phone` با شرط `deleted_at IS NULL`). ستون‌های اختیاری: `first_name`، `last_name`، `email` و `mobile_verified_at`. تنها entity دارای `deleted_at` برای soft delete.
 - `roles`: نقش‌های سیستمی و قابل تخصیص.
 - `permissions`: مجوزهای مستقل با کلید یکتا و ماژول مربوطه.
 - `user_roles`: ارتباط چندبه‌چند کاربران و نقش‌ها با کلید اصلی مرکب.

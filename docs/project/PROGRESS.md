@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.1 Auth & RBAC
-- **Current Task:** AUTH-01 — Align User model with PRD + migration · NOT_STARTED (SEC-05 COMPLETE → [tasks/phase-02/SEC-05-gitleaks-ci.md](../../tasks/phase-02/SEC-05-gitleaks-ci.md))
+- **Current Task:** AUTH-03 — OtpCode model · IN_PROGRESS (batch AUTH-01/03/04؛ AUTH-01 COMPLETE → [tasks/phase-02/AUTH-01-align-user-model.md](../../tasks/phase-02/AUTH-01-align-user-model.md))
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 24/142 task COMPLETE · وزنی 10.3% (42.5h / 411h) · MVP 15.8%
+- **Progress:** 25/142 task COMPLETE · وزنی 10.8% (44.5h / 411h) · MVP 16.6%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** plan برای AUTH-01 و تأیید کاربر. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** AUTH-03، بعد AUTH-04 (batch تأییدشده). batch بعدی: AUTH-02. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**10.3%** = 42.5h COMPLETE / 411h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**10.8%** = 44.5h COMPLETE / 411h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 131h | 5h | 3.8% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 131h | 7h | 5.3% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 368.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 226h ≈ ۱۵ هفته.
+- باقی‌مانده: 366.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 224h ≈ ۱۵ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-06: AUTH-01 (User model aligned with PRD; E.164 phone + partial unique).
 - 2026-10-06: SEC-05 (Secret scanning in CI, gitleaks 8.30.1).
 - 2026-09-29: INF-05 (AuditLog writer service). فاز ۱ کامل شد.
 - 2026-09-29: INF-06 (Sensitive-data redaction in logs).
@@ -61,6 +62,12 @@
 ---
 
 ## Plan changes
+### 2026-10-06 — تأیید batch AUTH-01/03/04 (تغییرات کاربر)
+- AUTH-01: موبایل فقط به شکل E.164 (`+989XXXXXXXXX`) با CHECK دیتابیسی؛ `normalize_phone()` اضافه شد. `email` در v1 unique نیست.
+- AUTH-03: `otp_codes.mobile` هم همین فرمت و CHECK را دارد. کلید HMAC یک setting جدا به اسم `OTP_HASH_SECRET` است (حداقل ۳۲ کاراکتر). در production نبودن یا کوتاه‌بودن آن باعث fail شدن startup می‌شود.
+- AUTH-04: mock OTP در production startup را fail می‌کند (fail-closed). کد OTP یک رشته ۶ کاراکتری zero-padded است.
+- یادداشت برای بعد (فعلاً کاری انجام نمی‌شود): task پاک‌سازی دوره‌ای `otp_codes` در فاز OPS اضافه شود.
+
 ### 2026-09-30 — SEC-05: secret scanning در CI
 - task جدید **SEC-05** (فاز ۲، M2.1، Level MEDIUM، 2h): gitleaks در CI با نسخه pin‌شده، fail روی هر finding و allowlist فقط برای fixtureهای ساختگی. اولین task فاز ۲ و پیش‌نیاز AUTH-06. کل: 142 task و 411h؛ فاز ۲: 131h؛ forecast فازهای ۲ تا ۶ یک روز جلو رفت.
 ### 2026-09-29 — INF-05: SEC-04 و trusted-proxy
@@ -95,6 +102,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-06 — AUTH-01 COMPLETE
+- **انجام شد:** migration `20261006_0002`: فیلدهای `first_name`، `last_name`، `email` و `mobile_verified_at` اضافه شدند؛ `phone` با CHECK فرمت E.164 و partial unique index؛ `normalize_phone()` در `app/core/phone.py`.
+- **اعتبارسنجی:** چرخه upgrade/downgrade/upgrade انجام شد؛ pytest 374 passed؛ ruff، format و mypy سبز.
+- **بعدی:** AUTH-03.
+
 ### 2026-10-06 — SEC-05 COMPLETE
 - **انجام شد:** job `secret-scan` در `ci.yml` (gitleaks 8.30.1، sha256 بررسی‌شده، `fetch-depth: 0`، `--exit-code 1`)؛ `.gitleaks.toml` (default rules، allowlist خالی چون هیچ fixture فلگ نشد)؛ بخش Secret scanning در README.
 - **اعتبارسنجی:** اسکن کل تاریخچه (24 commit) بدون finding؛ تست منفی محلی: exit 1 (`github-pat`)، شاخه موقت push نشد و حذف شد؛ pytest 345 passed، ruff، format و mypy سبز.

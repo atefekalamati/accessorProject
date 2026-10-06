@@ -20,6 +20,8 @@ from app.main import create_app
 
 pytestmark = pytest.mark.integration
 
+HEAD_REVISION = "20261006_0002"
+
 EXPECTED_TABLES = {
     "addresses",
     "alembic_version",
@@ -51,8 +53,9 @@ async def test_migration_cycle_created_expected_schema(db_engine: AsyncEngine) -
         revision = await connection.scalar(text("SELECT version_num FROM alembic_version"))
 
     assert tables == EXPECTED_TABLES
-    assert revision == "20260913_0001"
-    assert "deleted_at" in users_columns
+    assert revision == HEAD_REVISION
+    assert {"first_name", "last_name", "email", "mobile_verified_at", "deleted_at"} <= users_columns
+    assert "full_name" not in users_columns
     assert "deleted_at" not in addresses_columns
 
 
@@ -77,8 +80,12 @@ async def test_role_seed_is_idempotent(db_session: AsyncSession) -> None:
     assert names == sorted(role.name for role in DEFAULT_ROLES)
 
 
+def _unique_phone() -> str:
+    return f"+989{uuid4().int % 1_000_000_000:09d}"
+
+
 async def test_unique_user_phone_and_utc_timestamps(db_session: AsyncSession) -> None:
-    phone = f"+989{uuid4().int % 10_000_000_000:010d}"[:13]
+    phone = _unique_phone()
     first_user = User(phone=phone)
     db_session.add(first_user)
     await db_session.flush()
@@ -90,9 +97,54 @@ async def test_unique_user_phone_and_utc_timestamps(db_session: AsyncSession) ->
         await db_session.flush()
 
 
+async def test_soft_deleted_user_frees_its_phone(db_session: AsyncSession) -> None:
+    phone = _unique_phone()
+    old_user = User(phone=phone)
+    db_session.add(old_user)
+    await db_session.flush()
+    old_user.soft_delete()
+    await db_session.flush()
+
+    new_user = User(phone=phone)
+    db_session.add(new_user)
+    await db_session.flush()
+
+    assert new_user.id != old_user.id
+
+
+@pytest.mark.parametrize("phone", ["09121234567", "+98912123456", "+989121234567 ", " "])
+async def test_user_phone_must_be_e164(db_session: AsyncSession, phone: str) -> None:
+    db_session.add(User(phone=phone))
+
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+@pytest.mark.parametrize("field", ["first_name", "last_name"])
+async def test_user_names_cannot_be_blank(db_session: AsyncSession, field: str) -> None:
+    db_session.add(User(phone=_unique_phone(), **{field: "   "}))
+
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_user_profile_fields_are_optional(db_session: AsyncSession) -> None:
+    user = User(phone=_unique_phone())
+    db_session.add(user)
+    await db_session.flush()
+    await db_session.refresh(user)
+
+    assert (user.first_name, user.last_name, user.email, user.mobile_verified_at) == (
+        None,
+        None,
+        None,
+        None,
+    )
+
+
 async def test_not_deleted_excludes_soft_deleted_rows(db_session: AsyncSession) -> None:
-    active_user = User(phone=f"+989{uuid4().int % 10_000_000_000:010d}"[:13])
-    deleted_user = User(phone=f"+989{uuid4().int % 10_000_000_000:010d}"[:13])
+    active_user = User(phone=_unique_phone())
+    deleted_user = User(phone=_unique_phone())
     db_session.add_all([active_user, deleted_user])
     await db_session.flush()
 
@@ -128,7 +180,7 @@ async def test_address_requires_an_existing_user(db_session: AsyncSession) -> No
 
 
 async def test_user_can_have_only_one_default_address(db_session: AsyncSession) -> None:
-    user = User(phone=f"+989{uuid4().int % 10_000_000_000:010d}"[:13])
+    user = User(phone=_unique_phone())
     db_session.add(user)
     await db_session.flush()
 
@@ -197,4 +249,4 @@ async def test_readiness_and_development_database_status(
     assert status_response.status_code == 200
     assert status_response.json()["status"] == "connected"
     assert status_response.json()["database"]
-    assert status_response.json()["migration_revision"] == "20260913_0001"
+    assert status_response.json()["migration_revision"] == HEAD_REVISION
