@@ -1,7 +1,8 @@
 from typing import Annotated, Final
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Cookie, Depends, Request, Response
 
+from app.core.errors import UnauthorizedError
 from app.core.time import utc_now
 from app.modules.auth.dependencies import get_auth_service, get_otp_service
 from app.modules.auth.schemas import (
@@ -67,4 +68,22 @@ async def verify_otp(
     service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> TokenResponse:
     tokens = await service.verify_otp(payload.mobile, payload.code, _client_info(request), request)
+    return _token_response(response, tokens)
+
+
+@router.post(
+    "/refresh",
+    response_model=TokenResponse,
+    summary="Rotate the refresh cookie and return a new access token",
+)
+async def refresh(
+    request: Request,
+    response: Response,
+    service: Annotated[AuthService, Depends(get_auth_service)],
+    refresh_token: Annotated[str | None, Cookie(alias=REFRESH_COOKIE_NAME)] = None,
+) -> TokenResponse:
+    # Read from the cookie only; a token in the body or a header is never accepted.
+    if not refresh_token:
+        raise UnauthorizedError(message="Invalid or expired session")
+    tokens = await service.refresh(refresh_token, _client_info(request), request)
     return _token_response(response, tokens)

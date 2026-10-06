@@ -54,7 +54,7 @@
 | AUTH-04 | SMS provider interface + fake | COMPLETE | HIGH | HIGH | 2 | ADR-009 | fake injectable in tests | ✓ |
 | AUTH-05 | POST /auth/request-otp + rate limit (429) | COMPLETE | HIGH | HIGH | 4 | AUTH-03, AUTH-04, INF-01, INF-06 | per-mobile & per-IP 429 tested | ✓ |
 | AUTH-06 | POST /auth/verify-otp + Session + token service | COMPLETE | HIGH | HIGH | 4 | AUTH-05, AUTH-02, ADR-012, SEC-05 | single-use OTP; refresh cookie; hashed | ✓ |
-| AUTH-07 | POST /auth/refresh with rotation | NOT_STARTED | HIGH | HIGH | 3 | AUTH-06 | rotation + reuse detection | ✓ |
+| AUTH-07 | POST /auth/refresh with rotation | COMPLETE | HIGH | HIGH | 3 | AUTH-06 | rotation + reuse detection | ✓ |
 | AUTH-08 | POST /auth/logout | NOT_STARTED | MEDIUM | HIGH | 1.5 | AUTH-07 | cookie cleared; refresh → 401 | ✓ |
 | AUTH-09 | GET /auth/me, PATCH /users/me | NOT_STARTED | HIGH | HIGH | 2.5 | AUTH-06 | system fields rejected (400) | ✓ |
 | AUTH-10 | Permission dependency + ownership helper | NOT_STARTED | HIGH | HIGH | 3 | AUTH-06, AUTH-02 | 401/403 from DB permissions | ✓ |

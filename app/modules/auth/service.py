@@ -167,6 +167,10 @@ def _otp_invalid() -> UnauthorizedError:
     return UnauthorizedError(code=ErrorCode.OTP_INVALID, message="Invalid or expired code")
 
 
+def _session_invalid() -> UnauthorizedError:
+    return UnauthorizedError(message="Invalid or expired session")
+
+
 def _can_log_in(user: User | None) -> bool:
     return user is not None and not user.is_deleted and user.status == UserStatus.ACTIVE
 
@@ -231,6 +235,45 @@ class AuthService:
             logger.info("auth.otp_rejected", extra={"mobile": mask_phone(mobile)})
             raise _otp_invalid()
         logger.info("auth.login", extra={"mobile": mask_phone(mobile)})
+        return tokens
+
+    async def refresh(
+        self, refresh_token: str, client: ClientInfo, audit_request: Request | None
+    ) -> IssuedTokens:
+        """Rotate a refresh token; reuse of a revoked one revokes its whole family."""
+        tokens: IssuedTokens | None = None
+        reused_family: UUID | None = None
+        async with self._session.begin():
+            current = await self._sessions.lock_by_token_hash(hash_refresh_token(refresh_token))
+            now = utc_now()
+            if current is not None and current.revoked_at is not None:
+                reused_family = current.family_id
+                revoked = await self._sessions.revoke_family(current.family_id, now)
+                await record_audit(
+                    self._session,
+                    actor_id=None,
+                    action="auth.refresh_reuse",
+                    entity_type="user",
+                    entity_id=current.user_id,
+                    before=None,
+                    after={
+                        "family_id": current.family_id,
+                        "session_id": current.id,
+                        "revoked_sessions": revoked,
+                    },
+                    request=audit_request,
+                )
+            elif current is not None and current.expires_at > now:
+                current.revoked_at = now
+                if _can_log_in(await self._users.get(current.user_id)):
+                    tokens, _ = await self._open_session(
+                        current.user_id, current.family_id, client, now
+                    )
+
+        if reused_family is not None:
+            logger.warning("auth.refresh_reuse", extra={"family_id": str(reused_family)})
+        if tokens is None:
+            raise _session_invalid()
         return tokens
 
     def _check_otp(
