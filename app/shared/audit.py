@@ -66,7 +66,7 @@ def build_diff(
     return diff
 
 
-def _client_ip(request: Request | None) -> str | None:
+def client_ip(request: Request | None) -> str | None:
     if request is None or request.client is None:
         return None
     try:
@@ -108,7 +108,7 @@ async def record_audit(
         entity_type=entity_type,
         entity_id=entity_id,
         metadata_=redact(metadata),
-        ip=_client_ip(request),
+        ip=client_ip(request),
     )
     session.add(audit_log)
     await session.flush()

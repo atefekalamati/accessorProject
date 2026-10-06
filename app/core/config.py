@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     otp_ttl_seconds: int = Field(default=120, ge=30, le=600)
     # HMAC key for OTP hashes; required in production, kept separate from JWT_SECRET.
     otp_hash_secret: SecretStr | None = Field(default=None, min_length=32)
+    # OTP request limits; counted from otp_codes over a rolling one-hour window.
+    otp_resend_cooldown_seconds: int = Field(default=60, ge=1, le=600)
+    otp_max_per_mobile_per_hour: int = Field(default=5, ge=1)
+    otp_max_per_ip_per_hour: int = Field(default=60, ge=1)
+    # Hard cap on SMS volume (SMS-bombing cost protection).
+    otp_max_global_per_hour: int = Field(default=500, ge=1)
     log_level: str = "INFO"
 
     @field_validator("database_url")

@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.1 Auth & RBAC
-- **Current Task:** AUTH-05 — POST /auth/request-otp · IN_PROGRESS (batch AUTH-02/05؛ AUTH-02 COMPLETE) → [tasks/phase-02/AUTH-05-request-otp.md](../../tasks/phase-02/AUTH-05-request-otp.md)
+- **Current Task:** AUTH-06 — POST /auth/verify-otp + Session + token service · NOT_STARTED (batch AUTH-02/05 COMPLETE) → [tasks/phase-02/AUTH-06-verify-otp-session.md](../../tasks/phase-02/AUTH-06-verify-otp-session.md)
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 28/142 task COMPLETE · وزنی 12.5% (51.5h / 411h) · MVP 19.2%
+- **Progress:** 29/142 task COMPLETE · وزنی 13.5% (55.5h / 411h) · MVP 20.7%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** batch بعدی (AUTH-02 + AUTH-05) و تأیید کاربر. CI batch AUTH-01/03/04 سبز است؛ `OTP_HASH_SECRET` در `.env` محلی است؛ دیتابیس توسعه روی `20261006_0003` است. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** بررسی CI برای batch AUTH-02/05؛ پیشنهاد batch بعدی AUTH-06 + AUTH-07 (7h). تصمیم باز کاربر: data migration برای حذف `warehouse_manager` از دیتابیس‌های تازه (migration اولیه آن را insert می‌کند). دیتابیس توسعه seed شده و روی `20261006_0003` است. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**12.5%** = 51.5h COMPLETE / 411h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**13.5%** = 55.5h COMPLETE / 411h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 131h | 14h | 10.7% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 131h | 18h | 13.7% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 359.5h ≈ ۲۴ هفته. MVP باقی‌مانده: 217h ≈ ۱۵ هفته.
+- باقی‌مانده: 355.5h ≈ ۲۴ هفته. MVP باقی‌مانده: 213h ≈ ۱۴ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-06: AUTH-05 (POST /auth/request-otp, per-mobile/IP/global 429; ADR-016).
 - 2026-10-06: AUTH-02 (RBAC seed: 5 roles, 15 permission keys, role mapping).
 - 2026-10-06: AUTH-04 (SmsSender interface + FakeSmsSender, zero-padded OTP generator).
 - 2026-10-06: AUTH-03 (OtpCode model, HMAC-SHA256 with OTP_HASH_SECRET).
@@ -109,6 +110,10 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-06 — AUTH-05 COMPLETE (پایان batch AUTH-02/05)
+- `POST /api/v1/auth/request-otp`: نرمال‌سازی موبایل، OTP هش‌شده، ابطال کد قبلی، و 429 برای cooldown، هر شماره، هر IP و سقف سراسری (ADR-016).
+- pytest 426 passed؛ ruff، format و mypy سبز.
+
 ### 2026-10-06 — AUTH-02 COMPLETE
 - seed نقش‌ها، permissionها و role_permissions (idempotent و بدون حذف). دیتابیس توسعه seed شد و `warehouse_manager` از آن حذف شد.
 - یافته: migration اولیه `warehouse_manager` را insert می‌کند؛ دیتابیس تازه آن را دارد (نیازمند تصمیم کاربر).
