@@ -23,6 +23,7 @@ PostgreSQL در Compose فقط روی `127.0.0.1:${DB_HOST_PORT}` منتشر ش�
 - `user_roles`: ارتباط چندبه‌چند کاربران و نقش‌ها با کلید اصلی مرکب.
 - `role_permissions`: ارتباط چندبه‌چند نقش‌ها و مجوزها با کلید اصلی مرکب.
 - `addresses`: آدرس‌های متعلق به کاربر؛ هر کاربر حداکثر یک آدرس پیش‌فرض دارد.
+- `otp_codes`: کدهای OTP صادرشده. فقط HMAC-SHA256 کد ذخیره می‌شود (CHECK `ck_otp_codes_code_hash_format` = ۶۴ کاراکتر hex، پس plaintext قابل ذخیره نیست). `mobile` با فرمت E.164، `expires_at`، `consumed_at`، `attempt_count` و `ip`. index روی `(mobile, created_at)`. به `users` FK ندارد.
 - `audit_logs`: رخدادهای مدیریتی و حساس؛ حذف ردیف‌ها توسط trigger دیتابیس ممنوع است.
 - `app_settings`: تنظیمات JSON برنامه با کلید یکتا.
 - `alembic_version`: revision فعلی schema که Alembic مدیریت می‌کند.
@@ -39,6 +40,7 @@ users 1 ────< addresses
   └────< audit_logs (actor_user_id nullable, ON DELETE SET NULL)
 
 app_settings (مستقل)
+otp_codes (مستقل؛ با mobile به users مرتبط است، نه با FK)
 ```
 
 ## Queryهای بررسی

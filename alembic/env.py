@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from app.db.base import Base
-from app.db.models import Address, AppSetting, AuditLog, Permission, Role, User
+from app.db.models import Address, AppSetting, AuditLog, OtpCode, Permission, Role, User
 
 config = context.config
 
@@ -25,7 +25,7 @@ if not database_url:
 target_metadata = Base.metadata
 
 # Keep model imports explicit so Alembic can discover every table.
-_MODELS = (Address, AppSetting, AuditLog, Permission, Role, User)
+_MODELS = (Address, AppSetting, AuditLog, OtpCode, Permission, Role, User)
 
 
 def run_migrations_offline() -> None:

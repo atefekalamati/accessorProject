@@ -13,6 +13,7 @@ async def test_development_database_status_is_absent_in_production() -> None:
         environment=Environment.PRODUCTION,
         cors_origins=["https://shop.example.com"],
         otp_mock_enabled=False,
+        otp_hash_secret="test-otp-hash-secret-at-least-32-characters",
     )
     application = create_app(settings)
     transport = ASGITransport(app=application)

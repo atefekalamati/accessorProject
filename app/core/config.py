@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     otp_mock_enabled: bool = True
     otp_mock_code: str = Field(default="123456", pattern=r"^\d{6}$")
     otp_ttl_seconds: int = Field(default=120, ge=30, le=600)
+    # HMAC key for OTP hashes; required in production, kept separate from JWT_SECRET.
+    otp_hash_secret: SecretStr | None = Field(default=None, min_length=32)
     log_level: str = "INFO"
 
     @field_validator("database_url")
@@ -74,6 +76,8 @@ class Settings(BaseSettings):
                 raise ValueError("Wildcard CORS origin is forbidden in production")
             if self.otp_mock_enabled:
                 raise ValueError("Mock OTP must be disabled in production")
+            if self.otp_hash_secret is None:
+                raise ValueError("OTP_HASH_SECRET is required in production")
         return self
 
     @property

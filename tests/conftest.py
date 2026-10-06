@@ -17,6 +17,7 @@ os.environ.setdefault(
     "DATABASE_URL", "postgresql+asyncpg://user:password@localhost:5432/project_ak"
 )
 os.environ.setdefault("JWT_SECRET", "test-secret-that-is-at-least-32-characters")
+os.environ.setdefault("OTP_HASH_SECRET", "test-otp-hash-secret-at-least-32-characters")
 
 from alembic import command
 from app.core.config import Environment, Settings
@@ -60,6 +61,7 @@ def settings() -> Settings:
         environment=Environment.TESTING,
         cors_origins=["http://localhost:3000"],
         otp_mock_enabled=True,
+        otp_hash_secret="test-otp-hash-secret-at-least-32-characters",
     )
 
 

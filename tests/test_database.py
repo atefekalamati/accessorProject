@@ -12,21 +12,24 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.config import Environment, Settings
+from app.core.time import utc_now
 from app.db.base import Base
-from app.db.models import Address, AuditLog, Role, User
+from app.db.models import Address, AuditLog, OtpCode, Role, User
 from app.db.models.common import not_deleted
 from app.db.seed import DEFAULT_ROLES, seed_roles
 from app.main import create_app
+from app.modules.auth.otp import hash_otp_code
 
 pytestmark = pytest.mark.integration
 
-HEAD_REVISION = "20261006_0002"
+HEAD_REVISION = "20261006_0003"
 
 EXPECTED_TABLES = {
     "addresses",
     "alembic_version",
     "app_settings",
     "audit_logs",
+    "otp_codes",
     "permissions",
     "role_permissions",
     "roles",
@@ -250,3 +253,55 @@ async def test_readiness_and_development_database_status(
     assert status_response.json()["status"] == "connected"
     assert status_response.json()["database"]
     assert status_response.json()["migration_revision"] == HEAD_REVISION
+
+
+def _otp_code(**overrides: object) -> OtpCode:
+    mobile = _unique_phone()
+    values: dict[str, object] = {
+        "mobile": mobile,
+        "code_hash": hash_otp_code("123456", mobile, b"k" * 32),
+        "expires_at": utc_now() + timedelta(minutes=2),
+        "ip": "203.0.113.7",
+    }
+    return OtpCode(**{**values, **overrides})
+
+
+async def test_otp_code_stores_hash_with_defaults(db_session: AsyncSession) -> None:
+    otp = _otp_code()
+    db_session.add(otp)
+    await db_session.flush()
+    await db_session.refresh(otp)
+
+    assert otp.attempt_count == 0
+    assert otp.consumed_at is None
+    assert otp.expires_at.utcoffset() == timedelta(0)
+    assert "123456" not in otp.code_hash
+
+
+async def test_otp_codes_has_mobile_created_at_index(db_engine: AsyncEngine) -> None:
+    async with db_engine.connect() as connection:
+        indexes = await connection.run_sync(
+            lambda sync_connection: {
+                index["name"]: index["column_names"]
+                for index in inspect(sync_connection).get_indexes("otp_codes")
+            }
+        )
+
+    assert indexes["ix_otp_codes_mobile_created_at"] == ["mobile", "created_at"]
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"code_hash": "123456"},
+        {"code_hash": "A" * 64},
+        {"mobile": "09121234567"},
+        {"attempt_count": -1},
+    ],
+    ids=["plaintext-code", "non-hex-hash", "non-e164-mobile", "negative-attempts"],
+)
+async def test_otp_code_constraints(db_session: AsyncSession, overrides: dict[str, object]) -> None:
+    db_session.add(_otp_code(**overrides))
+
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
