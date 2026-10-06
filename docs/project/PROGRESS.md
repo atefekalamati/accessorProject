@@ -8,7 +8,7 @@
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
 - **Progress:** 27/142 task COMPLETE · وزنی 11.8% (48.5h / 411h) · MVP 18.1%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** batch بعدی (AUTH-02 + …) و تأیید کاربر. اقدام کاربر: `OTP_HASH_SECRET` را در `.env` محلی بگذارید؛ upgrade دیتابیس توسعه به `20261006_0003` (CHECK موبایل E.164). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** batch بعدی (AUTH-02 + AUTH-05) و تأیید کاربر. CI batch AUTH-01/03/04 سبز است؛ `OTP_HASH_SECRET` در `.env` محلی است؛ دیتابیس توسعه روی `20261006_0003` است. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
