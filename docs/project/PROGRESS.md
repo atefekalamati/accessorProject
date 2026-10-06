@@ -6,22 +6,22 @@
 - **Phase › Milestone:** 2 Core domain › M2.1 Auth & RBAC
 - **Current Task:** AUTH-06 — POST /auth/verify-otp + Session + token service · NOT_STARTED (batch AUTH-02/05 COMPLETE) → [tasks/phase-02/AUTH-06-verify-otp-session.md](../../tasks/phase-02/AUTH-06-verify-otp-session.md)
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 29/142 task COMPLETE · وزنی 13.5% (55.5h / 411h) · MVP 20.7%
+- **Progress:** 29/142 task COMPLETE · وزنی 13.5% (55.5h / 412h) · MVP 20.6%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** بررسی CI برای batch AUTH-02/05؛ پیشنهاد batch بعدی AUTH-06 + AUTH-07 (7h). تصمیم باز کاربر: data migration برای حذف `warehouse_manager` از دیتابیس‌های تازه (migration اولیه آن را insert می‌کند). دیتابیس توسعه seed شده و روی `20261006_0003` است. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** CI batch AUTH-02/05 سبز است. batch بعدی: AUTH-06 + AUTH-07 (7h)، که plan آن منتظر تأیید است. دیتابیس توسعه seed شده و روی `20261006_0003` است. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**13.5%** = 55.5h COMPLETE / 411h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**13.5%** = 55.5h COMPLETE / 412h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 131h | 18h | 13.7% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 132h | 18h | 13.6% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,7 +29,7 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 355.5h ≈ ۲۴ هفته. MVP باقی‌مانده: 213h ≈ ۱۴ هفته.
+- باقی‌مانده: 356.5h ≈ ۲۴ هفته. MVP باقی‌مانده: 214h ≈ ۱۴ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -66,6 +66,9 @@
 ---
 
 ## Plan changes
+### 2026-10-06 — scope جدید AUTH-11 (تصمیم کاربر)
+- data migration برای حذف `warehouse_manager`: حذف فقط وقتی انجام می‌شود که `user_roles` به آن ارجاع نداشته باشد، و downgrade ردیف را دوباره insert می‌کند. تخصیص نقش فقط نقش‌های `DEFAULT_ROLES` را می‌پذیرد. برآورد AUTH-11 از 4h به 5h رسید و کل برنامه 412h شد.
+- CI batch AUTH-02/05 سبز است.
 ### 2026-10-06 — تأیید batch AUTH-02/05 (تغییرات کاربر) و قواعد فرایند
 - AUTH-02: نگاشت نقش به permission تأیید شد. ردیف `warehouse_manager` فقط یک‌بار و دستی از دیتابیس توسعه حذف شد (نه با seed).
 - AUTH-05: محدودیت‌ها: cooldown 60s، ۵ درخواست در ساعت برای هر شماره، ۶۰ در ساعت برای هر IP (به‌خاطر CGNAT در ایران). سقف سراسری `OTP_MAX_GLOBAL_PER_HOUR=500` با 429 و لاگ WARNING `otp.global_cap_hit` اضافه شد. فیلد اضافه در body → 400. trusted-proxy مربوط به OPS-04 است.

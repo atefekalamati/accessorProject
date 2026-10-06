@@ -58,7 +58,7 @@
 | AUTH-08 | POST /auth/logout | NOT_STARTED | MEDIUM | HIGH | 1.5 | AUTH-07 | cookie cleared; refresh → 401 | ✓ |
 | AUTH-09 | GET /auth/me, PATCH /users/me | NOT_STARTED | HIGH | HIGH | 2.5 | AUTH-06 | system fields rejected (400) | ✓ |
 | AUTH-10 | Permission dependency + ownership helper | NOT_STARTED | HIGH | HIGH | 3 | AUTH-06, AUTH-02 | 401/403 from DB permissions | ✓ |
-| AUTH-11 | Admin user endpoints + AuditLog | NOT_STARTED | MEDIUM | HIGH | 4 | AUTH-10, INF-03, INF-05 | only super_admin changes roles | ✓ |
+| AUTH-11 | Admin user endpoints + AuditLog + warehouse_manager data migration | NOT_STARTED | MEDIUM | HIGH | 5 | AUTH-10, INF-03, INF-05 | only super_admin changes roles; only DEFAULT_ROLES assignable | ✓ |
 | AUTH-12 | Auth API & security test suite | NOT_STARTED | HIGH | HIGH | 3 | AUTH-05…11 | all PRD acceptance criteria tested | ✓ |
 
 ### M2.2 Catalog — PRD «دسته‌بندی محصولات» ✓، «جزئیات محصول» (قالبی)
@@ -105,7 +105,7 @@
 | PRC-05 | Pricing settings (super_admin only) | NOT_STARTED | MEDIUM | HIGH | 3 | PRC-01, AUTH-10 | others → 403 |
 | PRC-06 | Pricing tests (unit table + tamper API) | NOT_STARTED | HIGH | HIGH | 3 | PRC-02…05 | client amounts ignored |
 
-**Phase 2:** 131h · COMPLETE 3h
+**Phase 2:** 132h · COMPLETE 18h
 
 ---
 
@@ -257,4 +257,4 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 
 ---
 
-**Grand total:** 411h (estimate) · MVP (Phase 1–3): 268.5h · COMPLETE: 55.5h
+**Grand total:** 412h (estimate) · MVP (Phase 1–3): 269.5h · COMPLETE: 55.5h

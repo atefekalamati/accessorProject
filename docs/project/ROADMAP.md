@@ -5,7 +5,7 @@
 | **Work mode (فرض قابل تغییر)** | تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت |
 | **Forecast MVP (پایان فاز ۳)** | **پیش‌بینی:** 2027-01-23 |
 | **Forecast کل پروژه** | **پیش‌بینی:** 2027-03-30 |
-| **Total estimated effort** | 411h (estimate) · MVP: 268.5h |
+| **Total estimated effort** | 412h (estimate) · MVP: 269.5h |
 | **Completed effort** | 40.5h (9.9%) · MVP: 15.1% |
 | **Schedule verdict** | ددلاین سختی وجود ندارد، پس verdict فقط نسبت به forecast است: **on track** (شروع 2026-09-29). forecast هیچ buffer ندارد. اگر برآوردها ۲۰ تا ۳۰٪ بیشتر شوند، پایان MVP حدود فوریه تا مارس 2027 می‌شود. |
 
@@ -16,7 +16,7 @@
 | Phase | Name | Status | Deadline (پیش‌بینی) | Effort (est.) | Done | Deps (phases / decisions) |
 |---|---|---|---|---|---|---|
 | 1 | Foundation | COMPLETE | 2026-10-09 | 37h | 100% | — |
-| 2 | Core domain | NOT_STARTED | 2026-12-07 | 131h | 2.3% | 1 |
+| 2 | Core domain | IN_PROGRESS | 2026-12-07 | 132h | 13.6% | 1 |
 | 3 | Purchase flow (MVP line) | NOT_STARTED | 2027-01-23 | 100.5h | 0.5% | 2 |
 | 4 | Account & admin | NOT_STARTED | 2027-02-20 | 61h | 0% | 3 |
 | 5 | Release | NOT_STARTED | 2027-03-12 | 43h | 0% | 3–4 / D8، D9، D10 (انتخاب واقعی)، D13 |
