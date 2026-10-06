@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from uuid import UUID
 
-from sqlalchemy import ColumnElement, func, select, text, update
+from sqlalchemy import ColumnElement, exists, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import OtpCode
+from app.db.models import OtpCode, Role, User, UserRole, UserSession, UserStatus
+from app.db.models.common import not_deleted
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,3 +66,92 @@ class OtpRepository:
     async def add(self, otp: OtpCode) -> None:
         self._session.add(otp)
         await self._session.flush()
+
+    async def lock_latest_unconsumed(self, mobile: str) -> OtpCode | None:
+        """The newest unconsumed code of ``mobile``, row-locked until the transaction ends.
+
+        Request-otp expires older codes, so only the newest one can still be valid.
+        """
+        statement = (
+            select(OtpCode)
+            .where(OtpCode.mobile == mobile, OtpCode.consumed_at.is_(None))
+            .order_by(OtpCode.created_at.desc())
+            .limit(1)
+            .with_for_update()
+        )
+        otp: OtpCode | None = await self._session.scalar(statement)
+        return otp
+
+    async def consume(self, otp_id: UUID, now: datetime) -> bool:
+        """Mark a code consumed; False when it was already consumed (single use)."""
+        result = await self._session.execute(
+            update(OtpCode)
+            .where(OtpCode.id == otp_id, OtpCode.consumed_at.is_(None))
+            .values(consumed_at=now)
+            .returning(OtpCode.id)
+        )
+        return result.scalar_one_or_none() is not None
+
+
+class UserRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_phone(self, phone: str) -> User | None:
+        """The account that currently owns ``phone`` (soft-deleted accounts excluded)."""
+        statement = select(User).where(User.phone == phone, not_deleted(User))
+        user: User | None = await self._session.scalar(statement)
+        return user
+
+    async def get(self, user_id: UUID) -> User | None:
+        user: User | None = await self._session.get(User, user_id)
+        return user
+
+    async def has_deleted_blocked(self, phone: str) -> bool:
+        """True when a soft-deleted account of ``phone`` was blocked (ADR-017)."""
+        statement = select(
+            exists().where(
+                User.phone == phone,
+                User.deleted_at.is_not(None),
+                User.status == UserStatus.BLOCKED,
+            )
+        )
+        return bool(await self._session.scalar(statement))
+
+    async def role_id(self, name: str) -> UUID | None:
+        role_id: UUID | None = await self._session.scalar(select(Role.id).where(Role.name == name))
+        return role_id
+
+    async def add_with_role(self, user: User, role_id: UUID) -> None:
+        self._session.add(user)
+        await self._session.flush()
+        self._session.add(UserRole(user_id=user.id, role_id=role_id))
+        await self._session.flush()
+
+
+class SessionRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def add(self, user_session: UserSession) -> None:
+        self._session.add(user_session)
+        await self._session.flush()
+
+    async def lock_by_token_hash(self, token_hash: str) -> UserSession | None:
+        statement = (
+            select(UserSession)
+            .where(UserSession.refresh_token_hash == token_hash)
+            .with_for_update()
+        )
+        user_session: UserSession | None = await self._session.scalar(statement)
+        return user_session
+
+    async def revoke_family(self, family_id: UUID, now: datetime) -> int:
+        """Revoke every still-active session of a family; returns how many were revoked."""
+        result = await self._session.execute(
+            update(UserSession)
+            .where(UserSession.family_id == family_id, UserSession.revoked_at.is_(None))
+            .values(revoked_at=now)
+            .returning(UserSession.id)
+        )
+        return len(result.scalars().all())

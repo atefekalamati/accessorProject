@@ -143,3 +143,27 @@ def test_mock_otp_fails_production_startup(monkeypatch: pytest.MonkeyPatch) -> N
 
     with pytest.raises(ValidationError, match="Mock OTP must be disabled in production"):
         Settings(_env_file=None)
+
+
+def _production_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", BASE_SETTINGS["database_url"])
+    monkeypatch.setenv("OTP_HASH_SECRET", OTP_HASH_SECRET)
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("CORS_ORIGINS", "https://shop.example.com")
+    monkeypatch.setenv("OTP_MOCK_ENABLED", "false")
+
+
+def test_missing_jwt_secret_fails_production_startup(monkeypatch: pytest.MonkeyPatch) -> None:
+    _production_env(monkeypatch)
+    monkeypatch.delenv("JWT_SECRET", raising=False)
+
+    with pytest.raises(ValidationError, match=r"jwt_secret\n.*Field required"):
+        Settings(_env_file=None)
+
+
+def test_short_jwt_secret_fails_production_startup(monkeypatch: pytest.MonkeyPatch) -> None:
+    _production_env(monkeypatch)
+    monkeypatch.setenv("JWT_SECRET", "x" * 31)
+
+    with pytest.raises(ValidationError, match=r"jwt_secret\n.*at least 32"):
+        Settings(_env_file=None)

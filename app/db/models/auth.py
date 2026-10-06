@@ -1,9 +1,19 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
-from sqlalchemy import CheckConstraint, DateTime, Index, Integer, String
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import INET
+from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.phone import MOBILE_E164_PATTERN
@@ -31,3 +41,29 @@ class OtpCode(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         Integer, nullable=False, default=0, server_default="0"
     )
     ip: Mapped[str | None] = mapped_column(INET, nullable=True)
+
+
+class UserSession(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
+    """One refresh token; rotation revokes it and issues a successor in the same family."""
+
+    __tablename__ = "sessions"
+    __table_args__ = (
+        # A hex SHA-256 digest; rejects any attempt to store a raw refresh token.
+        CheckConstraint("refresh_token_hash ~ '^[0-9a-f]{64}$'", name="refresh_token_hash_format"),
+        UniqueConstraint("refresh_token_hash"),
+        Index("ix_sessions_user_id", "user_id"),
+        Index("ix_sessions_family_id", "family_id"),
+    )
+
+    user_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    # Shared by every rotation of one login; reuse of a revoked token revokes the family.
+    family_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
+    refresh_token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    ip: Mapped[str | None] = mapped_column(INET, nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

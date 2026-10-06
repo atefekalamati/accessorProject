@@ -2,19 +2,39 @@ from __future__ import annotations
 
 import logging
 import math
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from enum import Enum, auto
+from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.requests import Request
 
 from app.core.config import Settings
-from app.core.errors import ErrorCode, RateLimitedError
+from app.core.errors import ErrorCode, ForbiddenError, RateLimitedError, UnauthorizedError
 from app.core.redaction import mask_phone
 from app.core.time import utc_now
-from app.db.models import OtpCode
-from app.modules.auth.otp import generate_otp_code, hash_otp_code, otp_hash_key
-from app.modules.auth.repository import OtpRepository, WindowUsage
+from app.db.models import OtpCode, User, UserSession, UserStatus
+from app.modules.auth.otp import (
+    generate_otp_code,
+    hash_otp_code,
+    otp_hash_key,
+    verify_otp_code,
+)
+from app.modules.auth.repository import (
+    OtpRepository,
+    SessionRepository,
+    UserRepository,
+    WindowUsage,
+)
 from app.modules.auth.schemas import RequestOtpResponse
 from app.modules.auth.sms import SmsSender
+from app.modules.auth.tokens import (
+    create_access_token,
+    generate_refresh_token,
+    hash_refresh_token,
+)
+from app.shared.audit import record_audit
 
 logger = logging.getLogger("app.auth")
 
@@ -114,3 +134,160 @@ class OtpService:
                 extra={"count": global_usage.count, "cap": settings.otp_max_global_per_hour},
             )
             raise error
+
+
+CUSTOMER_ROLE = "customer"
+USER_AGENT_MAX_LENGTH = 512
+
+
+@dataclass(frozen=True, slots=True)
+class ClientInfo:
+    ip: str | None
+    user_agent: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class IssuedTokens:
+    """Transport-neutral result; the router decides where each token goes (ADR-012)."""
+
+    access_token: str
+    access_expires_in_seconds: int
+    refresh_token: str
+    refresh_expires_at: datetime
+
+
+class _Outcome(Enum):
+    OK = auto()
+    INVALID = auto()
+    FORBIDDEN = auto()
+
+
+def _otp_invalid() -> UnauthorizedError:
+    # One error for wrong, expired, exhausted and consumed codes: nothing to enumerate.
+    return UnauthorizedError(code=ErrorCode.OTP_INVALID, message="Invalid or expired code")
+
+
+def _can_log_in(user: User | None) -> bool:
+    return user is not None and not user.is_deleted and user.status == UserStatus.ACTIVE
+
+
+class AuthService:
+    """OTP verification, login sessions and refresh-token rotation."""
+
+    def __init__(
+        self,
+        session: AsyncSession,
+        otp_repository: OtpRepository,
+        user_repository: UserRepository,
+        session_repository: SessionRepository,
+        settings: Settings,
+    ) -> None:
+        self._session = session
+        self._otps = otp_repository
+        self._users = user_repository
+        self._sessions = session_repository
+        self._settings = settings
+
+    async def verify_otp(
+        self, mobile: str, code: str, client: ClientInfo, audit_request: Request | None
+    ) -> IssuedTokens:
+        """Consume a valid OTP for an already-normalized mobile and open a session.
+
+        Failed attempts are committed before the error is raised, so the attempt
+        counter survives the 401.
+        """
+        key = otp_hash_key(self._settings)
+        tokens: IssuedTokens | None = None
+        async with self._session.begin():
+            # Same lock as request-otp: no new code is issued mid-verification.
+            await self._otps.lock_mobile(mobile)
+            otp = await self._otps.lock_latest_unconsumed(mobile)
+            now = utc_now()
+            outcome = self._check_otp(otp, code, mobile, key, now)
+            if otp is not None and outcome is _Outcome.OK:
+                if not await self._otps.consume(otp.id, now):
+                    outcome = _Outcome.INVALID
+            if outcome is _Outcome.OK:
+                user, created = await self._resolve_user(mobile, now)
+                if user is None:
+                    outcome = _Outcome.FORBIDDEN
+                else:
+                    tokens, user_session = await self._open_session(user.id, uuid4(), client, now)
+                    await record_audit(
+                        self._session,
+                        actor_id=user.id,
+                        action="auth.login",
+                        entity_type="user",
+                        entity_id=user.id,
+                        before=None,
+                        after={"session_id": user_session.id, "user_created": created},
+                        request=audit_request,
+                    )
+
+        if outcome is _Outcome.FORBIDDEN:
+            logger.warning("auth.login_denied", extra={"mobile": mask_phone(mobile)})
+            raise ForbiddenError(message="Account is not active")
+        if tokens is None:
+            logger.info("auth.otp_rejected", extra={"mobile": mask_phone(mobile)})
+            raise _otp_invalid()
+        logger.info("auth.login", extra={"mobile": mask_phone(mobile)})
+        return tokens
+
+    def _check_otp(
+        self, otp: OtpCode | None, code: str, mobile: str, key: bytes, now: datetime
+    ) -> _Outcome:
+        max_attempts = self._settings.otp_max_attempts
+        if otp is None or otp.expires_at <= now or otp.attempt_count >= max_attempts:
+            return _Outcome.INVALID
+        if verify_otp_code(code, mobile, key, otp.code_hash):
+            return _Outcome.OK
+        otp.attempt_count += 1
+        if otp.attempt_count >= max_attempts:
+            # Same invalidation as request-otp: expire, never mark consumed (ADR-016).
+            otp.expires_at = now
+        return _Outcome.INVALID
+
+    async def _resolve_user(self, mobile: str, now: datetime) -> tuple[User | None, bool]:
+        """The active account of ``mobile``, created on first login; None when denied."""
+        user = await self._users.get_by_phone(mobile)
+        if user is not None:
+            if not _can_log_in(user):
+                return None, False
+            if user.mobile_verified_at is None:
+                user.mobile_verified_at = now
+            return user, False
+
+        # Deleting a blocked account must not unblock its mobile (ADR-017).
+        if await self._users.has_deleted_blocked(mobile):
+            return None, False
+        role_id = await self._users.role_id(CUSTOMER_ROLE)
+        if role_id is None:
+            raise RuntimeError("The customer role is missing; run python -m app.db.seed")
+        user = User(phone=mobile, status=UserStatus.ACTIVE, mobile_verified_at=now)
+        await self._users.add_with_role(user, role_id)
+        return user, True
+
+    async def _open_session(
+        self, user_id: UUID, family_id: UUID, client: ClientInfo, now: datetime
+    ) -> tuple[IssuedTokens, UserSession]:
+        settings = self._settings
+        refresh_token = generate_refresh_token()
+        user_agent = client.user_agent[:USER_AGENT_MAX_LENGTH] if client.user_agent else None
+        user_session = UserSession(
+            id=uuid4(),
+            user_id=user_id,
+            family_id=family_id,
+            refresh_token_hash=hash_refresh_token(refresh_token),
+            user_agent=user_agent,
+            ip=client.ip,
+            expires_at=now + timedelta(days=settings.refresh_token_ttl_days),
+            created_at=now,
+        )
+        await self._sessions.add(user_session)
+        tokens = IssuedTokens(
+            access_token=create_access_token(user_id, user_session.id, settings, now),
+            access_expires_in_seconds=settings.access_token_ttl_seconds,
+            refresh_token=refresh_token,
+            refresh_expires_at=user_session.expires_at,
+        )
+        return tokens, user_session

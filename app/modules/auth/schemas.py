@@ -20,3 +20,23 @@ class RequestOtpRequest(BaseModel):
 class RequestOtpResponse(BaseModel):
     expires_in_seconds: int
     resend_after_seconds: int
+
+
+class VerifyOtpRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mobile: str = Field(min_length=1, max_length=32)
+    code: str = Field(pattern=r"^\d{6}$")
+
+    @field_validator("mobile")
+    @classmethod
+    def normalize_mobile(cls, value: str) -> str:
+        return normalize_phone(value)
+
+
+class TokenResponse(BaseModel):
+    """Access token only; the refresh token travels in an HttpOnly cookie (ADR-012)."""
+
+    access_token: str
+    token_type: str = "bearer"
+    expires_in_seconds: int

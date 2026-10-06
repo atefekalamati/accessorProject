@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     otp_max_per_ip_per_hour: int = Field(default=60, ge=1)
     # Hard cap on SMS volume (SMS-bombing cost protection).
     otp_max_global_per_hour: int = Field(default=500, ge=1)
+    # Wrong codes allowed per OTP before it is invalidated.
+    otp_max_attempts: int = Field(default=5, ge=1, le=10)
+    # Short-lived access JWT (body) and long-lived refresh token (cookie), ADR-012.
+    access_token_ttl_seconds: int = Field(default=900, ge=60, le=3600)
+    refresh_token_ttl_days: int = Field(default=30, ge=1, le=90)
     log_level: str = "INFO"
 
     @field_validator("database_url")

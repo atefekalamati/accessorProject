@@ -53,7 +53,7 @@
 | AUTH-03 | OtpCode model (hashed, expiring, attempts) | COMPLETE | HIGH | HIGH | 2 | AUTH-01 | no plaintext OTP column | ✓ |
 | AUTH-04 | SMS provider interface + fake | COMPLETE | HIGH | HIGH | 2 | ADR-009 | fake injectable in tests | ✓ |
 | AUTH-05 | POST /auth/request-otp + rate limit (429) | COMPLETE | HIGH | HIGH | 4 | AUTH-03, AUTH-04, INF-01, INF-06 | per-mobile & per-IP 429 tested | ✓ |
-| AUTH-06 | POST /auth/verify-otp + Session + token service | NOT_STARTED | HIGH | HIGH | 4 | AUTH-05, AUTH-02, ADR-012, SEC-05 | single-use OTP; refresh cookie; hashed | ✓ |
+| AUTH-06 | POST /auth/verify-otp + Session + token service | COMPLETE | HIGH | HIGH | 4 | AUTH-05, AUTH-02, ADR-012, SEC-05 | single-use OTP; refresh cookie; hashed | ✓ |
 | AUTH-07 | POST /auth/refresh with rotation | NOT_STARTED | HIGH | HIGH | 3 | AUTH-06 | rotation + reuse detection | ✓ |
 | AUTH-08 | POST /auth/logout | NOT_STARTED | MEDIUM | HIGH | 1.5 | AUTH-07 | cookie cleared; refresh → 401 | ✓ |
 | AUTH-09 | GET /auth/me, PATCH /users/me | NOT_STARTED | HIGH | HIGH | 2.5 | AUTH-06 | system fields rejected (400) | ✓ |
@@ -126,7 +126,7 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | DSC-00 | Rewrite discount requirements | NOT_STARTED | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
-| DSC-01 | DiscountCode & redemption models | NOT_STARTED | HIGH | HIGH | 3 | DSC-00 | limits modeled |
+| DSC-01 | DiscountCode & redemption models | NOT_STARTED | HIGH | HIGH | 3 | DSC-00 | limits modeled; per-user usage limit keyed by normalized phone, not user_id (ADR-017) |
 | DSC-02 | Pure discount validation/calculation | NOT_STARTED | HIGH | HIGH | 4 | DSC-01, PRC-02 | expired/used/ineligible → 422 |
 | DSC-03 | Apply/remove code on cart | NOT_STARTED | HIGH | HIGH | 3 | DSC-02, CART-03 | recalculated server-side |
 | DSC-04 | Admin discount CRUD + AuditLog | NOT_STARTED | MEDIUM | HIGH | 3 | DSC-01, AUTH-10, INF-05 | audited |
@@ -162,7 +162,7 @@
 | PAY-04 | Failure/expiry: release reservation, allow retry | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, INV-06 | expired reservation never consumed |
 | PAY-05 | Callback tests (duplicate, amount mismatch, expired) | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, PAY-04 | abuse paths covered |
 | PAY-06 | End-to-end purchase test | NOT_STARTED | HIGH | HIGH | 4 | PAY-05 | cart → OTP → checkout → order → payment → stock committed |
-| HANDOFF-01 | PRD consistency review + export openapi.json | NOT_STARTED | HIGH | HIGH | 3 | PAY-06, all Phase 1–3 `-00` | PRD matches implemented API; `openapi.json` exported for frontend |
+| HANDOFF-01 | PRD consistency review + export openapi.json | NOT_STARTED | HIGH | HIGH | 3 | PAY-06, all Phase 1–3 `-00` | PRD matches implemented API; `openapi.json` exported for frontend; frontend note: refresh must be single-flight across tabs (ADR-017 reuse detection) |
 
 **Phase 3:** 100.5h · COMPLETE 0.5h
 

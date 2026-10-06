@@ -27,6 +27,7 @@
 | D18 | modeهای گردکردن مبلغ | — | — | resolved (ADR-014) |
 | D19 | unique روی مدل soft-deletable | — | — | resolved (ADR-015) |
 | D20 | rate limit و جزئیات request-otp | AUTH-05 | — | resolved (ADR-016) |
+| D21 | ورود، session و چرخش refresh | AUTH-06، AUTH-07 | — | resolved (ADR-017) |
 
 ## ADR
 
@@ -114,6 +115,19 @@
 - زمینه: PRD فقط «محدودیت برای هر شماره و IP → 429» را می‌گوید و عددی ندارد.
 - تصمیم (مقادیر را کاربر تأیید کرد): cooldown ارسال مجدد 60s، حداکثر ۵ کد در ساعت برای هر شماره، ۶۰ کد در ساعت برای هر IP (به‌خاطر CGNAT) و سقف سراسری ۵۰۰ کد در ساعت. سقف سراسری برای کنترل هزینه SMS-bombing است و لاگ WARNING `otp.global_cap_hit` دارد. همه به 429 `OTP_RATE_LIMITED` با `Retry-After` ختم می‌شوند. شمارش از `otp_codes` در یک پنجره متحرک ۱ ساعته انجام می‌شود (نام settingها `*_PER_HOUR` است). تصمیم‌های کم‌اثر (خودم): کد قبلی با `expires_at = now` باطل می‌شود و به `consumed_at` دست نمی‌زنیم تا «مصرف» با «ابطال» یکی نشود. SMS بعد از commit ارسال می‌شود. درخواست‌های هر شماره با `pg_advisory_xact_lock` پشت هم اجرا می‌شوند. شمارش per-IP و سراسری lock ندارد و زیر بار همزمان ممکن است کمی از سقف رد شود.
 - پیامدها: AUTH-05. شمارش سراسری و per-IP index روی `created_at` ندارد؛ پاک‌سازی دوره‌ای `otp_codes` (task آینده OPS) هزینه آن را محدود می‌کند.
+
+### ADR-017 — ورود با OTP، session و چرخش refresh token (D21)
+- تاریخ: 2026-10-06
+- زمینه: PRD («هویت و دسترسی») فقط OTP یک‌بارمصرف، access کوتاه‌عمر، refresh بلندعمر و هش‌شده را می‌گوید. رفتار حساب حذف‌شده یا مسدود و جزئیات چرخش در PRD نیامده است.
+- تصمیم (کاربر تأیید کرد):
+  - verify-otp: ردیف OTP با `FOR UPDATE` قفل می‌شود (به‌علاوه همان advisory lock شماره در ADR-016)، و مقایسه constant-time است. کد اشتباه `attempt_count` را بالا می‌برد. بعد از `OTP_MAX_ATTEMPTS=5` تلاش، کد با `expires_at = now` باطل می‌شود. مصرف کد اتمیک است (`consumed_at IS NULL`). برای کد اشتباه، منقضی، مصرف‌شده یا ناموجود یک خطای یکسان برمی‌گردد: 401 `OTP_INVALID`.
+  - اولین ورود: کاربر با نقش `customer` ساخته می‌شود و `mobile_verified_at` مقدار می‌گیرد. audit `auth.login` ثبت می‌شود. حساب `inactive` یا `blocked` → 403 `FORBIDDEN` (کد مصرف می‌شود و token صادر نمی‌شود).
+  - حساب soft-deleted هرگز token نمی‌گیرد. اگر حساب حذف‌شده‌ای `active` بوده، verify با همان شماره یک حساب customer جدید می‌سازد (ADR-015). اگر حساب حذف‌شده‌ای با همان شماره `blocked` بوده → 403، تا حذف حساب راه فرار از مسدودی نباشد.
+  - tokenها (ADR-012): access یک JWT با HS256 ثابت است (الگوریتم دیگر و `none` رد می‌شوند). claimهای `exp/iat/sub/sid/typ/jti` الزامی‌اند و نقش در آن نیست. `ACCESS_TOKEN_TTL_SECONDS=900`. refresh یک token تصادفی 256 بیتی است که SHA-256 آن در `sessions` ذخیره می‌شود. `REFRESH_TOKEN_TTL_DAYS=30` است و با هر چرخش تمدید می‌شود (sliding). cookie `refresh_token` با `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth` تنظیم می‌شود.
+  - refresh: هر چرخش session قبلی را revoke و session جدیدی در همان `family_id` می‌سازد. ارائه refresh revoke‌شده کل family را revoke می‌کند و audit `auth.refresh_reuse` ثبت می‌شود. grace period وجود ندارد: دو refresh همزمان با یک token هم reuse حساب می‌شوند. کاربر غیرفعال، مسدود یا حذف‌شده نمی‌تواند refresh کند.
+- تصمیم‌های کم‌اثر (خودم): SHA-256 ساده برای refresh کافی است، چون token آنتروپی بالا دارد (برخلاف OTP). پاسخ‌های token هدر `Cache-Control: no-store` دارند.
+- پیامدها: AUTH-06، AUTH-07، AUTH-08 (logout همین family را revoke می‌کند)، AUTH-10 (وضعیت فعال‌بودن کاربر در هر درخواست از دیتابیس خوانده شود)، DSC-01 (سقف استفاده per-user با موبایل نرمال‌شده، نه `user_id`، چون حذف حساب شماره را آزاد می‌کند)، HANDOFF-01 (frontend باید refresh را در همه تب‌ها single-flight کند، وگرنه reuse detection کاربر را logout می‌کند).
+- محدودیت شناخته‌شده: downgrade migration `20261006_0002` یک unique کامل روی `users.phone` برمی‌گرداند و اگر حساب حذف‌شده و حساب جدیدی با یک شماره وجود داشته باشد fail می‌شود.
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).

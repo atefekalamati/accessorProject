@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.1 Auth & RBAC
-- **Current Task:** AUTH-06 — POST /auth/verify-otp + Session + token service · NOT_STARTED (batch AUTH-02/05 COMPLETE) → [tasks/phase-02/AUTH-06-verify-otp-session.md](../../tasks/phase-02/AUTH-06-verify-otp-session.md)
+- **Current Task:** AUTH-07 — POST /auth/refresh with rotation · IN_PROGRESS (batch AUTH-06/07؛ AUTH-06 COMPLETE) → [tasks/phase-02/AUTH-07-refresh-rotation.md](../../tasks/phase-02/AUTH-07-refresh-rotation.md)
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 29/142 task COMPLETE · وزنی 13.5% (55.5h / 412h) · MVP 20.6%
+- **Progress:** 30/142 task COMPLETE · وزنی 14.4% (59.5h / 412h) · MVP 22.1%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** CI batch AUTH-02/05 سبز است. batch بعدی: AUTH-06 + AUTH-07 (7h)، که plan آن منتظر تأیید است. دیتابیس توسعه seed شده و روی `20261006_0003` است. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** پیاده‌سازی AUTH-07 (batch AUTH-06/07). دیتابیس توسعه روی `20261006_0003` است و migration `20261006_0004` هنوز روی آن اجرا نشده است. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**13.5%** = 55.5h COMPLETE / 412h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**14.4%** = 59.5h COMPLETE / 412h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 132h | 18h | 13.6% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 132h | 22h | 16.7% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 356.5h ≈ ۲۴ هفته. MVP باقی‌مانده: 214h ≈ ۱۴ هفته.
+- باقی‌مانده: 352.5h ≈ ۲۴ هفته. MVP باقی‌مانده: 210h ≈ ۱۴ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-06: AUTH-06 (POST /auth/verify-otp, sessions, JWT HS256, refresh cookie; ADR-017).
 - 2026-10-06: AUTH-05 (POST /auth/request-otp, per-mobile/IP/global 429; ADR-016).
 - 2026-10-06: AUTH-02 (RBAC seed: 5 roles, 15 permission keys, role mapping).
 - 2026-10-06: AUTH-04 (SmsSender interface + FakeSmsSender, zero-padded OTP generator).
@@ -66,6 +67,9 @@
 ---
 
 ## Plan changes
+### 2026-10-06 — تأیید batch AUTH-06/07 (تغییرات کاربر)
+- حساب soft-deleted با وضعیت `blocked` مانع ساخت حساب جدید با همان شماره است (403). حساب حذف‌شده‌ی عادی باعث ساخت حساب جدید می‌شود (ADR-017).
+- یادداشت برای بعد (فعلاً کاری انجام نمی‌شود): DSC-01 سقف استفاده per-user را با موبایل نرمال‌شده می‌شمارد. AUTH-10 وضعیت فعال‌بودن کاربر را در هر درخواست از دیتابیس می‌خواند. HANDOFF-01: frontend باید refresh را در همه تب‌ها single-flight کند.
 ### 2026-10-06 — scope جدید AUTH-11 (تصمیم کاربر)
 - data migration برای حذف `warehouse_manager`: حذف فقط وقتی انجام می‌شود که `user_roles` به آن ارجاع نداشته باشد، و downgrade ردیف را دوباره insert می‌کند. تخصیص نقش فقط نقش‌های `DEFAULT_ROLES` را می‌پذیرد. برآورد AUTH-11 از 4h به 5h رسید و کل برنامه 412h شد.
 - CI batch AUTH-02/05 سبز است.
@@ -113,6 +117,10 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-06 — AUTH-06 COMPLETE (batch AUTH-06/07)
+- `POST /api/v1/auth/verify-otp`، جدول `sessions` (migration `20261006_0004`)، JWT با HS256 ثابت، و refresh در cookie محدود به `/api/v1/auth` (ADR-017).
+- pytest 460 passed؛ ruff، format و mypy سبز.
+
 ### 2026-10-06 — AUTH-05 COMPLETE (پایان batch AUTH-02/05)
 - `POST /api/v1/auth/request-otp`: نرمال‌سازی موبایل، OTP هش‌شده، ابطال کد قبلی، و 429 برای cooldown، هر شماره، هر IP و سقف سراسری (ADR-016).
 - pytest 426 passed؛ ruff، format و mypy سبز.
