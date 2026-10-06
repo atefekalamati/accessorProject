@@ -131,3 +131,15 @@ def test_otp_hash_secret_is_optional_outside_production(
     settings = Settings(**BASE_SETTINGS, environment="development", _env_file=None)
 
     assert settings.otp_hash_secret is None
+
+
+def test_mock_otp_fails_production_startup(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", BASE_SETTINGS["database_url"])
+    monkeypatch.setenv("JWT_SECRET", BASE_SETTINGS["jwt_secret"])
+    monkeypatch.setenv("OTP_HASH_SECRET", OTP_HASH_SECRET)
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("CORS_ORIGINS", "https://shop.example.com")
+    monkeypatch.setenv("OTP_MOCK_ENABLED", "true")
+
+    with pytest.raises(ValidationError, match="Mock OTP must be disabled in production"):
+        Settings(_env_file=None)

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 from pydantic import SecretStr
 
 from app.core.config import Settings
-from app.modules.auth.otp import hash_otp_code, otp_hash_key, verify_otp_code
+from app.modules.auth import otp as otp_module
+from app.modules.auth.otp import generate_otp_code, hash_otp_code, otp_hash_key, verify_otp_code
 
 KEY = b"test-otp-hash-secret-at-least-32-characters"
 MOBILE = "+989121234567"
@@ -56,3 +59,24 @@ def test_hash_key_is_not_the_jwt_secret(settings: Settings) -> None:
     configured = settings.model_copy(update={"otp_hash_secret": SecretStr("x" * 32)})
 
     assert otp_hash_key(configured) != configured.jwt_secret.get_secret_value().encode()
+
+
+def test_mock_mode_returns_the_configured_code(settings: Settings) -> None:
+    mocked = settings.model_copy(update={"otp_mock_enabled": True, "otp_mock_code": "000123"})
+
+    assert generate_otp_code(mocked) == "000123"
+
+
+def test_generated_code_is_zero_padded(settings: Settings, monkeypatch: pytest.MonkeyPatch) -> None:
+    real = settings.model_copy(update={"otp_mock_enabled": False})
+    monkeypatch.setattr(otp_module, "secrets", SimpleNamespace(randbelow=lambda upper: 42))
+
+    assert generate_otp_code(real) == "000042"
+
+
+def test_generated_codes_are_six_digit_strings(settings: Settings) -> None:
+    real = settings.model_copy(update={"otp_mock_enabled": False})
+    codes = {generate_otp_code(real) for _ in range(200)}
+
+    assert all(len(code) == 6 and code.isascii() and code.isdigit() for code in codes)
+    assert len(codes) > 1

@@ -51,7 +51,7 @@
 | AUTH-01 | Align User model with PRD + migration | COMPLETE | HIGH | HIGH | 2 | FND-04 | new migration; one active account per mobile | ✓ |
 | AUTH-02 | Roles & permissions seed (5 roles) | NOT_STARTED | HIGH | HIGH | 3 | FND-05, ADR-004 | idempotent seed incl. super_admin | ✓ |
 | AUTH-03 | OtpCode model (hashed, expiring, attempts) | COMPLETE | HIGH | HIGH | 2 | AUTH-01 | no plaintext OTP column | ✓ |
-| AUTH-04 | SMS provider interface + fake | NOT_STARTED | HIGH | HIGH | 2 | ADR-009 | fake injectable in tests | ✓ |
+| AUTH-04 | SMS provider interface + fake | COMPLETE | HIGH | HIGH | 2 | ADR-009 | fake injectable in tests | ✓ |
 | AUTH-05 | POST /auth/request-otp + rate limit (429) | NOT_STARTED | HIGH | HIGH | 4 | AUTH-03, AUTH-04, INF-01, INF-06 | per-mobile & per-IP 429 tested | ✓ |
 | AUTH-06 | POST /auth/verify-otp + Session + token service | NOT_STARTED | HIGH | HIGH | 4 | AUTH-05, AUTH-02, ADR-012, SEC-05 | single-use OTP; refresh cookie; hashed | ✓ |
 | AUTH-07 | POST /auth/refresh with rotation | NOT_STARTED | HIGH | HIGH | 3 | AUTH-06 | rotation + reuse detection | ✓ |
@@ -257,4 +257,4 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 
 ---
 
-**Grand total:** 411h (estimate) · MVP (Phase 1–3): 268.5h · COMPLETE: 46.5h
+**Grand total:** 411h (estimate) · MVP (Phase 1–3): 268.5h · COMPLETE: 48.5h

@@ -2,8 +2,21 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import secrets
 
 from app.core.config import Settings
+
+OTP_CODE_LENGTH = 6
+
+
+def generate_otp_code(settings: Settings) -> str:
+    """Return a zero-padded 6-digit code, or the fixed mock code when OTP mock is enabled.
+
+    Settings already reject OTP mock in production, so the mock branch never runs there.
+    """
+    if settings.otp_mock_enabled:
+        return settings.otp_mock_code
+    return f"{secrets.randbelow(10**OTP_CODE_LENGTH):0{OTP_CODE_LENGTH}d}"
 
 
 def otp_hash_key(settings: Settings) -> bytes:
