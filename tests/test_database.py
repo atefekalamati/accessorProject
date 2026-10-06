@@ -14,9 +14,15 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from app.core.config import Environment, Settings
 from app.core.time import utc_now
 from app.db.base import Base
-from app.db.models import Address, AuditLog, OtpCode, Role, User
+from app.db.models import Address, AuditLog, OtpCode, Permission, Role, RolePermission, User
 from app.db.models.common import not_deleted
-from app.db.seed import DEFAULT_ROLES, seed_roles
+from app.db.seed import (
+    ALL_PERMISSION_KEYS,
+    DEFAULT_ROLES,
+    PERMISSIONS,
+    ROLE_PERMISSIONS,
+    seed_rbac,
+)
 from app.main import create_app
 from app.modules.auth.otp import hash_otp_code
 
@@ -73,14 +79,57 @@ async def test_migration_matches_sqlalchemy_metadata(db_engine: AsyncEngine) -> 
     assert differences == []
 
 
-async def test_role_seed_is_idempotent(db_session: AsyncSession) -> None:
-    await seed_roles(db_session)
-    await seed_roles(db_session)
+async def _role_permission_keys(session: AsyncSession) -> dict[str, set[str]]:
+    rows = await session.execute(
+        select(Role.name, Permission.key)
+        .join(RolePermission, RolePermission.role_id == Role.id)
+        .join(Permission, Permission.id == RolePermission.permission_id)
+    )
+    grants: dict[str, set[str]] = {}
+    for role_name, key in rows:
+        grants.setdefault(role_name, set()).add(key)
+    return grants
+
+
+async def test_rbac_seed_is_idempotent(db_session: AsyncSession) -> None:
+    await seed_rbac(db_session)
+    await seed_rbac(db_session)
     await db_session.flush()
 
-    names = (await db_session.scalars(select(Role.name).order_by(Role.name))).all()
+    names = set((await db_session.scalars(select(Role.name))).all())
+    keys = set((await db_session.scalars(select(Permission.key))).all())
+    grant_count = len((await db_session.execute(select(RolePermission.role_id))).all())
 
-    assert names == sorted(role.name for role in DEFAULT_ROLES)
+    assert {role.name for role in DEFAULT_ROLES} <= names
+    assert keys == {permission.key for permission in PERMISSIONS}
+    assert grant_count == sum(len(granted) for granted in ROLE_PERMISSIONS.values())
+
+
+async def test_rbac_seed_grants_match_mapping(db_session: AsyncSession) -> None:
+    await seed_rbac(db_session)
+    await db_session.flush()
+
+    grants = await _role_permission_keys(db_session)
+
+    assert grants["super_admin"] == set(ALL_PERMISSION_KEYS)
+    assert "customer" not in grants
+    assert "users:manage_roles" not in grants["admin"]
+    for role_name, keys in ROLE_PERMISSIONS.items():
+        assert grants.get(role_name, set()) == set(keys)
+
+
+async def test_rbac_seed_never_deletes_unlisted_rows(db_session: AsyncSession) -> None:
+    db_session.add(Role(name="legacy_role", description="Not in DEFAULT_ROLES"))
+    db_session.add(Permission(key="legacy:action", module="legacy"))
+    await db_session.flush()
+
+    await seed_rbac(db_session)
+    await db_session.flush()
+
+    names = set((await db_session.scalars(select(Role.name))).all())
+    keys = set((await db_session.scalars(select(Permission.key))).all())
+    assert "legacy_role" in names
+    assert "legacy:action" in keys
 
 
 def _unique_phone() -> str:

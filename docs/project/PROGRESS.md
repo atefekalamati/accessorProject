@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.1 Auth & RBAC
-- **Current Task:** AUTH-02 — Roles & permissions seed · NOT_STARTED (batch AUTH-01/03/04 COMPLETE → [tasks/phase-02/AUTH-04-sms-provider-interface.md](../../tasks/phase-02/AUTH-04-sms-provider-interface.md))
+- **Current Task:** AUTH-05 — POST /auth/request-otp · IN_PROGRESS (batch AUTH-02/05؛ AUTH-02 COMPLETE) → [tasks/phase-02/AUTH-05-request-otp.md](../../tasks/phase-02/AUTH-05-request-otp.md)
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 27/142 task COMPLETE · وزنی 11.8% (48.5h / 411h) · MVP 18.1%
+- **Progress:** 28/142 task COMPLETE · وزنی 12.5% (51.5h / 411h) · MVP 19.2%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** batch بعدی (AUTH-02 + AUTH-05) و تأیید کاربر. CI batch AUTH-01/03/04 سبز است؛ `OTP_HASH_SECRET` در `.env` محلی است؛ دیتابیس توسعه روی `20261006_0003` است. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
@@ -15,13 +15,13 @@
 ---
 
 ## Overall Progress
-**11.8%** = 48.5h COMPLETE / 411h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**12.5%** = 51.5h COMPLETE / 411h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 131h | 11h | 8.4% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 131h | 14h | 10.7% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 362.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 220h ≈ ۱۵ هفته.
+- باقی‌مانده: 359.5h ≈ ۲۴ هفته. MVP باقی‌مانده: 217h ≈ ۱۵ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-06: AUTH-02 (RBAC seed: 5 roles, 15 permission keys, role mapping).
 - 2026-10-06: AUTH-04 (SmsSender interface + FakeSmsSender, zero-padded OTP generator).
 - 2026-10-06: AUTH-03 (OtpCode model, HMAC-SHA256 with OTP_HASH_SECRET).
 - 2026-10-06: AUTH-01 (User model aligned with PRD; E.164 phone + partial unique).
@@ -64,6 +65,10 @@
 ---
 
 ## Plan changes
+### 2026-10-06 — تأیید batch AUTH-02/05 (تغییرات کاربر) و قواعد فرایند
+- AUTH-02: نگاشت نقش به permission تأیید شد. ردیف `warehouse_manager` فقط یک‌بار و دستی از دیتابیس توسعه حذف شد (نه با seed).
+- AUTH-05: محدودیت‌ها: cooldown 60s، ۵ درخواست در ساعت برای هر شماره، ۶۰ در ساعت برای هر IP (به‌خاطر CGNAT در ایران). سقف سراسری `OTP_MAX_GLOBAL_PER_HOUR=500` با 429 و لاگ WARNING `otp.global_cap_hit` اضافه شد. فیلد اضافه در body → 400. trusted-proxy مربوط به OPS-04 است.
+- CLAUDE.md: سؤال کم‌اثر با پیشنهاد خودم تصمیم و در DECISIONS.md ثبت می‌شود. batch بدون task HIGH تا ۱۲ ساعت مجاز است و با «ok» تأیید می‌شود.
 ### 2026-10-06 — تأیید batch AUTH-01/03/04 (تغییرات کاربر)
 - AUTH-01: موبایل فقط به شکل E.164 (`+989XXXXXXXXX`) با CHECK دیتابیسی؛ `normalize_phone()` اضافه شد. `email` در v1 unique نیست.
 - AUTH-03: `otp_codes.mobile` هم همین فرمت و CHECK را دارد. کلید HMAC یک setting جدا به اسم `OTP_HASH_SECRET` است (حداقل ۳۲ کاراکتر). در production نبودن یا کوتاه‌بودن آن باعث fail شدن startup می‌شود.
@@ -104,6 +109,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-06 — AUTH-02 COMPLETE
+- seed نقش‌ها، permissionها و role_permissions (idempotent و بدون حذف). دیتابیس توسعه seed شد و `warehouse_manager` از آن حذف شد.
+- یافته: migration اولیه `warehouse_manager` را insert می‌کند؛ دیتابیس تازه آن را دارد (نیازمند تصمیم کاربر).
+- pytest 409 passed؛ ruff، format و mypy سبز.
+
 ### 2026-10-06 — AUTH-04 COMPLETE (پایان batch AUTH-01/03/04)
 - **انجام شد:** `SmsSender` و `FakeSmsSender` (بدون log کردن کد) ساخته شدند. dependency `get_sms_sender` قابل override است و در production fail-closed می‌شود. `generate_otp_code` کد ۶ رقمی zero-padded یا کد mock را برمی‌گرداند. تست startup production با mock اضافه شد.
 - **اعتبارسنجی:** pytest 403 passed؛ ruff، format و mypy سبز.
