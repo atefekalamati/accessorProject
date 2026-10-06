@@ -1,0 +1,18 @@
+# gitleaks configuration (SEC-05). Keep the default ruleset and add only narrow exceptions.
+#
+# Allowlist policy:
+# - Every entry must target a known fake fixture, scoped by both `paths` and `regexes`,
+#   with a comment explaining why it is fake. Whole-directory entries (e.g. tests/) are banned.
+# - Add an entry only when a real scan flags the fixture.
+#
+# Known fixtures reviewed on 2026-10-06 with gitleaks v8.30.1 (full history, 24 commits):
+# none of them is flagged by the default rules, so no allowlist entries are needed.
+# - tests/test_logging.py: fake JWT ("eyJhbGciOiJIUzI1NiJ9...c2lnbmF0dXJlLXZhbHVl")
+# - tests/test_errors.py: SECRET = "db-password-leaked-in-exception"
+# - postgres:test@localhost: disposable test database credentials (CI, README, docs, tests)
+# - tests/conftest.py: JWT_SECRET test default
+
+title = "Project AK gitleaks config"
+
+[extend]
+useDefault = true

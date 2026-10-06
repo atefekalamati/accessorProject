@@ -1,27 +1,27 @@
 # PROGRESS — منبع واحد «کجاییم؟»
 
-**Last Updated:** 2026-09-30
+**Last Updated:** 2026-10-06
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.1 Auth & RBAC
-- **Current Task:** SEC-05 — Secret scanning in CI (gitleaks) · NOT_STARTED → [tasks/phase-02/SEC-05-gitleaks-ci.md](../../tasks/phase-02/SEC-05-gitleaks-ci.md)
-- **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ شروع شد؛ هنوز هیچ task IN_PROGRESS نیست.
-- **Progress:** 23/142 task COMPLETE · وزنی 9.9% (40.5h / 411h) · MVP 15.1%
+- **Current Task:** AUTH-01 — Align User model with PRD + migration · NOT_STARTED (SEC-05 COMPLETE → [tasks/phase-02/SEC-05-gitleaks-ci.md](../../tasks/phase-02/SEC-05-gitleaks-ci.md))
+- **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
+- **Progress:** 24/142 task COMPLETE · وزنی 10.3% (42.5h / 411h) · MVP 15.8%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** plan برای SEC-05 (gitleaks در CI) و تأیید کاربر؛ بعد از آن AUTH-01. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** plan برای AUTH-01 و تأیید کاربر. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**9.9%** = 40.5h COMPLETE / 411h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**10.3%** = 42.5h COMPLETE / 411h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | NOT_STARTED | 131h | 3h | 2.3% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 131h | 5h | 3.8% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 370.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 228h ≈ ۱۵ هفته.
+- باقی‌مانده: 368.5h ≈ ۲۵ هفته. MVP باقی‌مانده: 226h ≈ ۱۵ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-06: SEC-05 (Secret scanning in CI, gitleaks 8.30.1).
 - 2026-09-29: INF-05 (AuditLog writer service). فاز ۱ کامل شد.
 - 2026-09-29: INF-06 (Sensitive-data redaction in logs).
 - 2026-09-29: FND-07 (CI pipeline).
@@ -94,6 +95,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-06 — SEC-05 COMPLETE
+- **انجام شد:** job `secret-scan` در `ci.yml` (gitleaks 8.30.1، sha256 بررسی‌شده، `fetch-depth: 0`، `--exit-code 1`)؛ `.gitleaks.toml` (default rules، allowlist خالی چون هیچ fixture فلگ نشد)؛ بخش Secret scanning در README.
+- **اعتبارسنجی:** اسکن کل تاریخچه (24 commit) بدون finding؛ تست منفی محلی: exit 1 (`github-pat`)، شاخه موقت push نشد و حذف شد؛ pytest 345 passed، ruff، format و mypy سبز.
+- **بعدی:** AUTH-01.
+
 ### 2026-09-30 — فاز ۱ merge شد و فاز ۲ شروع شد
 - PR #2 از head قدیمی (`e791371`) merge شده بود. PR #3 دو commit جامانده را وارد کرد: `579bd75` (INF-05) و `56f6e9d`. `master` = `1b5d92e`.
 - شاخه `feat/phase-2-core-domain` از `master` ساخته و push شد. SEC-05 اضافه شد.

@@ -47,7 +47,7 @@
 |---|---|---|---|---|---|---|---|---|
 | DEC-02 | Role set (D2) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-004 | ✓ |
 | DEC-16 | Token transport (D16) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-012 | ✓ |
-| SEC-05 | Secret scanning in CI (gitleaks, pinned, allowlist for fake fixtures) | NOT_STARTED | HIGH | MEDIUM | 2 | FND-07 | CI fails on findings; history scan clean | ✓ |
+| SEC-05 | Secret scanning in CI (gitleaks, pinned, allowlist for fake fixtures) | COMPLETE | HIGH | MEDIUM | 2 | FND-07 | CI fails on findings; history scan clean | ✓ |
 | AUTH-01 | Align User model with PRD + migration | NOT_STARTED | HIGH | HIGH | 2 | FND-04 | new migration; one active account per mobile | ✓ |
 | AUTH-02 | Roles & permissions seed (5 roles) | NOT_STARTED | HIGH | HIGH | 3 | FND-05, ADR-004 | idempotent seed incl. super_admin | ✓ |
 | AUTH-03 | OtpCode model (hashed, expiring, attempts) | NOT_STARTED | HIGH | HIGH | 2 | AUTH-01 | no plaintext OTP column | ✓ |
@@ -257,4 +257,4 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 
 ---
 
-**Grand total:** 411h (estimate) · MVP (Phase 1–3): 268.5h · COMPLETE: 40.5h
+**Grand total:** 411h (estimate) · MVP (Phase 1–3): 268.5h · COMPLETE: 42.5h
