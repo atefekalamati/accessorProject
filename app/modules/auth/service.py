@@ -30,7 +30,9 @@ from app.modules.auth.repository import (
 from app.modules.auth.schemas import RequestOtpResponse
 from app.modules.auth.sms import SmsSender
 from app.modules.auth.tokens import (
+    AccessTokenError,
     create_access_token,
+    decode_access_token,
     generate_refresh_token,
     hash_refresh_token,
 )
@@ -360,3 +362,69 @@ class AuthService:
             refresh_expires_at=user_session.expires_at,
         )
         return tokens, user_session
+
+
+@dataclass(frozen=True, slots=True)
+class CurrentUser:
+    """The authenticated user of one request, loaded from the database (never the token)."""
+
+    id: UUID
+    session_id: UUID
+    status: str
+    roles: frozenset[str]
+    permissions: frozenset[str]
+
+
+def _not_authenticated() -> UnauthorizedError:
+    return UnauthorizedError(
+        message="Authentication required", headers={"WWW-Authenticate": "Bearer"}
+    )
+
+
+class AccessService:
+    """Resolves an access token to the current user; runs on every authenticated request."""
+
+    def __init__(
+        self, session: AsyncSession, user_repository: UserRepository, settings: Settings
+    ) -> None:
+        self._session = session
+        self._users = user_repository
+        self._settings = settings
+
+    async def authenticate(self, access_token: str) -> CurrentUser:
+        """Validate the token, then re-check user, session and permissions in the database.
+
+        The token only identifies the user and session; status, soft delete, session
+        revocation and permissions are read fresh each time (ADR-017).
+        """
+        try:
+            claims = decode_access_token(access_token, self._settings)
+        except AccessTokenError:
+            raise _not_authenticated() from None
+
+        # A short transaction of its own, so services can begin() on the same session.
+        async with self._session.begin():
+            row = await self._users.get_with_session(claims.user_id, claims.session_id)
+            now = utc_now()
+            if row is None:
+                raise _not_authenticated()
+            user, user_session = row
+            # Logout and rotation revoke the session, so its access tokens die with it.
+            if (
+                user.is_deleted
+                or user_session.revoked_at is not None
+                or user_session.expires_at <= now
+            ):
+                raise _not_authenticated()
+            if user.status != UserStatus.ACTIVE:
+                raise ForbiddenError(message="Account is not active")
+            roles = await self._users.role_names(user.id)
+            permissions = await self._users.permission_keys(user.id)
+
+        return CurrentUser(
+            id=user.id,
+            session_id=user_session.id,
+            status=user.status,
+            roles=frozenset(roles),
+            permissions=frozenset(permissions),
+        )

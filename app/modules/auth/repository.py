@@ -7,7 +7,16 @@ from uuid import UUID
 from sqlalchemy import ColumnElement, exists, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import OtpCode, Role, User, UserRole, UserSession, UserStatus
+from app.db.models import (
+    OtpCode,
+    Permission,
+    Role,
+    RolePermission,
+    User,
+    UserRole,
+    UserSession,
+    UserStatus,
+)
 from app.db.models.common import not_deleted
 
 
@@ -121,6 +130,39 @@ class UserRepository:
     async def role_id(self, name: str) -> UUID | None:
         role_id: UUID | None = await self._session.scalar(select(Role.id).where(Role.name == name))
         return role_id
+
+    async def get_with_session(
+        self, user_id: UUID, session_id: UUID
+    ) -> tuple[User, UserSession] | None:
+        """A user together with one of their sessions; soft-deleted users included."""
+        statement = (
+            select(User, UserSession)
+            .join(UserSession, UserSession.user_id == User.id)
+            .where(User.id == user_id, UserSession.id == session_id)
+        )
+        row = (await self._session.execute(statement)).one_or_none()
+        return None if row is None else (row[0], row[1])
+
+    async def role_names(self, user_id: UUID) -> list[str]:
+        statement = (
+            select(Role.name)
+            .join(UserRole, UserRole.role_id == Role.id)
+            .where(UserRole.user_id == user_id)
+            .order_by(Role.name)
+        )
+        return list((await self._session.scalars(statement)).all())
+
+    async def permission_keys(self, user_id: UUID) -> list[str]:
+        """Union of the permissions of all roles of ``user_id``."""
+        statement = (
+            select(Permission.key)
+            .join(RolePermission, RolePermission.permission_id == Permission.id)
+            .join(UserRole, UserRole.role_id == RolePermission.role_id)
+            .where(UserRole.user_id == user_id)
+            .distinct()
+            .order_by(Permission.key)
+        )
+        return list((await self._session.scalars(statement)).all())
 
     async def add_with_role(self, user: User, role_id: UUID) -> None:
         self._session.add(user)
