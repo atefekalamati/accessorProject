@@ -1,6 +1,6 @@
 Batch mode (rules also in CLAUDE.md section 11, "Batch mode").
 
-1. Propose: read Current/Next in docs/project/PROGRESS.md and the current milestone in docs/project/PLAN.md. Pick the next 3–5 related, unblocked tasks (total estimate ≤ ~8h). Never include PAY-* tasks or inventory reservation/commit/release tasks. Those always run one task per session.
+1. Propose: read Current/Next in docs/project/PROGRESS.md and the current milestone in docs/project/PLAN.md. Pick the next 3–5 related, unblocked tasks (total estimate ≤ ~8h if any task is HIGH; ≤ ~12h otherwise, approved directly with "ok"). Never include PAY-* tasks or inventory reservation/commit/release tasks. Those always run one task per session.
 2. Write ONE combined plan covering files, order and tests. For each HIGH-level task, add its risks, rollback steps and extra tests. Report the status header, then wait for approval.
 3. After approval, for each task in order:
    a. Implement only what the approved plan covers.
