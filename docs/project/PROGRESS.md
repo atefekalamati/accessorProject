@@ -8,7 +8,7 @@
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
 - **Progress:** 31/142 task COMPLETE · وزنی 15.2% (62.5h / 412h) · MVP 23.2%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** کاربر CI batch AUTH-06/07 را بررسی کند. دیتابیس توسعه روی `20261006_0003` است و `alembic upgrade head` (برای `20261006_0004`) هنوز روی آن اجرا نشده است. batch بعدی پیشنهادی: AUTH-08 + AUTH-09 + AUTH-10 (7h). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** CI batch AUTH-06/07 سبز است. دیتابیس توسعه به `20261006_0004` (head) ارتقا یافت. batch بعدی پیشنهادی: AUTH-08 + AUTH-09 + AUTH-10 (7h). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
