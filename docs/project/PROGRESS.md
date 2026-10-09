@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** CAT-00 — IN_PROGRESS (پیش‌نویس و diff آماده؛ منتظر تأیید کاربر). [فایل task](../../tasks/phase-02/CAT-00-product-requirements.md)
+- **Current Task:** — (CAT-00 COMPLETE). بعدی: SEC-06، سپس CAT-01 تا CAT-03
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 36/143 task COMPLETE · وزنی 18.7% (77.5h / 415h) · MVP 28.4%
+- **Progress:** 37/143 task COMPLETE · وزنی 19.4% (80.5h / 415h) · MVP 29.5%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** بازبینی `docs/project/drafts/CAT-00-prd.diff` و پاسخ Q1–Q4 در فایل task؛ بعد apply، ثبت در DECISIONS و COMPLETE. سپس SEC-06 (batch بدون HIGH) و CAT-01 تا CAT-03. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** بررسی CI روی commit CAT-00. batch بعدی: SEC-06 (بدون HIGH)، سپس CAT-01 تا CAT-03 طبق ADR-020. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**18.7%** = 77.5h COMPLETE / 415h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**19.4%** = 80.5h COMPLETE / 415h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135h | 40h | 29.6% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135h | 43h | 31.9% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 337.5h ≈ ۲۲ هفته. MVP باقی‌مانده: 195h ≈ ۱۳ هفته.
+- باقی‌مانده: 334.5h ≈ ۲۲ هفته. MVP باقی‌مانده: 192h ≈ ۱۳ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-09: CAT-00 (PRD «جزئیات محصول» ✓ و «محصولات» ✓ بازنویسی شد؛ public با slug، admin با id؛ ADR-020).
 - 2026-10-09: AUTH-12 (consolidated auth security suite; rule → test map for ADR-016/017/018/019).
 - 2026-10-09: AUTH-11 (admin user list/status/role, last super_admin guard, warehouse_manager data migration; ADR-019).
 - 2026-10-09: AUTH-09 (GET /auth/me, PATCH /users/me, audit user.profile_updated, no-store).

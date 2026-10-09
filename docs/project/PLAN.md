@@ -62,11 +62,11 @@
 | AUTH-11 | Admin user endpoints + AuditLog + warehouse_manager data migration | COMPLETE | MEDIUM | HIGH | 5 | AUTH-10, INF-03, INF-05 | only super_admin changes roles; only DEFAULT_ROLES assignable | ✓ |
 | AUTH-12 | Auth API & security test suite | COMPLETE | HIGH | HIGH | 3 | AUTH-05…11 | all PRD acceptance criteria tested | ✓ |
 
-### M2.2 Catalog — PRD «دسته‌بندی محصولات» ✓، «جزئیات محصول» (قالبی)
+### M2.2 Catalog — PRD «دسته‌بندی محصولات» ✓، «جزئیات محصول» ✓، «محصولات» ✓
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | DEC-03 | Stock model (D3) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-005 |
-| CAT-00 | Rewrite «جزئیات محصول» + «محصولات» (admin) requirements | IN_PROGRESS | HIGH | HIGH | 3 | — | PRD section ✓ بازبینی‌شده + approved |
+| CAT-00 | Rewrite «جزئیات محصول» + «محصولات» (admin) requirements | COMPLETE | HIGH | HIGH | 3 | — | PRD section ✓ بازبینی‌شده + approved |
 | CAT-01 | Category model + migration (tree, slug, status, order) | NOT_STARTED | HIGH | MEDIUM | 3 | INF-04 | unique slug; inactive hidden |
 | CAT-02 | Product model + soft delete + draft/published/archived | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-01, INF-04 | referenced products soft-deleted only |
 | CAT-03 | ProductVariant model (SKU, active, purchasable; no stock column) | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-02, ADR-005 | unique SKU |

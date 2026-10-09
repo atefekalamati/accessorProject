@@ -30,6 +30,7 @@
 | D21 | ورود، session و چرخش refresh | AUTH-06، AUTH-07 | — | resolved (ADR-017) |
 | D22 | احراز هویت هر درخواست، permission و مالکیت | AUTH-08، AUTH-09، AUTH-10 | — | resolved (ADR-018) |
 | D23 | مدیریت کاربر توسط مدیران (وضعیت و نقش) | AUTH-11 | — | resolved (ADR-019) |
+| D24 | نیازمندی‌های محصول (جزئیات و admin) | CAT-00 | — | resolved (ADR-020) |
 
 ## ADR
 
@@ -154,6 +155,18 @@
 - تصمیم‌های کم‌اثر (خودم): ماژول در `app/modules/admin/` است. تغییری که وضعیت یا نقش را عوض نکند → 200 بدون audit. فعال‌سازی دوباره sessionهای قبلی را برنمی‌گرداند. جست‌وجوی `mobile` رقمی و جزئی است: `+` اختیاری، ۳ تا ۱۶ رقم، و صفر ابتدای شماره محلی حذف می‌شود. کاربر ناموجود یا soft-deleted → 404. پاسخ‌ها هدر `Cache-Control: no-store` دارند. موبایل در پاسخ admin ماسک نمی‌شود، چون admin مجوز `users:read` دارد.
 - پیامدها: AUTH-11. seed مجوز `users:manage` را به admin اضافه می‌کند. روی دیتابیس‌های موجود باید `python -m app.db.seed` دوباره اجرا شود.
 
+### ADR-020 — نیازمندی‌های محصول: جزئیات عمومی و مدیریت (D24)
+- تاریخ: 2026-10-09
+- زمینه: بخش‌های «جزئیات محصول» و «محصولات» (admin) در PRD قالبی بودند. «معماری سیستم» ✓ `GET /products/{id}` را نام می‌برد.
+- تصمیم (کاربر تأیید کرد):
+  - URL عمومی محصول با slug است (`GET /products/{slug}`) و endpointهای admin با id. `GET /products/{id}/pricing` و `/availability` با id می‌مانند.
+  - محصول منتشرشده در دسته غیرفعال: صفحه محصول نمایش داده می‌شود و دسته فقط از breadcrumb حذف می‌شود؛ محصول در لیست آن دسته نمی‌آید.
+  - پاسخ جزئیات فیلد صریح `tax_included` دارد (در v1 برابر false). سیاست نمایش قیمت در زمان فعال‌شدن مالیات به D11 (ADR-010) موکول است.
+  - media: فقط jpeg/png/webp، حداکثر ۵MB، بدون ویدئو در v1. نوع فایل با magic bytes تشخیص داده می‌شود (نه پسوند یا Content-Type) و EXIF/metadata هنگام بارگذاری حذف می‌شود.
+  - `default_variant_id` و `price_range` در پاسخ جزئیات می‌مانند. قاعده SCOPE?: فیلد read-only مشتق از داده موجود می‌ماند و هر feature جدید کاربرمحور حذف می‌شود.
+- تصمیم‌های کم‌اثر (خودم): گراف وضعیت draft↔published، published/draft → archived، archived → draft؛ `published_at` فقط در اولین انتشار؛ `discount_percent` به پایین گرد می‌شود و فقط نمایشی است؛ slug را ادمین وارد می‌کند (حروف کوچک لاتین، رقم و `-`، ۳ تا ۱۲۰)؛ SKU به حروف بزرگ نرمال می‌شود؛ گزینه‌های تنوع متن آزاد با کلیدهای color/size/model؛ بدون restore در v1؛ تغییر وضعیت و تغییرات تنوع/رسانه روی ردیف Product قفل می‌گیرند؛ ProductHistory حذف و AuditLog جایگزین شد.
+- پیامدها: CAT-02 تا CAT-05، CAT-07، CAT-08، CAT-11، PRC-01 (قانون «تنوع فعال بدون قیمت → 422» بعد از PRC-01). حذف EXIF و تشخیص magic bytes در CAT-05 احتمالاً dependency جدید لازم دارد (مثل Pillow) که در plan آن task با دلیل ذکر می‌شود.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
@@ -167,6 +180,7 @@
 | 2026-09-29 | «موجودی و رزرو» | رزرو در `POST /orders`؛ endpointهای عمومی reservation و `validate-stock` حذف؛ 410 → 409 `RESERVATION_EXPIRED`؛ یک انبار پیش‌فرض؛ Warehouse Manager موکول | D6، D5، D7، D3، D4، D2 |
 | 2026-09-29 | «صفحه اصلی» | موجودی از ProductVariant حذف؛ Content Admin → Content Manager | D3، D2 |
 | 2026-09-29 | «دسته‌بندی محصولات» | موجودی از ProductVariant حذف؛ Content Admin → Content Manager | D3، D2 |
+| 2026-10-09 | «جزئیات محصول» ✓، «محصولات» ✓، «معماری سیستم» | بازنویسی دو بخش قالبی (CAT-00)؛ `GET /products/{id}` → `GET /products/{slug}` | D24 (ADR-020) |
 
 قاعده: هر task نوع `XX-00` بخش قالبی ماژول خود را در PRD بازنویسی می‌کند، به عنوان آن بخش «✓ بازبینی‌شده» اضافه می‌کند و یک ردیف به این جدول می‌افزاید.
 
