@@ -59,8 +59,10 @@ PERMISSIONS: tuple[PermissionSeed, ...] = (
 
 ALL_PERMISSION_KEYS: frozenset[str] = frozenset(permission.key for permission in PERMISSIONS)
 
+# Admins may manage customer accounts (users:manage); the admin service limits them to
+# targets whose roles are all customer (ADR-019).
 _ADMIN_EXCLUDED: frozenset[str] = frozenset(
-    {"pricing_settings:update", "users:manage", "users:manage_roles", "audit:read"}
+    {"pricing_settings:update", "users:manage_roles", "audit:read"}
 )
 
 # Customers have no permissions; their access is enforced by ownership checks.

@@ -203,3 +203,13 @@ class SessionRepository:
             .returning(UserSession.id)
         )
         return len(result.scalars().all())
+
+    async def revoke_user(self, user_id: UUID, now: datetime) -> int:
+        """Revoke every still-active session of a user; returns how many were revoked."""
+        result = await self._session.execute(
+            update(UserSession)
+            .where(UserSession.user_id == user_id, UserSession.revoked_at.is_(None))
+            .values(revoked_at=now)
+            .returning(UserSession.id)
+        )
+        return len(result.scalars().all())

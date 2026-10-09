@@ -29,6 +29,7 @@
 | D20 | rate limit و جزئیات request-otp | AUTH-05 | — | resolved (ADR-016) |
 | D21 | ورود، session و چرخش refresh | AUTH-06، AUTH-07 | — | resolved (ADR-017) |
 | D22 | احراز هویت هر درخواست، permission و مالکیت | AUTH-08، AUTH-09، AUTH-10 | — | resolved (ADR-018) |
+| D23 | مدیریت کاربر توسط مدیران (وضعیت و نقش) | AUTH-11 | — | resolved (ADR-019) |
 
 ## ADR
 
@@ -52,6 +53,7 @@
 - تاریخ: 2026-09-29
 - تصمیم: نقش‌های دیتابیسی `customer`، `support`، `content_manager`، `admin`، `super_admin`. Guest نقش دیتابیسی نیست. `finance_manager` و `warehouse_manager` به نسخه بعد موکول شدند؛ در v1 تنظیمات مالیات/گردکردن با `super_admin` و موجودی با `admin` (مجوز `inventory:update`).
 - پیامدها: seed فعلی (`warehouse_manager`) در AUTH-02 اصلاح و `super_admin` اضافه می‌شود. PRD به‌روز شد.
+- به‌روزرسانی 2026-10-09 (AUTH-11، کاربر تأیید کرد): admin مجوز `users:manage` را هم دارد. ولی فقط وضعیت کاربرانی را تغییر می‌دهد که همه نقش‌هایشان `customer` است (ADR-019). migration `20261009_0005` ردیف `warehouse_manager` را حذف می‌کند، فقط اگر در `user_roles` ارجاعی نداشته باشد. فقط نقش‌های `DEFAULT_ROLES` قابل تخصیص‌اند.
 
 ### ADR-005 — مدل موجودی و انبار (D3، D4)
 - تاریخ: 2026-09-29
@@ -139,6 +141,18 @@
 - تصمیم‌های کم‌اثر پروفایل (خودم): نام‌ها در audit ماسک نمی‌شوند (برای کاربرد audit لازم‌اند). `mask_email` فقط اول و آخر local part را نگه می‌دارد. diff روی مقادیر خام ساخته و بعد ماسک می‌شود و هر ردیف `"changed": true` دارد، پس تغییر حتی با ماسک یکسان دیده می‌شود (اصلاح 2026-10-09 به درخواست کاربر؛ برای همه audit ها). body خالی → 200 بدون تغییر. `null` برای نام → 400 و برای email یعنی پاک کردن.
 - dependency (کاربر، 2026-10-09): بازه `>=2.3,<3.0` در `pyproject.toml` می‌ماند. نصب قابل‌تکرار با lock file در SEC-06 انجام می‌شود.
 - پیامدها: هر درخواست احراز‌شده سه query کوتاه دارد (user+session، roles، permissions). اگر لازم شد، cache در OPS بررسی می‌شود. AUTH-11 هنگام block کردن کاربر نیازی به revoke فوری session ندارد، چون وضعیت در هر درخواست چک می‌شود (هرچند revoke برای refresh مفید است).
+
+### ADR-019 — مدیریت کاربر توسط مدیران: وضعیت و نقش (D23)
+- تاریخ: 2026-10-09
+- زمینه: PRD («هویت و دسترسی») فقط سه endpoint `GET /admin/users`، `PATCH /admin/users/{id}/status` و `PATCH /admin/users/{id}/role` را نام می‌برد و می‌گوید «تغییر نقش توسط Super Admin». مرز اختیار admin و حفاظت از آخرین super_admin در PRD نیامده است.
+- تصمیم (کاربر تأیید کرد):
+  - list: مجوز `users:read`. صفحه‌بندی با page و limit (حداکثر 100) است. فقط پارامترهای `page`، `limit`، `mobile`، `status`، `role` و `sort` (`newest` یا `oldest`) پذیرفته می‌شوند و پارامتر دیگر → 400. کاربر soft-deleted در list نمی‌آید.
+  - status: مجوز `users:manage` (admin و super_admin). admin فقط وضعیت کاربرانی را تغییر می‌دهد که نقش‌هایشان زیرمجموعه `{customer}` است. هدف با هر نقش staff (support، content_manager، admin، super_admin) فقط توسط super_admin تغییر می‌کند، وگرنه 403. تغییر وضعیت خود → 422. رفتن به `inactive` یا `blocked` همه sessionهای کاربر را revoke می‌کند.
+  - role: مجوز `users:manage_roles` و نقش `super_admin` (دو چک جدا). body برابر `{"roles": [...]}` است و کل مجموعه نقش‌ها را جایگزین می‌کند. فقط `DEFAULT_ROLES` پذیرفته می‌شود، یکتا و ۱ تا ۵ نقش؛ در غیر این صورت 400. تغییر نقش خود → 422.
+  - آخرین super_admin: اگر تغییری (نقش یا وضعیت) هیچ super_admin فعال و حذف‌نشده‌ای باقی نگذارد → 409 `CONFLICT`. همه این تغییرات با advisory lock `rbac:super_admin` پشت هم اجرا می‌شوند. چون تغییر خود ممنوع است، این حالت فقط در درخواست‌های همزمان پیش می‌آید.
+  - audit: `user.status_changed` (status و `revoked_sessions`) و `user.roles_changed` (فهرست مرتب نقش‌ها)، با before/after.
+- تصمیم‌های کم‌اثر (خودم): ماژول در `app/modules/admin/` است. تغییری که وضعیت یا نقش را عوض نکند → 200 بدون audit. فعال‌سازی دوباره sessionهای قبلی را برنمی‌گرداند. جست‌وجوی `mobile` رقمی و جزئی است: `+` اختیاری، ۳ تا ۱۶ رقم، و صفر ابتدای شماره محلی حذف می‌شود. کاربر ناموجود یا soft-deleted → 404. پاسخ‌ها هدر `Cache-Control: no-store` دارند. موبایل در پاسخ admin ماسک نمی‌شود، چون admin مجوز `users:read` دارد.
+- پیامدها: AUTH-11. seed مجوز `users:manage` را به admin اضافه می‌کند. روی دیتابیس‌های موجود باید `python -m app.db.seed` دوباره اجرا شود.
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).

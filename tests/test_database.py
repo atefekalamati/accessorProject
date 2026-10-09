@@ -1,20 +1,32 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from alembic.autogenerate import compare_metadata
+from alembic.config import Config
 from alembic.migration import MigrationContext
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import inspect, select, text
+from sqlalchemy import delete, func, inspect, select, text
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
+from alembic import command
 from app.core.config import Environment, Settings
 from app.core.time import utc_now
 from app.db.base import Base
-from app.db.models import Address, AuditLog, OtpCode, Permission, Role, RolePermission, User
+from app.db.models import (
+    Address,
+    AuditLog,
+    OtpCode,
+    Permission,
+    Role,
+    RolePermission,
+    User,
+    UserRole,
+)
 from app.db.models.common import not_deleted
 from app.db.seed import (
     ALL_PERMISSION_KEYS,
@@ -28,7 +40,7 @@ from app.modules.auth.otp import hash_otp_code
 
 pytestmark = pytest.mark.integration
 
-HEAD_REVISION = "20261006_0004"
+HEAD_REVISION = "20261009_0005"
 
 EXPECTED_TABLES = {
     "addresses",
@@ -355,3 +367,78 @@ async def test_otp_code_constraints(db_session: AsyncSession, overrides: dict[st
 
     with pytest.raises(IntegrityError):
         await db_session.flush()
+
+
+WAREHOUSE_MANAGER_ID = UUID("d092d5a1-5d54-5abd-9dbc-d5921a375a2f")
+PRE_ROLE_CLEANUP_REVISION = "20261006_0004"
+
+
+async def _alembic(database_url: str, action: str, revision: str) -> None:
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
+    # env.py calls asyncio.run, which cannot run inside the test's event loop.
+    await asyncio.to_thread(getattr(command, action), config, revision)
+
+
+async def _warehouse_manager(db_engine: AsyncEngine) -> Role | None:
+    async with AsyncSession(db_engine) as session:
+        role: Role | None = await session.scalar(
+            select(Role).where(Role.name == "warehouse_manager")
+        )
+        return role
+
+
+async def test_role_cleanup_migration_removes_unreferenced_warehouse_manager(
+    db_engine: AsyncEngine, migrated_database: str
+) -> None:
+    try:
+        await _alembic(migrated_database, "downgrade", PRE_ROLE_CLEANUP_REVISION)
+        assert await _warehouse_manager(db_engine) is not None
+
+        await _alembic(migrated_database, "upgrade", "head")
+        assert await _warehouse_manager(db_engine) is None
+
+        await _alembic(migrated_database, "downgrade", PRE_ROLE_CLEANUP_REVISION)
+        restored = await _warehouse_manager(db_engine)
+        assert restored is not None
+        assert (restored.id, restored.description, restored.is_system) == (
+            WAREHOUSE_MANAGER_ID,
+            "Warehouse manager",
+            True,
+        )
+    finally:
+        await _alembic(migrated_database, "upgrade", "head")
+    assert await _warehouse_manager(db_engine) is None
+
+
+async def test_role_cleanup_migration_keeps_referenced_warehouse_manager(
+    db_engine: AsyncEngine, migrated_database: str
+) -> None:
+    user = User(phone="+989120000555")
+    try:
+        await _alembic(migrated_database, "downgrade", PRE_ROLE_CLEANUP_REVISION)
+        async with AsyncSession(db_engine, expire_on_commit=False) as session, session.begin():
+            session.add(user)
+            await session.flush()
+            session.add(UserRole(user_id=user.id, role_id=WAREHOUSE_MANAGER_ID))
+
+        await _alembic(migrated_database, "upgrade", "head")
+        kept = await _warehouse_manager(db_engine)
+        assert kept is not None
+        assert kept.id == WAREHOUSE_MANAGER_ID
+
+        # Downgrade leaves the kept row (and its assignment) as it is.
+        await _alembic(migrated_database, "downgrade", PRE_ROLE_CLEANUP_REVISION)
+        async with AsyncSession(db_engine) as session:
+            assignments = await session.scalar(
+                select(func.count()).select_from(UserRole).where(UserRole.user_id == user.id)
+            )
+        assert assignments == 1
+    finally:
+        async with AsyncSession(db_engine) as session, session.begin():
+            await session.execute(delete(User).where(User.phone == "+989120000555"))
+        await _alembic(migrated_database, "upgrade", "head")
+    # Once unreferenced, a later run of the migration removes it.
+    await _alembic(migrated_database, "downgrade", PRE_ROLE_CLEANUP_REVISION)
+    await _alembic(migrated_database, "upgrade", "head")
+    assert await _warehouse_manager(db_engine) is None
