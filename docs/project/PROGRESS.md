@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.1 Auth & RBAC
-- **Current Task:** AUTH-12 — Auth API & security test suite · IN_PROGRESS (batch AUTH-11/12؛ AUTH-11 COMPLETE) → [tasks/phase-02/AUTH-12-auth-security-tests.md](../../tasks/phase-02/AUTH-12-auth-security-tests.md)
+- **Current Task:** — (batch AUTH-11/12 COMPLETE؛ منتظر CI). بعدی: SEC-06 و task بعدی M2.1 طبق PLAN.md
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 35/143 task COMPLETE · وزنی 18.0% (74.5h / 414h) · MVP 27.4%
+- **Progress:** 36/143 task COMPLETE · وزنی 18.7% (77.5h / 414h) · MVP 28.5%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** CI batch AUTH-08/10/09 سبز است. batch بعدی پیشنهادی: AUTH-11 + AUTH-12 (HIGH). SEC-06 در اولین batch بدون task HIGH اجرا می‌شود. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** M2.1 کامل شد. CI batch AUTH-11/12 باید بررسی شود. روی دیتابیس توسعه `alembic upgrade head` و `python -m app.db.seed` اجرا شود (grant جدید `users:manage` برای admin). batch بعدی پیشنهادی (بدون HIGH، 11h): SEC-06 + CAT-01 + CAT-02 + CAT-03. CAT-00 (HIGH، ویرایش PRD) جدا انجام می‌شود. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**18.0%** = 74.5h COMPLETE / 414h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**18.7%** = 77.5h COMPLETE / 414h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 134h | 37h | 27.6% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 134h | 40h | 29.9% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 339.5h ≈ ۲۳ هفته. MVP باقی‌مانده: 197h ≈ ۱۴ هفته.
+- باقی‌مانده: 336.5h ≈ ۲۲ هفته. MVP باقی‌مانده: 194h ≈ ۱۳ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-09: AUTH-12 (consolidated auth security suite; rule → test map for ADR-016/017/018/019).
 - 2026-10-09: AUTH-11 (admin user list/status/role, last super_admin guard, warehouse_manager data migration; ADR-019).
 - 2026-10-09: AUTH-09 (GET /auth/me, PATCH /users/me, audit user.profile_updated, no-store).
 - 2026-10-06: AUTH-10 (get_current_user, require_permission, ensure_owner; per-request DB checks; ADR-018).

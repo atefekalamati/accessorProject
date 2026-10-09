@@ -60,7 +60,7 @@
 | AUTH-09 | GET /auth/me, PATCH /users/me | COMPLETE | HIGH | HIGH | 2.5 | AUTH-06 | system fields rejected (400) | ✓ |
 | AUTH-10 | Permission dependency + ownership helper | COMPLETE | HIGH | HIGH | 3 | AUTH-06, AUTH-02 | 401/403 from DB permissions | ✓ |
 | AUTH-11 | Admin user endpoints + AuditLog + warehouse_manager data migration | COMPLETE | MEDIUM | HIGH | 5 | AUTH-10, INF-03, INF-05 | only super_admin changes roles; only DEFAULT_ROLES assignable | ✓ |
-| AUTH-12 | Auth API & security test suite | NOT_STARTED | HIGH | HIGH | 3 | AUTH-05…11 | all PRD acceptance criteria tested | ✓ |
+| AUTH-12 | Auth API & security test suite | COMPLETE | HIGH | HIGH | 3 | AUTH-05…11 | all PRD acceptance criteria tested | ✓ |
 
 ### M2.2 Catalog — PRD «دسته‌بندی محصولات» ✓، «جزئیات محصول» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
