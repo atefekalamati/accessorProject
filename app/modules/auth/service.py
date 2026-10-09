@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, auto
+from typing import Any, Final
 from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +14,7 @@ from starlette.requests import Request
 
 from app.core.config import Settings
 from app.core.errors import ErrorCode, ForbiddenError, RateLimitedError, UnauthorizedError
-from app.core.redaction import mask_phone
+from app.core.redaction import mask_email, mask_phone
 from app.core.time import utc_now
 from app.db.models import OtpCode, User, UserSession, UserStatus
 from app.modules.auth.otp import (
@@ -27,7 +29,7 @@ from app.modules.auth.repository import (
     UserRepository,
     WindowUsage,
 )
-from app.modules.auth.schemas import RequestOtpResponse
+from app.modules.auth.schemas import ProfileResponse, RequestOtpResponse
 from app.modules.auth.sms import SmsSender
 from app.modules.auth.tokens import (
     AccessTokenError,
@@ -428,3 +430,71 @@ class AccessService:
             roles=frozenset(roles),
             permissions=frozenset(permissions),
         )
+
+
+PROFILE_FIELDS: Final = ("first_name", "last_name", "email")
+
+
+def _audit_profile(values: Mapping[str, Any]) -> dict[str, Any]:
+    # redact() masks phones and secrets, not emails, so the email is masked here.
+    email = values.get("email")
+    return {**values, "email": mask_email(email)} if email else dict(values)
+
+
+class ProfileService:
+    """Read and edit the current user's own profile."""
+
+    def __init__(self, session: AsyncSession, user_repository: UserRepository) -> None:
+        self._session = session
+        self._users = user_repository
+
+    async def get_profile(self, current: CurrentUser) -> ProfileResponse:
+        async with self._session.begin():
+            user = await self._users.get(current.id)
+        if user is None or user.is_deleted:
+            raise _not_authenticated()
+        return _profile(user, current)
+
+    async def update_profile(
+        self, current: CurrentUser, changes: Mapping[str, Any], audit_request: Request | None
+    ) -> ProfileResponse:
+        """Apply validated ``changes`` (a subset of PROFILE_FIELDS); audit real changes only."""
+        async with self._session.begin():
+            user = await self._users.lock_active(current.id)
+            if user is None:
+                raise _not_authenticated()
+            before = {field: getattr(user, field) for field in PROFILE_FIELDS}
+            changed = {
+                field: value
+                for field, value in changes.items()
+                if field in PROFILE_FIELDS and before[field] != value
+            }
+            if changed:
+                for field, value in changed.items():
+                    setattr(user, field, value)
+                await self._session.flush()
+                await record_audit(
+                    self._session,
+                    actor_id=user.id,
+                    action="user.profile_updated",
+                    entity_type="user",
+                    entity_id=user.id,
+                    before=_audit_profile({field: before[field] for field in changed}),
+                    after=_audit_profile(changed),
+                    request=audit_request,
+                )
+        return _profile(user, current)
+
+
+def _profile(user: User, current: CurrentUser) -> ProfileResponse:
+    return ProfileResponse(
+        id=user.id,
+        mobile=user.phone,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        email=user.email,
+        status=user.status,
+        mobile_verified_at=user.mobile_verified_at,
+        roles=sorted(current.roles),
+        permissions=sorted(current.permissions),
+    )

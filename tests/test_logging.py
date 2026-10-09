@@ -8,7 +8,7 @@ import pytest
 
 import app.core.logging as app_logging
 from app.core.logging import REDACTION_FAILED_MESSAGE, JsonFormatter
-from app.core.redaction import REDACTED
+from app.core.redaction import REDACTED, mask_email
 
 JWT = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.c2lnbmF0dXJlLXZhbHVl"
 logger = logging.getLogger("tests.logging")
@@ -206,3 +206,18 @@ def test_formatter_never_raises_on_redaction_error(
     assert parsed["message"] == REDACTION_FAILED_MESSAGE
     assert parsed["level"] == "INFO"
     assert "tok-must-not-leak" not in output
+
+
+@pytest.mark.parametrize(
+    ("email", "masked"),
+    [
+        ("ali.rezaei@example.com", "a***i@example.com"),
+        ("abc@x.io", "a***c@x.io"),
+        ("ab@x.io", "a***@x.io"),
+        ("a@x.io", "a***@x.io"),
+        ("not-an-email", REDACTED),
+        ("@x.io", REDACTED),
+    ],
+)
+def test_mask_email_keeps_only_the_edges_of_the_local_part(email: str, masked: str) -> None:
+    assert mask_email(email) == masked

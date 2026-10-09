@@ -4,17 +4,32 @@ from fastapi import APIRouter, Cookie, Depends, Request, Response, status
 
 from app.core.errors import UnauthorizedError
 from app.core.time import utc_now
-from app.modules.auth.dependencies import get_auth_service, get_otp_service
+from app.modules.auth.dependencies import (
+    get_auth_service,
+    get_current_user,
+    get_otp_service,
+    get_profile_service,
+)
 from app.modules.auth.schemas import (
+    ProfileResponse,
     RequestOtpRequest,
     RequestOtpResponse,
     TokenResponse,
+    UpdateProfileRequest,
     VerifyOtpRequest,
 )
-from app.modules.auth.service import AuthService, ClientInfo, IssuedTokens, OtpService
+from app.modules.auth.service import (
+    AuthService,
+    ClientInfo,
+    CurrentUser,
+    IssuedTokens,
+    OtpService,
+    ProfileService,
+)
 from app.shared.audit import client_ip
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+users_router = APIRouter(prefix="/users", tags=["users"])
 
 # Cookie transport lives only here; services never see HTTP (ADR-012).
 REFRESH_COOKIE_NAME: Final = "refresh_token"
@@ -112,3 +127,35 @@ async def logout(
         samesite="strict",
     )
     response.headers["Cache-Control"] = "no-store"
+
+
+@router.get(
+    "/me",
+    response_model=ProfileResponse,
+    summary="The current user's profile, roles and permissions",
+)
+async def me(
+    response: Response,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    service: Annotated[ProfileService, Depends(get_profile_service)],
+) -> ProfileResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return await service.get_profile(user)
+
+
+@users_router.patch(
+    "/me",
+    response_model=ProfileResponse,
+    summary="Complete or edit the current user's name and email",
+)
+async def update_me(
+    payload: UpdateProfileRequest,
+    request: Request,
+    response: Response,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    service: Annotated[ProfileService, Depends(get_profile_service)],
+) -> ProfileResponse:
+    response.headers["Cache-Control"] = "no-store"
+    # Only fields the client sent; omitted ones stay unchanged.
+    changes = payload.model_dump(include=payload.model_fields_set)
+    return await service.update_profile(user, changes, request)

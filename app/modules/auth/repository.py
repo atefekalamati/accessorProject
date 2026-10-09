@@ -131,6 +131,12 @@ class UserRepository:
         role_id: UUID | None = await self._session.scalar(select(Role.id).where(Role.name == name))
         return role_id
 
+    async def lock_active(self, user_id: UUID) -> User | None:
+        """A not-deleted user, row-locked until the transaction ends."""
+        statement = select(User).where(User.id == user_id, not_deleted(User)).with_for_update()
+        user: User | None = await self._session.scalar(statement)
+        return user
+
     async def get_with_session(
         self, user_id: UUID, session_id: UUID
     ) -> tuple[User, UserSession] | None:

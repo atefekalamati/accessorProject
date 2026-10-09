@@ -28,7 +28,7 @@
 | D19 | unique روی مدل soft-deletable | — | — | resolved (ADR-015) |
 | D20 | rate limit و جزئیات request-otp | AUTH-05 | — | resolved (ADR-016) |
 | D21 | ورود، session و چرخش refresh | AUTH-06، AUTH-07 | — | resolved (ADR-017) |
-| D22 | احراز هویت هر درخواست، permission و مالکیت | AUTH-08، AUTH-10 | — | resolved (ADR-018) |
+| D22 | احراز هویت هر درخواست، permission و مالکیت | AUTH-08، AUTH-09، AUTH-10 | — | resolved (ADR-018) |
 
 ## ADR
 
@@ -135,6 +135,8 @@
 - زمینه: PRD فقط می‌گوید «نقش ارسالی از سمت کاربر قابل اعتماد نیست». اینکه access token بعد از logout تا انقضا معتبر بماند یا نه، و اینکه دسترسی به منبع دیگران چه پاسخی بگیرد، در PRD نیامده است.
 - تصمیم (کاربر تأیید کرد): `get_current_user` در هر درخواست user و session مربوط به claim `sid` را از دیتابیس می‌خواند. user ناموجود یا soft-deleted، و session revoke‌شده یا منقضی → 401 با `WWW-Authenticate: Bearer`. کاربر `inactive` یا `blocked` → 403. نتیجه: logout و revoke فوراً اثر دارند و بعد از هر refresh، access قبلی هم باطل می‌شود. permissionها از `user_roles → role_permissions` خوانده می‌شوند (اجتماع نقش‌ها) و هیچ claim یا ورودی کلاینت در آن‌ها نقشی ندارد.
 - تصمیم‌های کم‌اثر (خودم): `require_permission(key)` کلید ناشناخته را هنگام import با `ValueError` رد می‌کند. `ensure_owner` به‌جای 403 خطای 404 `NOT_FOUND` می‌دهد تا وجود منبع لو نرود. logout با cookie revoke‌شده reuse حساب نمی‌شود (برای idempotent ماندن).
+- پروفایل (AUTH-09، کاربر تأیید کرد): email با `email-validator>=2.3,<3.0` و با `check_deliverability=False` اعتبارسنجی و lowercase می‌شود. PATCH با audit `user.profile_updated` ثبت می‌شود و email در diff ماسک می‌شود. پاسخ‌های verify-otp، refresh، logout، `/auth/me` و `/users/me` هدر `Cache-Control: no-store` دارند.
+- تصمیم‌های کم‌اثر پروفایل (خودم): نام‌ها در audit ماسک نمی‌شوند (برای کاربرد audit لازم‌اند). `mask_email` فقط اول و آخر local part را نگه می‌دارد، پس اگر دو ایمیل ماسک یکسان داشته باشند، تغییر email در diff دیده نمی‌شود (محدودیت پذیرفته‌شده). body خالی → 200 بدون تغییر. `null` برای نام → 400 و برای email یعنی پاک کردن.
 - پیامدها: هر درخواست احراز‌شده سه query کوتاه دارد (user+session، roles، permissions). اگر لازم شد، cache در OPS بررسی می‌شود. AUTH-11 هنگام block کردن کاربر نیازی به revoke فوری session ندارد، چون وضعیت در هر درخواست چک می‌شود (هرچند revoke برای refresh مفید است).
 
 ### تصمیم‌های deferred

@@ -11,7 +11,13 @@ from app.core.errors import ForbiddenError, NotFoundError, UnauthorizedError
 from app.db.seed import ALL_PERMISSION_KEYS
 from app.db.session import get_db_session
 from app.modules.auth.repository import OtpRepository, SessionRepository, UserRepository
-from app.modules.auth.service import AccessService, AuthService, CurrentUser, OtpService
+from app.modules.auth.service import (
+    AccessService,
+    AuthService,
+    CurrentUser,
+    OtpService,
+    ProfileService,
+)
 from app.modules.auth.sms import SmsSender, get_sms_sender
 
 # auto_error=False: a missing or non-Bearer header must be our 401, not FastAPI's 403.
@@ -44,6 +50,12 @@ def get_access_service(
     settings: Annotated[Settings, Depends(get_app_settings)],
 ) -> AccessService:
     return AccessService(session, UserRepository(session), settings)
+
+
+def get_profile_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> ProfileService:
+    return ProfileService(session, UserRepository(session))
 
 
 async def get_current_user(
