@@ -6,18 +6,20 @@ therefore committed or rolled back together with the operation it describes.
 Stored ``metadata``::
 
     {"actor": "user" | "system", "request_id": str | None,
-     "diff": {field: {"before": ..., "after": ...}}}
+     "diff": {field: {"before": ..., "after": ..., "changed": true}}}
 
-Only changed fields appear in ``diff``. On create (``before=None``) or delete
-(``after=None``) every field of the snapshot appears with ``None`` on the missing side.
-Sensitive keys and phone numbers are masked with ``app.core.redaction.redact``.
+Only changed fields appear in ``diff``, each marked ``"changed": true``. On create
+(``before=None``) or delete (``after=None``) every field of the snapshot appears with
+``None`` on the missing side. The diff is computed on raw values and masked afterwards
+(``field_masks``, then ``app.core.redaction.redact`` for sensitive keys and phone
+numbers), so a change stays visible even when both masked values look the same.
 """
 
 from __future__ import annotations
 
 import ipaddress
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
@@ -56,13 +58,26 @@ def _jsonable(value: Any) -> Any:
 def build_diff(
     before: Mapping[str, Any] | None, after: Mapping[str, Any] | None
 ) -> dict[str, dict[str, Any]]:
-    """Return ``{field: {"before", "after"}}`` for fields whose values differ."""
+    """Return ``{field: {"before", "after", "changed"}}`` for fields whose values differ."""
     old = _jsonable(before or {})
     new = _jsonable(after or {})
     diff: dict[str, dict[str, Any]] = {}
     for key in sorted(old.keys() | new.keys()):
         if old.get(key) != new.get(key):
-            diff[key] = {"before": old.get(key), "after": new.get(key)}
+            diff[key] = {"before": old.get(key), "after": new.get(key), "changed": True}
+    return diff
+
+
+def _mask_fields(
+    diff: dict[str, dict[str, Any]], field_masks: Mapping[str, Callable[[str], str]]
+) -> dict[str, dict[str, Any]]:
+    for field, mask in field_masks.items():
+        entry = diff.get(field)
+        if entry is None:
+            continue
+        for side in ("before", "after"):
+            if isinstance(entry[side], str):
+                entry[side] = mask(entry[side])
     return diff
 
 
@@ -92,15 +107,20 @@ async def record_audit(
     before: Mapping[str, Any] | None,
     after: Mapping[str, Any] | None,
     request: Request | None,
+    field_masks: Mapping[str, Callable[[str], str]] | None = None,
 ) -> AuditLog:
-    """Add an audit row to ``session`` and flush it, without committing."""
+    """Add an audit row to ``session`` and flush it, without committing.
+
+    ``field_masks`` masks string values of the named fields after the diff is built,
+    for personal data that ``redact`` does not cover (e.g. email).
+    """
     if _ACTION.fullmatch(action) is None:
         raise ValueError(f"Audit action {action!r} must follow '<entity>.<verb>'")
 
     metadata = {
         "actor": ACTOR_SYSTEM if actor_id is None else ACTOR_USER,
         "request_id": _request_id(request),
-        "diff": build_diff(before, after),
+        "diff": _mask_fields(build_diff(before, after), field_masks or {}),
     }
     audit_log = AuditLog(
         actor_user_id=actor_id,

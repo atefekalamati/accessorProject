@@ -6,22 +6,22 @@
 - **Phase › Milestone:** 2 Core domain › M2.1 Auth & RBAC
 - **Current Task:** AUTH-11 — Admin user endpoints · NOT_STARTED (batch AUTH-08/10/09 COMPLETE) → [tasks/phase-02/AUTH-11-admin-user-endpoints.md](../../tasks/phase-02/AUTH-11-admin-user-endpoints.md)
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 34/142 task COMPLETE · وزنی 16.9% (69.5h / 412h) · MVP 25.8%
+- **Progress:** 34/143 task COMPLETE · وزنی 16.8% (69.5h / 414h) · MVP 25.6%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** بررسی CI batch AUTH-08/10/09 (dependency جدید `email-validator`). batch بعدی پیشنهادی: AUTH-11 + AUTH-12. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** CI batch AUTH-08/10/09 سبز است. batch بعدی پیشنهادی: AUTH-11 + AUTH-12 (HIGH). SEC-06 در اولین batch بدون task HIGH اجرا می‌شود. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**16.9%** = 69.5h COMPLETE / 412h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**16.8%** = 69.5h COMPLETE / 414h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 132h | 32h | 24.2% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 134h | 32h | 23.9% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,7 +29,7 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 342.5h ≈ ۲۳ هفته. MVP باقی‌مانده: 200h ≈ ۱۴ هفته.
+- باقی‌مانده: 344.5h ≈ ۲۳ هفته. MVP باقی‌مانده: 202h ≈ ۱۴ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -71,6 +71,10 @@
 ---
 
 ## Plan changes
+### 2026-10-09 — بعد از CI سبز batch AUTH-08/10/09 (تصمیم کاربر)
+- اصلاح audit: diff روی مقادیر خام ساخته می‌شود، هر ردیف `"changed": true` دارد و ماسک بعد از diff اعمال می‌شود (`field_masks`). این برای همه audit ها اعمال شد (INF-05).
+- `email-validator` با range pin می‌ماند.
+- task جدید SEC-06 (MEDIUM، 2h): lock file با hash، و نصب CI و Dockerfile از آن. در اولین batch بدون task HIGH اجرا می‌شود. کل برنامه 414h و فاز ۲ 134h شد.
 ### 2026-10-09 — تأیید batch AUTH-08/10/09 (تغییرات کاربر)
 - access token با revoke شدن session فوراً باطل می‌شود و `email-validator` با deliverability خاموش pin شد (ADR-018).
 - اضافه به AUTH-09: audit `user.profile_updated` با diff ماسک‌شده و `Cache-Control: no-store` روی ۵ endpoint auth/profile همراه با تست. برآورد تغییر نکرد.

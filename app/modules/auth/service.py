@@ -435,12 +435,6 @@ class AccessService:
 PROFILE_FIELDS: Final = ("first_name", "last_name", "email")
 
 
-def _audit_profile(values: Mapping[str, Any]) -> dict[str, Any]:
-    # redact() masks phones and secrets, not emails, so the email is masked here.
-    email = values.get("email")
-    return {**values, "email": mask_email(email)} if email else dict(values)
-
-
 class ProfileService:
     """Read and edit the current user's own profile."""
 
@@ -479,9 +473,11 @@ class ProfileService:
                     action="user.profile_updated",
                     entity_type="user",
                     entity_id=user.id,
-                    before=_audit_profile({field: before[field] for field in changed}),
-                    after=_audit_profile(changed),
+                    before={field: before[field] for field in changed},
+                    after=changed,
                     request=audit_request,
+                    # redact() masks phones and secrets, not emails.
+                    field_masks={"email": mask_email},
                 )
         return _profile(user, current)
 

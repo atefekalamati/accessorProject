@@ -272,13 +272,29 @@ async def test_profile_update_is_audited_with_a_redacted_diff(
     first, second = await _profile_audits(db_engine, user.id)
     assert first.actor_user_id == user.id
     assert first.metadata_["diff"] == {
-        "email": {"before": None, "after": "a***i@example.com"},
-        "first_name": {"before": None, "after": "Ali"},
+        "email": {"before": None, "after": "a***i@example.com", "changed": True},
+        "first_name": {"before": None, "after": "Ali", "changed": True},
     }
     assert second.metadata_["diff"] == {
-        "email": {"before": "a***i@example.com", "after": "z***a@example.org"},
+        "email": {"before": "a***i@example.com", "after": "z***a@example.org", "changed": True},
     }
     assert "ali.rezaei" not in str(first.metadata_)
+
+
+async def test_email_change_is_audited_even_when_masks_collide(
+    auth_client: AsyncClient, issue_otp: IssueOtp, new_mobile: str, db_engine: AsyncEngine
+) -> None:
+    headers = await _access(auth_client, issue_otp, new_mobile)
+    await _patch(auth_client, headers, {"email": "ali@example.com"})
+
+    await _patch(auth_client, headers, {"email": "amir.ali@example.com"})
+
+    user = await _user(db_engine, new_mobile)
+    _, second = await _profile_audits(db_engine, user.id)
+    assert second.metadata_["diff"] == {
+        "email": {"before": "a***i@example.com", "after": "a***i@example.com", "changed": True},
+    }
+    assert "amir" not in str(second.metadata_)
 
 
 # --- Cache-Control --------------------------------------------------------------------

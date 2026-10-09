@@ -34,3 +34,7 @@ python -m mypy app tests
 - dependency جدید: `email-validator>=2.3,<3.0` (دلیل: اعتبارسنجی استاندارد email؛ بدون DNS).
 - تست‌ها: `tests/test_auth_me.py` (۳۴ مورد) و ۶ unit test برای `mask_email` در `tests/test_logging.py`.
 - Validation: pytest 550 passed، ruff، format و mypy سبز.
+### 2026-10-09 — FIX (درخواست کاربر پس از CI سبز)
+- diff در audit حالا روی مقادیر خام ساخته می‌شود و بعد ماسک می‌شود (`record_audit(..., field_masks={"email": mask_email})`). هر ردیف diff `"changed": true` دارد، پس تغییر email حتی وقتی دو ماسک یکسان باشند هم دیده می‌شود. محدودیت ثبت‌شده در ADR-018 برطرف شد.
+- این قرارداد در `app/shared/audit.py` (INF-05) برای همه actionها اعمال شد: هر ردیف diff `changed: true` دارد و ماسک phone هم دیگر باعث حذف تغییر نمی‌شود.
+- تست‌ها: ۲ unit test در `tests/test_audit.py` و ۱ تست در `tests/test_auth_me.py`. pytest 553 passed، ruff، format و mypy سبز.
