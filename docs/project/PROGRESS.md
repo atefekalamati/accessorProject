@@ -8,7 +8,7 @@
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
 - **Progress:** 36/143 task COMPLETE · وزنی 18.7% (77.5h / 414h) · MVP 28.5%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** M2.1 کامل شد. CI batch AUTH-11/12 باید بررسی شود. روی دیتابیس توسعه `alembic upgrade head` و `python -m app.db.seed` اجرا شود (grant جدید `users:manage` برای admin). batch بعدی پیشنهادی (بدون HIGH، 11h): SEC-06 + CAT-01 + CAT-02 + CAT-03. CAT-00 (HIGH، ویرایش PRD) جدا انجام می‌شود. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** CI batch AUTH-11/12 سبز است و دیتابیس توسعه در `20261009_0005` (head) و seed‌شده است. batch بعدی: CAT-00 (HIGH، بازنویسی «جزئیات محصول» در PRD) + SEC-06. CAT-01 تا CAT-03 فقط بعد از تأیید CAT-00. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
@@ -73,6 +73,10 @@
 ---
 
 ## Plan changes
+### 2026-10-09 — بعد از CI سبز batch AUTH-11/12 (تصمیم کاربر)
+- ترتیب جدید: batch بعدی CAT-00 + SEC-06. CAT-01 تا CAT-03 فقط بعد از تأیید CAT-00 اجرا می‌شوند.
+- `TEST_DATABASE_URL` در CLAUDE.md، README و `.env.example` حالا از `127.0.0.1` استفاده می‌کند، چون `localhost` روی Windows حدود 5 برابر کندتر بود.
+- دیتابیس توسعه: `alembic upgrade head` (0004 → `20261009_0005`) و seed اجرا شد. admin حالا 12 permission دارد، از جمله `users:manage`.
 ### 2026-10-09 — تأیید batch AUTH-11/12 (تصمیم کاربر)
 - admin مجوز `users:manage` را می‌گیرد (ADR-004 به‌روز شد). admin فقط وضعیت کاربرانی را تغییر می‌دهد که نقش‌هایشان زیرمجموعه `{customer}` است. هر نقش staff فقط با super_admin تغییر می‌کند (ADR-019).
 - تغییر نقش با `{"roles": [...]}` کل مجموعه را جایگزین می‌کند. تغییر وضعیت یا نقش خود → 422. حذف یا غیرفعال‌کردن آخرین super_admin → 409. برآوردها تغییر نکرد.

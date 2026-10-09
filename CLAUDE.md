@@ -54,7 +54,7 @@ docker compose up --build                # API + PostgreSQL؛ پورت‌های 
 
 ```powershell
 docker compose --profile test up -d --wait postgres-test
-$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:55432/project_ak_test"  # پورت = TEST_DB_HOST_PORT
+$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@127.0.0.1:55432/project_ak_test"  # پورت = TEST_DB_HOST_PORT؛ 127.0.0.1 نه localhost (روی Windows ~5x کندتر)
 python -m pytest -q
 docker compose --profile test stop postgres-test; docker compose --profile test rm -f postgres-test
 ```
