@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
-from app.db.models.catalog import SLUG_PATTERN
+from app.db.models.catalog import SLUG_PATTERN, CategoryFilterType, VariantOptionKey
 
 # Fields that categories:edit_content may change; everything else needs catalog:manage
 # (ADR-023). icon_key and the SEO fields stay with catalog:manage for now.
@@ -82,3 +82,61 @@ class AdminCategoryResponse(BaseModel):
     seo_description: str | None
     created_at: datetime
     updated_at: datetime
+
+
+MAX_CATEGORY_FILTERS: Final = 30
+PRICE_FILTER_KEY: Final = "price"
+
+FilterKey = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
+FilterLabel = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+
+
+class CategoryFilterItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    attribute_key: FilterKey
+    label: FilterLabel
+    filter_type: CategoryFilterType
+    display_order: DisplayOrder = 0
+    is_active: bool = True
+
+    @model_validator(mode="after")
+    def check_type(self) -> Self:
+        # price is the only range; a color swatch only makes sense for the color option.
+        is_price = self.attribute_key == PRICE_FILTER_KEY
+        if is_price != (self.filter_type == CategoryFilterType.RANGE):
+            raise ValueError("filter_type 'range' is only for attribute_key 'price', and back")
+        if (
+            self.filter_type == CategoryFilterType.COLOR
+            and self.attribute_key != VariantOptionKey.COLOR
+        ):
+            raise ValueError("filter_type 'color' is only for attribute_key 'color'")
+        return self
+
+
+class ReplaceCategoryFiltersRequest(BaseModel):
+    """The complete new filter set of the category; it replaces the current one."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    filters: list[CategoryFilterItem] = Field(max_length=MAX_CATEGORY_FILTERS)
+
+    @model_validator(mode="after")
+    def check_unique_keys(self) -> Self:
+        keys = [item.attribute_key for item in self.filters]
+        if len(keys) != len(set(keys)):
+            raise ValueError("attribute_key must be unique")
+        return self
+
+
+class AdminCategoryFilterResponse(BaseModel):
+    id: UUID
+    attribute_key: str
+    label: str
+    filter_type: str
+    display_order: int
+    is_active: bool
+
+
+class AdminCategoryFiltersResponse(BaseModel):
+    items: list[AdminCategoryFilterResponse]

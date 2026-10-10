@@ -19,12 +19,15 @@ from app.core.errors import (
     ForbiddenError,
     NotFoundError,
 )
-from app.db.models import Category
+from app.db.models import Category, CategoryFilter
 from app.modules.auth.service import CurrentUser
 from app.modules.catalog.admin_schemas import (
     CONTENT_FIELDS,
+    AdminCategoryFilterResponse,
+    AdminCategoryFiltersResponse,
     AdminCategoryResponse,
     CreateCategoryRequest,
+    ReplaceCategoryFiltersRequest,
     UpdateCategoryRequest,
 )
 from app.modules.catalog.repository import AdminCategoryRepository
@@ -105,6 +108,21 @@ def _too_deep() -> BusinessRuleError:
 
 def _snapshot(category: Category) -> dict[str, Any]:
     return {field: getattr(category, field) for field in _AUDITED_FIELDS}
+
+
+def _filters_snapshot(filters: Sequence[CategoryFilter]) -> list[dict[str, Any]]:
+    fields = ("attribute_key", "label", "filter_type", "display_order", "is_active")
+    snapshot = [{field: getattr(item, field) for field in fields} for item in filters]
+    return sorted(snapshot, key=lambda item: str(item["attribute_key"]))
+
+
+def _filters_response(filters: Sequence[CategoryFilter]) -> AdminCategoryFiltersResponse:
+    return AdminCategoryFiltersResponse(
+        items=[
+            AdminCategoryFilterResponse.model_validate(item, from_attributes=True)
+            for item in filters
+        ]
+    )
 
 
 def _response(category: Category) -> AdminCategoryResponse:
@@ -239,6 +257,47 @@ class AdminCategoryService:
                 request=audit_request,
             )
         logger.info("category.deleted", extra={"category_id": str(category.id)})
+
+    async def replace_filters(
+        self,
+        actor: CurrentUser,
+        category_id: UUID,
+        payload: ReplaceCategoryFiltersRequest,
+        audit_request: Request | None,
+    ) -> AdminCategoryFiltersResponse:
+        """Replace the category's filter set; an identical set is a no-op without audit."""
+        async with self._session.begin():
+            await self._repository.lock_tree()
+            category = await self._repository.lock(category_id)
+            if category is None:
+                raise _not_found()
+            current = await self._repository.filters_of(category.id)
+            before = _filters_snapshot(current)
+            after = sorted(
+                (item.model_dump(mode="json") for item in payload.filters),
+                key=lambda item: item["attribute_key"],
+            )
+            if before == after:
+                return _filters_response(current)
+
+            filters = [
+                CategoryFilter(category_id=category.id, **item.model_dump())
+                for item in payload.filters
+            ]
+            await self._repository.replace_filters(category.id, filters)
+            await record_audit(
+                self._session,
+                actor_id=actor.id,
+                action="category.filters_updated",
+                entity_type="category",
+                entity_id=category.id,
+                before={"filters": before},
+                after={"filters": after},
+                request=audit_request,
+            )
+            saved = await self._repository.filters_of(category.id)
+        logger.info("category.filters_updated", extra={"category_id": str(category.id)})
+        return _filters_response(saved)
 
     async def _check_parent(self, parent_id: UUID, *, subtree_height: int) -> None:
         """The parent must exist, and the moved subtree must fit under it."""

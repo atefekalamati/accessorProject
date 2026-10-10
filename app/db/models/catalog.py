@@ -35,6 +35,13 @@ class VariantOptionKey(StrEnum):
     MODEL = "model"
 
 
+class CategoryFilterType(StrEnum):
+    CHECKBOX = "checkbox"
+    RANGE = "range"
+    COLOR = "color"
+    SELECT = "select"
+
+
 class Category(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "categories"
     __table_args__ = (
@@ -214,3 +221,37 @@ class VariantOption(UUIDPrimaryKeyMixin, Base):
     )
     option_key: Mapped[str] = mapped_column(String(20), nullable=False)
     value: Mapped[str] = mapped_column(String(50), nullable=False)
+
+
+class CategoryFilter(UUIDPrimaryKeyMixin, Base):
+    """A filterable key shown on a category page; the admin replaces the whole set (CAT-09).
+
+    ``attribute_key`` is a variant option key (color/size/model), a product attribute key,
+    or ``price`` (range only).
+    """
+
+    __tablename__ = "category_filters"
+    __table_args__ = (
+        UniqueConstraint("category_id", "attribute_key"),
+        CheckConstraint("length(trim(attribute_key)) > 0", name="attribute_key_not_blank"),
+        CheckConstraint("length(trim(label)) > 0", name="label_not_blank"),
+        CheckConstraint(
+            "filter_type IN ('checkbox', 'range', 'color', 'select')", name="valid_filter_type"
+        ),
+        CheckConstraint("display_order >= 0", name="display_order_non_negative"),
+    )
+
+    category_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("categories.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    attribute_key: Mapped[str] = mapped_column(String(50), nullable=False)
+    label: Mapped[str] = mapped_column(String(100), nullable=False)
+    filter_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    display_order: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )

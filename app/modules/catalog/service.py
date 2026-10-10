@@ -7,14 +7,17 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import NotFoundError
-from app.db.models import Category
+from app.db.models import Category, CategoryFilterType, VariantOptionKey
 from app.modules.catalog.repository import CategoryRepository
 from app.modules.catalog.schemas import (
     BreadcrumbItem,
     CategoryDetailResponse,
+    CategoryFiltersResponse,
     CategorySummary,
     CategoryTreeNode,
     CategoryTreeResponse,
+    FilterValue,
+    PublicCategoryFilter,
 )
 
 
@@ -34,6 +37,16 @@ def _children_by_parent(categories: Sequence[Category]) -> dict[UUID | None, lis
     for category in categories:
         children[category.parent_id].append(category)
     return children
+
+
+def _visible_by_slug(categories: Sequence[Category], slug: str) -> Category:
+    category = next((item for item in categories if item.slug == slug), None)
+    if category is None:
+        raise NotFoundError(message="Category not found")
+    return category
+
+
+_OPTION_KEYS = frozenset(VariantOptionKey)
 
 
 class CategoryService:
@@ -59,9 +72,7 @@ class CategoryService:
     async def detail(self, slug: str) -> CategoryDetailResponse:
         async with self._session.begin():
             categories = await self._repository.list_visible()
-        category = next((item for item in categories if item.slug == slug), None)
-        if category is None:
-            raise NotFoundError(message="Category not found")
+        category = _visible_by_slug(categories, slug)
 
         by_id = {item.id: item for item in categories}
         path: list[Category] = []
@@ -84,4 +95,38 @@ class CategoryService:
                 for item in reversed(path)
             ],
             children=[_summary(child) for child in children],
+        )
+
+    async def filters(self, slug: str) -> CategoryFiltersResponse:
+        """Active filters of a visible category, each with the values its published products
+        actually have; a filter without values is left out.
+
+        ``range`` (price) filters have no data until product prices exist (CAT-07).
+        """
+        async with self._session.begin():
+            category = _visible_by_slug(await self._repository.list_visible(), slug)
+            filters = [
+                item
+                for item in await self._repository.active_filters(category.id)
+                if item.filter_type != CategoryFilterType.RANGE
+            ]
+            keys = {item.attribute_key for item in filters}
+            counts = [
+                *await self._repository.option_value_counts(category.id, keys & _OPTION_KEYS),
+                *await self._repository.attribute_value_counts(category.id, keys - _OPTION_KEYS),
+            ]
+        values: dict[str, list[FilterValue]] = defaultdict(list)
+        for key, value, count in counts:
+            values[key].append(FilterValue(value=value, count=count))
+        return CategoryFiltersResponse(
+            items=[
+                PublicCategoryFilter(
+                    key=item.attribute_key,
+                    label=item.label,
+                    type=item.filter_type,
+                    values=values[item.attribute_key],
+                )
+                for item in filters
+                if values.get(item.attribute_key)
+            ]
         )

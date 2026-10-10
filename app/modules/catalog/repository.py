@@ -1,14 +1,22 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import UnaryExpression, exists, func, literal, select, text
+from sqlalchemy import ColumnElement, UnaryExpression, delete, exists, func, literal, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from app.db.models import Category, Product
+from app.db.models import (
+    Category,
+    CategoryFilter,
+    Product,
+    ProductAttribute,
+    ProductStatus,
+    ProductVariant,
+    VariantOption,
+)
 from app.db.models.common import not_deleted
 
 
@@ -40,6 +48,58 @@ class CategoryRepository:
             .order_by(Category.display_order, Category.id)
         )
         return (await self._session.scalars(statement)).all()
+
+    async def active_filters(self, category_id: UUID) -> Sequence[CategoryFilter]:
+        statement = (
+            select(CategoryFilter)
+            .where(CategoryFilter.category_id == category_id, CategoryFilter.is_active.is_(True))
+            .order_by(CategoryFilter.display_order, CategoryFilter.id)
+        )
+        return (await self._session.scalars(statement)).all()
+
+    async def option_value_counts(
+        self, category_id: UUID, keys: Collection[str]
+    ) -> list[tuple[str, str, int]]:
+        """``(key, value, products)`` over active variants of the category's public products."""
+        if not keys:
+            return []
+        products = func.count(Product.id.distinct())
+        statement = (
+            select(VariantOption.option_key, VariantOption.value, products)
+            .join(ProductVariant, ProductVariant.id == VariantOption.variant_id)
+            .join(Product, Product.id == ProductVariant.product_id)
+            .where(*_public_products_of(category_id), VariantOption.option_key.in_(keys))
+            .where(ProductVariant.is_active.is_(True), not_deleted(ProductVariant))
+            .group_by(VariantOption.option_key, VariantOption.value)
+            .order_by(VariantOption.option_key, VariantOption.value)
+        )
+        rows = (await self._session.execute(statement)).all()
+        return [(row[0], row[1], int(row[2])) for row in rows]
+
+    async def attribute_value_counts(
+        self, category_id: UUID, keys: Collection[str]
+    ) -> list[tuple[str, str, int]]:
+        """``(key, value, products)`` over the attributes of the category's public products."""
+        if not keys:
+            return []
+        products = func.count(Product.id.distinct())
+        statement = (
+            select(ProductAttribute.attribute_key, ProductAttribute.attribute_value, products)
+            .join(Product, Product.id == ProductAttribute.product_id)
+            .where(*_public_products_of(category_id), ProductAttribute.attribute_key.in_(keys))
+            .group_by(ProductAttribute.attribute_key, ProductAttribute.attribute_value)
+            .order_by(ProductAttribute.attribute_key, ProductAttribute.attribute_value)
+        )
+        rows = (await self._session.execute(statement)).all()
+        return [(row[0], row[1], int(row[2])) for row in rows]
+
+
+def _public_products_of(category_id: UUID) -> tuple[ColumnElement[bool], ...]:
+    return (
+        Product.category_id == category_id,
+        Product.status == ProductStatus.PUBLISHED,
+        not_deleted(Product),
+    )
 
 
 # Recursive walks stop here even if corrupt data ever contained a cycle.
@@ -132,3 +192,20 @@ class AdminCategoryRepository:
     async def has_products(self, category_id: UUID) -> bool:
         criteria = (Product.category_id == category_id, not_deleted(Product))
         return bool(await self._session.scalar(select(exists().where(*criteria))))
+
+    async def filters_of(self, category_id: UUID) -> list[CategoryFilter]:
+        statement = (
+            select(CategoryFilter)
+            .where(CategoryFilter.category_id == category_id)
+            .order_by(CategoryFilter.display_order, CategoryFilter.id)
+        )
+        return list((await self._session.scalars(statement)).all())
+
+    async def replace_filters(self, category_id: UUID, filters: Sequence[CategoryFilter]) -> None:
+        await self._session.execute(
+            delete(CategoryFilter).where(CategoryFilter.category_id == category_id)
+        )
+        # Flush the delete first: the new rows may reuse the (category, key) pairs.
+        await self._session.flush()
+        self._session.add_all(filters)
+        await self._session.flush()

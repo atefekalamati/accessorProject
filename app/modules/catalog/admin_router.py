@@ -8,8 +8,10 @@ from app.db.models import Category
 from app.modules.auth.dependencies import require_any_permission, require_permission
 from app.modules.auth.service import CurrentUser
 from app.modules.catalog.admin_schemas import (
+    AdminCategoryFiltersResponse,
     AdminCategoryResponse,
     CreateCategoryRequest,
+    ReplaceCategoryFiltersRequest,
     UpdateCategoryRequest,
 )
 from app.modules.catalog.admin_service import MANAGE_PERMISSION, AdminCategoryService
@@ -101,3 +103,20 @@ async def delete_category(
 ) -> Response:
     await service.delete(actor, category_id, request)
     return Response(status_code=status.HTTP_204_NO_CONTENT, headers={"Cache-Control": "no-store"})
+
+
+@router.patch(
+    "/{category_id}/filters",
+    response_model=AdminCategoryFiltersResponse,
+    summary="Replace the filterable keys of a category",
+)
+async def replace_category_filters(
+    category_id: UUID,
+    payload: ReplaceCategoryFiltersRequest,
+    request: Request,
+    response: Response,
+    actor: Annotated[CurrentUser, Depends(require_permission(MANAGE_PERMISSION))],
+    service: Annotated[AdminCategoryService, Depends(get_admin_category_service)],
+) -> AdminCategoryFiltersResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return await service.replace_filters(actor, category_id, payload, request)

@@ -41,3 +41,20 @@ class CategoryDetailResponse(BaseModel):
     # From the root down to this category, inclusive.
     breadcrumb: list[BreadcrumbItem]
     children: list[CategorySummary]
+
+
+class FilterValue(BaseModel):
+    value: str
+    # Published products in the category having this value.
+    count: int
+
+
+class PublicCategoryFilter(BaseModel):
+    key: str
+    label: str
+    type: str
+    values: list[FilterValue]
+
+
+class CategoryFiltersResponse(BaseModel):
+    items: list[PublicCategoryFilter]

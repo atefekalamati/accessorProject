@@ -3,6 +3,8 @@ from app.db.models.audit import AuditLog
 from app.db.models.auth import OtpCode, UserSession
 from app.db.models.catalog import (
     Category,
+    CategoryFilter,
+    CategoryFilterType,
     Product,
     ProductAttribute,
     ProductStatus,
@@ -19,6 +21,8 @@ __all__ = [
     "AppSetting",
     "AuditLog",
     "Category",
+    "CategoryFilter",
+    "CategoryFilterType",
     "OtpCode",
     "Permission",
     "Product",
