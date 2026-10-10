@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** INV-03 (batch INV-01/INV-03). بعدی: CAT-11 (HIGH)، سپس PRC-02 + CAT-08.
+- **Current Task:** —. بعدی طبق M2.2-PLAN.md و Plan changes: CAT-11 (HIGH)، سپس PRC-02 + CAT-08.
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 49/145 task COMPLETE · وزنی 27.4% (114h / 416.5h) · MVP 41.6%
+- **Progress:** 50/145 task COMPLETE · وزنی 27.9% (116h / 416.5h) · MVP 42.3%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** اتمام INV-03، سپس batch بعدی: CAT-11. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** batch بعدی: CAT-11 (تنها، 5h، HIGH). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**27.4%** = 114h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**27.9%** = 116h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 76.5h | 56.5% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 78.5h | 57.9% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,7 +29,7 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 302.5h ≈ ۲۰ هفته. MVP باقی‌مانده: 160h ≈ ۱۱ هفته.
+- باقی‌مانده: 300.5h ≈ ۲۰ هفته. MVP باقی‌مانده: 158h ≈ ۱۱ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -162,6 +162,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-10 — INV-03 COMPLETE (پایان batch INV-01/INV-03)
+- `app/modules/inventory/stock.py` (توابع خالص free، max purchasable، وضعیت variant و محصول؛ ADR-029). بازبینی diff توسط subagent (APPROVE WITH CHANGES، اعمال شد). CI INV-01 سبز.
+
 ### 2026-10-10 — INV-01 COMPLETE (batch INV-01/INV-03)
 - `warehouses` (انبار پیش‌فرض با id ثابت) و `inventory_items` (migration `20261010_0013`)، ADR-029. بازبینی plan و diff توسط subagent (هر دو APPROVE WITH CHANGES، یافته‌ها اعمال شد). pytest 935 passed؛ ruff، format و mypy سبز.
 
