@@ -4,11 +4,11 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** batch ۲: CAT-04 → CAT-06 (CAT-04 COMPLETE). بعدی: CAT-06
+- **Current Task:** — (batch ۲ متوقف شد: CAT-04 COMPLETE؛ CAT-06 منتظر D26). بعدی: CAT-06 بعد از تصمیم D26
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
 - **Progress:** 43/144 task COMPLETE · وزنی 22.9% (95h / 415.5h) · MVP 34.8%
-- **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** batch بعدی: CAT-04 (attributes و VariantOption)، CAT-06 (GET /categories)، CAT-05 (media؛ dependency جدید Pillow باید در plan تأیید شود). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Blockers:** فاز ۲: CAT-06 منتظر D26، CAT-10 منتظر D27. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
+- **Next Action:** تصمیم کاربر روی D26 (CAT-06) و D27 (CAT-10) و تأیید Pillow برای CAT-05؛ سپس batch CAT-06، CAT-05، CAT-10. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 

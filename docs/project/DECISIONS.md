@@ -32,6 +32,8 @@
 | D23 | مدیریت کاربر توسط مدیران (وضعیت و نقش) | AUTH-11 | — | resolved (ADR-019) |
 | D24 | نیازمندی‌های محصول (جزئیات و admin) | CAT-00 | — | resolved (ADR-020) |
 | D25 | جزئیات schema کاتالوگ (FK، پیش‌فرض، CHECK) | — | — | resolved (ADR-021) |
+| D26 | قرارداد API عمومی دسته (`GET /categories` خارج از PRD؛ شکل پاسخ `/categories/{slug}`؛ دسته فعال زیر والد غیرفعال) | — | CAT-06 | open |
+| D27 | دسترسی content_manager به دسته‌ها (PRD: عنوان/توضیح/بنر/ترتیب؛ seed: فقط `content:manage`) | — | CAT-10 | open |
 
 ## ADR
 
