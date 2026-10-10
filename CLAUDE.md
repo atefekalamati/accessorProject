@@ -39,7 +39,8 @@ Python 3.12 · FastAPI · Pydantic v2 + pydantic-settings · SQLAlchemy 2 async 
 محیط: Windows، venv در `.venv`. یا venv را فعال کن (`.\.venv\Scripts\Activate.ps1`) یا از `.venv/Scripts/python -m ...` استفاده کن.
 
 ```powershell
-python -m pip install -e ".[dev]"        # نصب
+python -m pip install --require-hashes --no-deps -r requirements-dev.lock; python -m pip install --no-deps -e .   # نصب (همان نسخه‌های CI)
+python scripts/lock.py                   # بازتولید lockها بعد از تغییر pyproject.toml (--upgrade برای ارتقای همه)
 uvicorn app.main:app --reload            # اجرا (نیاز به .env یا DATABASE_URL و JWT_SECRET)
 python -m pytest                         # تست (بدون TEST_DATABASE_URL، تست‌های integration skip می‌شوند)
 python -m ruff check .                   # lint

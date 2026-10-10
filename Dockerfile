@@ -13,15 +13,22 @@ RUN groupadd --system app && useradd --system --gid app --create-home app
 
 WORKDIR /srv/app
 
+# Dependencies first, from the hashed lock (SEC-06): a tampered or unpinned package fails the
+# build, and this layer stays cached until the lock changes.
+# BuildKit cache mount keeps downloaded wheels across builds, so a retry resumes instead of
+# starting over. The cache lives outside the image layer.
+COPY requirements.lock ./
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --require-hashes --no-deps -r requirements.lock
+
 COPY pyproject.toml README.md ./
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./alembic.ini
 
-# BuildKit cache mount keeps downloaded wheels across builds, so a retry resumes instead of
-# starting over. The cache lives outside the image layer.
+# The project itself only; every dependency already came from the lock.
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --upgrade pip && pip install .
+    pip install --no-deps .
 
 USER app
 
