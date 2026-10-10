@@ -1,12 +1,12 @@
 # PROGRESS — منبع واحد «کجاییم؟»
 
-**Last Updated:** 2026-10-09
+**Last Updated:** 2026-10-10
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** — (CAT-00 COMPLETE). بعدی: SEC-06، سپس CAT-01 تا CAT-03
+- **Current Task:** batch SEC-07 → SEC-06 → CAT-01..03 (SEC-07 COMPLETE). بعدی: SEC-06
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 37/143 task COMPLETE · وزنی 19.4% (80.5h / 415h) · MVP 29.5%
+- **Progress:** 38/144 task COMPLETE · وزنی 19.5% (81h / 415.5h) · MVP 29.7%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** بررسی CI روی commit CAT-00. batch بعدی: SEC-06 (بدون HIGH)، سپس CAT-01 تا CAT-03 طبق ADR-020. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
@@ -15,13 +15,13 @@
 ---
 
 ## Overall Progress
-**19.4%** = 80.5h COMPLETE / 415h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**19.5%** = 81h COMPLETE / 415.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135h | 43h | 31.9% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 43.5h | 32.1% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -33,6 +33,7 @@
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-10: SEC-07 (CI runner pinned to ubuntu-24.04; actions/checkout@v7, actions/setup-python@v7).
 - 2026-10-09: CAT-00 (PRD «جزئیات محصول» ✓ و «محصولات» ✓ بازنویسی شد؛ public با slug، admin با id؛ ADR-020).
 - 2026-10-09: AUTH-12 (consolidated auth security suite; rule → test map for ADR-016/017/018/019).
 - 2026-10-09: AUTH-11 (admin user list/status/role, last super_admin guard, warehouse_manager data migration; ADR-019).
@@ -74,6 +75,8 @@
 ---
 
 ## Plan changes
+### 2026-10-10 — task جدید SEC-07 (درخواست کاربر)
+- SEC-07 (LOW، 0.5h، M2.1): pin کردن runner به ubuntu-24.04 و ارتقای checkout/setup-python به v7، قبل از SEC-06. کل: 144 task، 415.5h؛ فاز ۲: 135.5h؛ MVP: 273h.
 ### 2026-10-09 — تأیید plan CAT-00 (تصمیم کاربر)
 - URL عمومی محصول با slug و endpointهای admin با id. CAT-00 بخش «محصولات» (admin) را هم بازنویسی می‌کند؛ برآورد از 2h به 3h رسید و کل برنامه 415h و فاز ۲ 135h شد.
 - SEC-06 بیرون از این batch ماند (batch بدون task HIGH). پیش‌نویس PRD در `docs/project/drafts/` و بعد از apply حذف می‌شود.
@@ -141,6 +144,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-10 — SEC-07 COMPLETE (batch SEC-07/SEC-06/CAT-01..03)
+- `runs-on: ubuntu-24.04`، checkout و setup-python روی v7 (تأیید وجود release). pytest 623 passed؛ ruff و mypy سبز.
+
 ### 2026-10-06 — AUTH-07 COMPLETE (پایان batch AUTH-06/07)
 - `POST /api/v1/auth/refresh`: refresh فقط از cookie خوانده می‌شود، rotation در همان family انجام می‌شود و reuse کل family را revoke می‌کند (audit `auth.refresh_reuse`). کاربر غیرفعال یا حذف‌شده → 401.
 - pytest 471 passed؛ ruff، format و mypy سبز.

@@ -48,6 +48,7 @@
 | DEC-02 | Role set (D2) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-004 | ✓ |
 | DEC-16 | Token transport (D16) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-012 | ✓ |
 | SEC-05 | Secret scanning in CI (gitleaks, pinned, allowlist for fake fixtures) | COMPLETE | HIGH | MEDIUM | 2 | FND-07 | CI fails on findings; history scan clean | ✓ |
+| SEC-07 | Pin CI runner (ubuntu-24.04) + bump checkout/setup-python to v7 | COMPLETE | LOW | LOW | 0.5 | FND-07, SEC-05 | CI green on pinned runner | ✓ |
 | SEC-06 | Dependency lock file with hashes; CI + Dockerfile install from it | NOT_STARTED | MEDIUM | MEDIUM | 2 | FND-07, FND-03 | --require-hashes in CI and Docker; drift check | ✓ |
 | AUTH-01 | Align User model with PRD + migration | COMPLETE | HIGH | HIGH | 2 | FND-04 | new migration; one active account per mobile | ✓ |
 | AUTH-02 | Roles & permissions seed (5 roles) | COMPLETE | HIGH | HIGH | 3 | FND-05, ADR-004 | idempotent seed incl. super_admin | ✓ |

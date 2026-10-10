@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   secret-scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     env:
@@ -23,7 +23,7 @@ jobs:
       GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # scan the full history, not only the last commit
 
@@ -40,7 +40,7 @@ jobs:
         run: ./gitleaks git --config .gitleaks.toml --redact --exit-code 1 --no-banner -v .
 
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     services:
@@ -62,9 +62,9 @@ jobs:
       TEST_DATABASE_URL: postgresql+asyncpg://postgres:test@localhost:5432/project_ak_test
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
