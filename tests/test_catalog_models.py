@@ -8,7 +8,16 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.time import utc_now
-from app.db.models import Category, Product, ProductStatus, ProductVariant, User
+from app.db.models import (
+    Category,
+    Product,
+    ProductAttribute,
+    ProductStatus,
+    ProductVariant,
+    User,
+    VariantOption,
+    VariantOptionKey,
+)
 
 pytestmark = pytest.mark.integration
 
@@ -432,3 +441,129 @@ async def test_variants_have_no_stock_or_price_columns(db_engine: AsyncEngine) -
         "updated_at",
         "deleted_at",
     }
+
+
+async def _saved_variant(db_session: AsyncSession) -> ProductVariant:
+    variant = _variant(await _saved_product(db_session))
+    db_session.add(variant)
+    await db_session.flush()
+    return variant
+
+
+async def test_variant_has_one_option_per_key(db_session: AsyncSession) -> None:
+    variant = await _saved_variant(db_session)
+    db_session.add_all(
+        [
+            VariantOption(variant_id=variant.id, option_key=VariantOptionKey.COLOR, value="طلایی"),
+            VariantOption(variant_id=variant.id, option_key=VariantOptionKey.SIZE, value="M"),
+            VariantOption(variant_id=variant.id, option_key=VariantOptionKey.MODEL, value="A1"),
+        ]
+    )
+    await db_session.flush()
+
+    rows = await db_session.execute(
+        select(VariantOption.option_key, VariantOption.value).where(
+            VariantOption.variant_id == variant.id
+        )
+    )
+    options = {key: value for key, value in rows}
+    assert options == {"color": "طلایی", "size": "M", "model": "A1"}
+
+
+async def test_variant_option_key_is_unique_per_variant(db_session: AsyncSession) -> None:
+    variant = await _saved_variant(db_session)
+    db_session.add(VariantOption(variant_id=variant.id, option_key="color", value="Gold"))
+    await db_session.flush()
+
+    db_session.add(VariantOption(variant_id=variant.id, option_key="color", value="Silver"))
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_variant_with_options_cannot_be_hard_deleted(db_session: AsyncSession) -> None:
+    variant = await _saved_variant(db_session)
+    db_session.add(VariantOption(variant_id=variant.id, option_key="size", value="L"))
+    await db_session.flush()
+
+    await db_session.delete(variant)
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"option_key": "material"},
+        {"value": "  "},
+        {"value": "x" * 51},
+        {"variant_id": uuid4()},
+    ],
+    ids=["unknown-key", "blank-value", "long-value", "unknown-variant"],
+)
+async def test_variant_option_constraints(
+    db_session: AsyncSession, overrides: dict[str, object]
+) -> None:
+    variant = await _saved_variant(db_session)
+    values: dict[str, object] = {"variant_id": variant.id, "option_key": "color", "value": "Red"}
+    db_session.add(VariantOption(**{**values, **overrides}))
+
+    with pytest.raises(DBAPIError):
+        await db_session.flush()
+
+
+async def test_product_attributes_one_value_per_key(db_session: AsyncSession) -> None:
+    product = await _saved_product(db_session)
+    db_session.add_all(
+        [
+            ProductAttribute(
+                product_id=product.id, attribute_key="material", attribute_value="Gold"
+            ),
+            ProductAttribute(
+                product_id=product.id, attribute_key="weight", attribute_value="3g", display_order=1
+            ),
+        ]
+    )
+    await db_session.flush()
+
+    db_session.add(
+        ProductAttribute(product_id=product.id, attribute_key="material", attribute_value="Silver")
+    )
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_same_attribute_key_on_different_products(db_session: AsyncSession) -> None:
+    for _ in range(2):
+        product = await _saved_product(db_session)
+        db_session.add(
+            ProductAttribute(
+                product_id=product.id, attribute_key="material", attribute_value="Gold"
+            )
+        )
+    await db_session.flush()
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"attribute_key": " "},
+        {"attribute_value": ""},
+        {"attribute_key": "k" * 51},
+        {"display_order": -1},
+        {"product_id": uuid4()},
+    ],
+    ids=["blank-key", "blank-value", "long-key", "neg-order", "unknown-product"],
+)
+async def test_product_attribute_constraints(
+    db_session: AsyncSession, overrides: dict[str, object]
+) -> None:
+    product = await _saved_product(db_session)
+    values: dict[str, object] = {
+        "product_id": product.id,
+        "attribute_key": "material",
+        "attribute_value": "Gold",
+    }
+    db_session.add(ProductAttribute(**{**values, **overrides}))
+
+    with pytest.raises(DBAPIError):
+        await db_session.flush()

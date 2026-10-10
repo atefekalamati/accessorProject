@@ -16,10 +16,12 @@ from app.db.models import (
     OtpCode,
     Permission,
     Product,
+    ProductAttribute,
     ProductVariant,
     Role,
     User,
     UserSession,
+    VariantOption,
 )
 
 config = context.config
@@ -45,10 +47,12 @@ _MODELS = (
     OtpCode,
     Permission,
     Product,
+    ProductAttribute,
     ProductVariant,
     Role,
     User,
     UserSession,
+    VariantOption,
 )
 
 

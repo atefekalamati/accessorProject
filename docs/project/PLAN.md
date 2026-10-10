@@ -71,7 +71,7 @@
 | CAT-01 | Category model + migration (tree, slug, status, order) | COMPLETE | HIGH | MEDIUM | 3 | INF-04 | unique slug; inactive hidden | ✓ |
 | CAT-02 | Product model + soft delete + draft/published/archived | COMPLETE | HIGH | MEDIUM | 3 | CAT-01, INF-04 | referenced products soft-deleted only | ✓ |
 | CAT-03 | ProductVariant model (SKU, active, purchasable; no stock column) | COMPLETE | HIGH | MEDIUM | 3 | CAT-02, ADR-005 | unique SKU | ✓ |
-| CAT-04 | Attributes & values (color/size/model) | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-03 | variant ↔ attribute values |
+| CAT-04 | Attributes & values (color/size/model) | COMPLETE | HIGH | MEDIUM | 3 | CAT-03 | variant ↔ attribute values | ✓ |
 | CAT-05 | Media model + storage interface + local fake | NOT_STARTED | MEDIUM | MEDIUM | 4 | CAT-02, ADR-009 | ordered media, main image |
 | CAT-06 | Public GET /categories, /categories/{slug} | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-01 | only active categories; SD rule (test) |
 | CAT-07 | Public product listing with filters/sort/pagination | NOT_STARTED | HIGH | MEDIUM | 6 | CAT-03, INF-03 | allowlisted filters; no N+1; shared paginated-query helper (count + offset, deterministic `id` tie-break) + DB-level pagination tests (no dup/skip across pages, correct total); SD rule (test) |

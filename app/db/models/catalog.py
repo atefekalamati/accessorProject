@@ -13,6 +13,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
@@ -26,6 +27,12 @@ from app.db.models.common import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKey
 SLUG_PATTERN = "^[a-z0-9-]{3,120}$"
 # SKU (PRD «محصولات» ✓): stored normalized (trimmed, upper case); Latin letters, digits and '-'.
 SKU_PATTERN = "^[A-Z0-9-]{1,64}$"
+
+
+class VariantOptionKey(StrEnum):
+    COLOR = "color"
+    SIZE = "size"
+    MODEL = "model"
 
 
 class Category(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
@@ -163,3 +170,47 @@ class ProductVariant(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base)
     is_purchasable: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
+
+
+class ProductAttribute(UUIDPrimaryKeyMixin, Base):
+    """Free-text spec pair shown on the product page; the admin replaces the whole set."""
+
+    __tablename__ = "product_attributes"
+    __table_args__ = (
+        UniqueConstraint("product_id", "attribute_key"),
+        CheckConstraint("length(trim(attribute_key)) > 0", name="attribute_key_not_blank"),
+        CheckConstraint("length(trim(attribute_value)) > 0", name="attribute_value_not_blank"),
+        CheckConstraint("display_order >= 0", name="display_order_non_negative"),
+        Index("ix_product_attributes_attribute_key", "attribute_key"),
+    )
+
+    product_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    attribute_key: Mapped[str] = mapped_column(String(50), nullable=False)
+    attribute_value: Mapped[str] = mapped_column(String(200), nullable=False)
+    display_order: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+
+
+class VariantOption(UUIDPrimaryKeyMixin, Base):
+    """One value per key (color/size/model) per variant (PRD «محصولات» ✓)."""
+
+    __tablename__ = "variant_options"
+    __table_args__ = (
+        UniqueConstraint("variant_id", "option_key"),
+        CheckConstraint("option_key IN ('color', 'size', 'model')", name="valid_option_key"),
+        CheckConstraint("length(trim(value)) > 0", name="value_not_blank"),
+        Index("ix_variant_options_option_key_value", "option_key", "value"),
+    )
+
+    variant_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("product_variants.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    option_key: Mapped[str] = mapped_column(String(20), nullable=False)
+    value: Mapped[str] = mapped_column(String(50), nullable=False)
