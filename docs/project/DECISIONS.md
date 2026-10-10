@@ -32,8 +32,8 @@
 | D23 | مدیریت کاربر توسط مدیران (وضعیت و نقش) | AUTH-11 | — | resolved (ADR-019) |
 | D24 | نیازمندی‌های محصول (جزئیات و admin) | CAT-00 | — | resolved (ADR-020) |
 | D25 | جزئیات schema کاتالوگ (FK، پیش‌فرض، CHECK) | — | — | resolved (ADR-021) |
-| D26 | قرارداد API عمومی دسته (`GET /categories` خارج از PRD؛ شکل پاسخ `/categories/{slug}`؛ دسته فعال زیر والد غیرفعال) | — | CAT-06 | open |
-| D27 | دسترسی content_manager به دسته‌ها (PRD: عنوان/توضیح/بنر/ترتیب؛ seed: فقط `content:manage`) | — | CAT-10 | open |
+| D26 | قرارداد API عمومی دسته (`GET /categories`، شکل پاسخ، والد غیرفعال) | — | — | resolved (ADR-022) |
+| D27 | دسترسی content_manager به دسته‌ها | — | — | resolved (ADR-023) |
 
 ## ADR
 
@@ -182,6 +182,22 @@
   - VariantOption و ProductAttribute (CAT-04): unique `(variant_id, option_key)` و `(product_id, attribute_key)`؛ یعنی هر کلید ویژگی در هر محصول یک مقدار دارد (PRD این را برای ویژگی صریح نمی‌گوید). طول کلید ویژگی ۵۰ و مقدار ۲۰۰ کاراکتر. بدون timestamp (تغییرات در AuditLog).
 - پیامدها: CAT-01، CAT-02، CAT-03، CAT-04، CAT-06، CAT-10، CAT-11، PRC-01.
 
+### ADR-022 — API عمومی دسته‌بندی (D26)
+- تاریخ: 2026-10-10
+- تصمیم (کاربر تأیید کرد): `GET /categories` یک درخت از دسته‌های قابل نمایش برمی‌گرداند. `GET /categories/{slug}` فیلدهای دسته، breadcrumb و زیرمجموعه‌های قابل نمایش را برمی‌گرداند. «قابل نمایش» یعنی دسته و **همه** اجدادش فعال و soft-delete‌نشده باشند؛ وگرنه دسته از درخت حذف می‌شود و detail آن 404 `NOT_FOUND` می‌دهد. `GET /categories` به بخش «دسته‌بندی محصولات» PRD اضافه شد.
+- پیامدها: CAT-06؛ لیست محصولات دسته (CAT-07) همین قاعده را برای دسته به کار می‌برد.
+
+### ADR-023 — مجوز ویرایش محتوای دسته (D27)
+- تاریخ: 2026-10-10
+- تصمیم (کاربر تأیید کرد): مجوز جدید `categories:edit_content` برای content_manager (و طبق قاعده موجود برای admin و super_admin). این مجوز فقط `title`، `description`، بنر (`image_url`) و ترتیب (`display_order`) را ویرایش می‌کند. ساختار (ایجاد، حذف، `parent_id`، `slug`، `is_active`) فقط با `catalog:manage`. هر دو مسیر تست می‌شوند. CAT-10 به Level HIGH رفت (تغییر RBAC).
+- تصمیم کم‌اثر (خودم): `icon_key` و فیلدهای seo جزو ساختار نیستند ولی چون کاربر فقط چهار فیلد را نام برد، فعلاً فقط با `catalog:manage` ویرایش می‌شوند.
+- پیامدها: CAT-10، seed RBAC (AUTH-02).
+
+### ADR-024 — Pillow برای رسانه (CAT-05)
+- تاریخ: 2026-10-10
+- تصمیم (کاربر تأیید کرد): Pillow از طریق lock (SEC-06) اضافه می‌شود. `Image.MAX_IMAGE_PIXELS` تنظیم می‌شود، ابعاد قبل از decode کامل (از header) بررسی می‌شود، و هر فایل هنگام بارگذاری re-encode می‌شود تا EXIF و metadata حذف و فایل‌های polyglot خنثی شوند.
+- پیامدها: CAT-05.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
@@ -196,6 +212,7 @@
 | 2026-09-29 | «صفحه اصلی» | موجودی از ProductVariant حذف؛ Content Admin → Content Manager | D3، D2 |
 | 2026-09-29 | «دسته‌بندی محصولات» | موجودی از ProductVariant حذف؛ Content Admin → Content Manager | D3، D2 |
 | 2026-10-09 | «جزئیات محصول» ✓، «محصولات» ✓، «معماری سیستم» | بازنویسی دو بخش قالبی (CAT-00)؛ `GET /products/{id}` → `GET /products/{slug}` | D24 (ADR-020) |
+| 2026-10-10 | «دسته‌بندی محصولات» ✓ | افزودن `GET /categories` (درخت)؛ قاعده پنهان‌شدن با جد غیرفعال؛ مجوز `categories:edit_content` برای content_manager | D26 (ADR-022)، D27 (ADR-023) |
 
 قاعده: هر task نوع `XX-00` بخش قالبی ماژول خود را در PRD بازنویسی می‌کند، به عنوان آن بخش «✓ بازبینی‌شده» اضافه می‌کند و یک ردیف به این جدول می‌افزاید.
 
