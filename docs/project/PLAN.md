@@ -64,6 +64,8 @@
 | AUTH-12 | Auth API & security test suite | COMPLETE | HIGH | HIGH | 3 | AUTH-05…11 | all PRD acceptance criteria tested | ✓ |
 
 ### M2.2 Catalog — PRD «دسته‌بندی محصولات» ✓، «جزئیات محصول» ✓، «محصولات» ✓
+ترتیب اجرا (2026-10-10): [M2.2-PLAN.md](M2.2-PLAN.md). PRC-01، PRC-02، INV-01 و INV-03 قبل از CAT-11، CAT-08 و CAT-07 اجرا می‌شوند.
+
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | DEC-03 | Stock model (D3) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-005 |
@@ -72,13 +74,13 @@
 | CAT-02 | Product model + soft delete + draft/published/archived | COMPLETE | HIGH | MEDIUM | 3 | CAT-01, INF-04 | referenced products soft-deleted only | ✓ |
 | CAT-03 | ProductVariant model (SKU, active, purchasable; no stock column) | COMPLETE | HIGH | MEDIUM | 3 | CAT-02, ADR-005 | unique SKU | ✓ |
 | CAT-04 | Attributes & values (color/size/model) | COMPLETE | HIGH | MEDIUM | 3 | CAT-03 | variant ↔ attribute values | ✓ |
-| CAT-05 | Media model + storage interface + local fake | NOT_STARTED | MEDIUM | MEDIUM | 4 | CAT-02, ADR-009 | ordered media, main image; replace `categories.image_url` with `media_id` (ADR-025) |
+| CAT-05 | Media model + storage interface + local fake | NOT_STARTED | MEDIUM | HIGH | 4 | CAT-02, ADR-009 | ordered media, main image; replace `categories.image_url` with `media_id` (ADR-025) |
 | CAT-06 | Public GET /categories, /categories/{slug} | COMPLETE | HIGH | MEDIUM | 3 | CAT-01 | only active categories; SD rule (test) | ✓ |
-| CAT-07 | Public product listing with filters/sort/pagination | NOT_STARTED | HIGH | MEDIUM | 6 | CAT-03, INF-03 | allowlisted filters; no N+1; shared paginated-query helper (count + offset, deterministic `id` tie-break) + DB-level pagination tests (no dup/skip across pages, correct total); SD rule (test) |
-| CAT-08 | Public product detail GET /products/{slug} | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-00, CAT-04, CAT-05 | published only; stable contract; SD rule (test) |
+| CAT-07 | Public product listing with filters/sort/pagination | NOT_STARTED | HIGH | MEDIUM | 6 | CAT-03, INF-03, PRC-02, INV-03 | allowlisted filters; no N+1; shared paginated-query helper (count + offset, deterministic `id` tie-break) + DB-level pagination tests (no dup/skip across pages, correct total); SD rule (test) |
+| CAT-08 | Public product detail GET /products/{slug} | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-00, CAT-04, CAT-05, PRC-02, INV-03 | published only; stable contract; SD rule (test) |
 | CAT-09 | Category filters endpoint + CategoryFilter | NOT_STARTED | MEDIUM | MEDIUM | 3 | CAT-04 | filters from data; SD rule (test) |
 | CAT-10 | Admin category CRUD + AuditLog + `categories:edit_content` (ADR-023) | COMPLETE | HIGH | HIGH | 3 | CAT-01, AUTH-10, INF-05 | changes audited | ✓ |
-| CAT-11 | Admin product/variant CRUD + publish rules | NOT_STARTED | HIGH | MEDIUM | 5 | CAT-03, CAT-05, AUTH-10 | published needs active variant + main media; SD rule (test) |
+| CAT-11 | Admin product/variant CRUD + publish rules | NOT_STARTED | HIGH | HIGH | 5 | CAT-03, CAT-05, AUTH-10, PRC-01 | published needs active variant + main media; SD rule (test) |
 | CAT-12 | Catalog API tests | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-06…11 | 400/401/403/404/409/422 covered |
 
 ### M2.3 Inventory & reservation — PRD «موجودی و رزرو» ✓، «انبار» (قالبی)
@@ -152,6 +154,7 @@
 | ORD-03 | POST /checkout/validate | NOT_STARTED | HIGH | HIGH | 3 | CART-03, DSC-03, ADDR-02 | price/stock/discount/shipping re-checked; SD rule (test) |
 | ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | NOT_STARTED | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional; SD rule (test) |
 | ORD-05 | Order state machine (order/payment/shipment) | NOT_STARTED | HIGH | HIGH | 4 | ORD-01 | invalid transitions → 422 |
+| CAT-17 | `best_selling` sort for product listing (from successful OrderItems) | NOT_STARTED | MEDIUM | MEDIUM | 1 | CAT-07, ORD-01 | sort allowlisted; ties by `id` |
 | ORD-06 | Order tests (idempotency, price-changed, insufficient stock) | NOT_STARTED | HIGH | HIGH | 3 | ORD-03…05 | duplicate create → one order; SD rule (test) |
 
 ### M3.5 Payment — PRD «پرداخت» (قالبی) + «معماری سیستم» ✓

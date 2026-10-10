@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** —. بعدی: batch CAT-05 + CAT-09 (CAT-05 شامل جایگزینی `image_url` با `media_id`، ADR-025)
+- **Current Task:** CAT-05 (batch A: CAT-05، CAT-09؛ سپس batch B: PRC-01، CAT-11؛ M2.2-PLAN.md)
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 45/144 task COMPLETE · وزنی 24.3% (101h / 415.5h) · MVP 37.0%
+- **Progress:** 45/145 task COMPLETE · وزنی 24.2% (101h / 416.5h) · MVP 36.9%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** در جلسه جدید: `/batch` برای CAT-06، CAT-05، CAT-10 با plan شامل ریسک/rollback برای CAT-10 (ADR-022، ADR-023، ADR-024). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
@@ -15,21 +15,21 @@
 ---
 
 ## Overall Progress
-**24.3%** = 101h COMPLETE / 415.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**24.2%** = 101h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | IN_PROGRESS | 135.5h | 63.5h | 46.9% | 2026-12-07 |
-| 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
+| 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 314.5h ≈ ۲۱ هفته. MVP باقی‌مانده: 172h ≈ ۱۲ هفته.
+- باقی‌مانده: 315.5h ≈ ۲۱ هفته. MVP باقی‌مانده: 173h ≈ ۱۲ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -82,6 +82,8 @@
 ---
 
 ## Plan changes
+### 2026-10-10 — AUTOPILOT و plan واحد M2.2 (تصمیم کاربر)
+- قواعد AUTOPILOT در CLAUDE.md و [REVIEW-CHECKLIST.md](REVIEW-CHECKLIST.md). plan M2.2 در [M2.2-PLAN.md](M2.2-PLAN.md) یک‌بار فرستاده شد. PRC-01، PRC-02، INV-01 و INV-03 قبل از CAT-11، CAT-08 و CAT-07 می‌آیند. CAT-05 و CAT-11 به Level HIGH رفتند. task جدید CAT-17 (`best_selling`، 1h) در M3.4 ثبت شد. کل: 145 task، 416.5h؛ MVP: 274h.
 ### 2026-10-10 — تأیید batch CAT-06/CAT-10 (تغییرات کاربر)
 - CAT-05 به batch بعد رفت (سقف 8h). کاربر اضافه کرد: allowlist host برای `image_url` (`MEDIA_ALLOWED_HOSTS`) و حداکثر عمق ۵. تصمیم DELETE تأیید شد (ADR-025). CAT-05 باید `image_url` را با `media_id` جایگزین کند.
 ### 2026-10-10 — تصمیم‌های D26، D27 و Pillow (تصمیم کاربر)
