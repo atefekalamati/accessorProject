@@ -33,6 +33,8 @@ def test_every_role_is_mapped_to_known_permissions() -> None:
 def test_role_permission_boundaries() -> None:
     assert ROLE_PERMISSIONS["super_admin"] == ALL_PERMISSION_KEYS
     assert ROLE_PERMISSIONS["customer"] == frozenset()
+    assert ROLE_PERMISSIONS["content_manager"] == {"content:manage", "categories:edit_content"}
     admin = ROLE_PERMISSIONS["admin"]
+    assert "categories:edit_content" in admin
     assert "inventory:update" in admin
     assert not admin & {"users:manage_roles", "pricing_settings:update", "audit:read"}

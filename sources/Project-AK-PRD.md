@@ -1425,6 +1425,9 @@ Success:
 - PATCH /admin/categories/{id}
   ویرایش دسته‌بندی، بنر، آیکون، توضیح و وضعیت
 
+- DELETE /admin/categories/{id}
+  حذف نرم دسته‌بندی؛ دسته دارای زیرمجموعه یا محصول حذف‌نشده → 409
+
 - PATCH /admin/categories/{id}/filters
   مدیریت ویژگی‌های قابل فیلتر برای دسته
 

@@ -68,6 +68,7 @@ def settings() -> Settings:
         cors_origins=["http://localhost:3000"],
         otp_mock_enabled=True,
         otp_hash_secret="test-otp-hash-secret-at-least-32-characters",
+        media_allowed_hosts=["cdn.example.com"],
     )
 
 

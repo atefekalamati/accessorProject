@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from enum import StrEnum
 from functools import lru_cache
 from typing import Annotated, Any, cast
@@ -17,7 +18,7 @@ class Environment(StrEnum):
     PRODUCTION = "production"
 
 
-def _parse_cors_origins(value: Any) -> Any:
+def _parse_str_list(value: Any) -> Any:
     if isinstance(value, str):
         raw_value = value.strip()
         if raw_value.startswith("["):
@@ -26,7 +27,11 @@ def _parse_cors_origins(value: Any) -> Any:
     return value
 
 
-CorsOrigins = Annotated[list[str], NoDecode, BeforeValidator(_parse_cors_origins)]
+CorsOrigins = Annotated[list[str], NoDecode, BeforeValidator(_parse_str_list)]
+HostList = Annotated[list[str], NoDecode, BeforeValidator(_parse_str_list)]
+
+_LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+_HOSTNAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$")
 
 
 class Settings(BaseSettings):
@@ -60,6 +65,8 @@ class Settings(BaseSettings):
     access_token_ttl_seconds: int = Field(default=900, ge=60, le=3600)
     refresh_token_ttl_days: int = Field(default=30, ge=1, le=90)
     log_level: str = "INFO"
+    # Hosts allowed in admin-entered image URLs (https only); empty rejects every URL.
+    media_allowed_hosts: HostList = Field(default_factory=list)
 
     @field_validator("database_url")
     @classmethod
@@ -78,6 +85,14 @@ class Settings(BaseSettings):
         ]
         if invalid:
             raise ValueError("CORS_ORIGINS entries must be HTTP(S) origins")
+        return value
+
+    @field_validator("media_allowed_hosts")
+    @classmethod
+    def validate_media_allowed_hosts(cls, value: list[str]) -> list[str]:
+        invalid = [host for host in value if _HOSTNAME.fullmatch(host) is None]
+        if invalid:
+            raise ValueError("MEDIA_ALLOWED_HOSTS entries must be lowercase host names")
         return value
 
     @model_validator(mode="after")

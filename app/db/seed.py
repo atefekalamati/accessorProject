@@ -41,6 +41,10 @@ DEFAULT_ROLES: tuple[RoleSeed, ...] = (
 # Permission keys use the `<module>:<action>` format.
 PERMISSIONS: tuple[PermissionSeed, ...] = (
     PermissionSeed("catalog:manage", "Manage products, variants, categories and collections"),
+    PermissionSeed(
+        "categories:edit_content",
+        "Edit category title, description, banner and display order (ADR-023)",
+    ),
     PermissionSeed("pricing:update", "Change product and variant prices"),
     PermissionSeed("pricing_settings:update", "Change tax and rounding settings"),
     PermissionSeed("inventory:read", "View stock levels"),
@@ -69,7 +73,7 @@ _ADMIN_EXCLUDED: frozenset[str] = frozenset(
 ROLE_PERMISSIONS: Mapping[str, frozenset[str]] = {
     "customer": frozenset(),
     "support": frozenset({"orders:read", "customers:read"}),
-    "content_manager": frozenset({"content:manage"}),
+    "content_manager": frozenset({"content:manage", "categories:edit_content"}),
     "admin": ALL_PERMISSION_KEYS - _ADMIN_EXCLUDED,
     "super_admin": ALL_PERMISSION_KEYS,
 }

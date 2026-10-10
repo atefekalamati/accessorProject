@@ -7,6 +7,7 @@ holds the cross-cutting checks that no single endpoint suite owns.
 
 from __future__ import annotations
 
+import re
 from collections.abc import AsyncIterator, Awaitable, Callable
 from http.cookies import SimpleCookie
 from uuid import UUID
@@ -135,6 +136,9 @@ async def test_no_plaintext_otp_or_refresh_token_in_the_database(
         assert not any(secret in value for value in stored), secret
 
 
+_PATH_PARAM = re.compile(r"\{[a-z_]+\}")
+
+
 def _admin_endpoints(settings: Settings) -> list[tuple[str, str]]:
     """``(method, path)`` of every /admin operation, with path parameters filled in.
 
@@ -142,7 +146,7 @@ def _admin_endpoints(settings: Settings) -> list[tuple[str, str]]:
     """
     paths = create_app(settings).openapi()["paths"]
     return sorted(
-        (method.upper(), path.replace("{user_id}", "00000000-0000-0000-0000-000000000000"))
+        (method.upper(), _PATH_PARAM.sub("00000000-0000-0000-0000-000000000000", path))
         for path, operations in paths.items()
         if path.startswith("/api/v1/admin")
         for method in operations
@@ -159,9 +163,11 @@ async def _login(client: AsyncClient, issue_otp: IssueOtp, mobile: str) -> dict[
 
 
 def test_admin_routes_are_discovered(settings: Settings) -> None:
-    """Guards the two tests below: they must see every /admin route, starting with AUTH-11."""
-    assert {endpoint[0] for endpoint in _admin_endpoints(settings)} == {"GET", "PATCH"}
-    assert len(_admin_endpoints(settings)) >= 3
+    """Guards the two tests below: they must see every /admin route (AUTH-11, CAT-10)."""
+    endpoints = _admin_endpoints(settings)
+    assert {method for method, _path in endpoints} == {"GET", "POST", "PATCH", "DELETE"}
+    assert ("DELETE", "/api/v1/admin/categories/00000000-0000-0000-0000-000000000000") in endpoints
+    assert len(endpoints) >= 7
 
 
 async def test_every_admin_route_requires_authentication(

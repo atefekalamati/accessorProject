@@ -87,6 +87,21 @@ def require_permission(key: str) -> Callable[[CurrentUser], Awaitable[CurrentUse
     return dependency
 
 
+def require_any_permission(*keys: str) -> Callable[[CurrentUser], Awaitable[CurrentUser]]:
+    """A dependency that requires at least one of ``keys`` among the user's permissions."""
+    unknown = sorted(set(keys) - ALL_PERMISSION_KEYS)
+    if not keys or unknown:
+        raise ValueError(f"Unknown or missing permission keys: {unknown!r}")
+    required = frozenset(keys)
+
+    async def dependency(user: Annotated[CurrentUser, Depends(get_current_user)]) -> CurrentUser:
+        if not required & user.permissions:
+            raise ForbiddenError(message="Permission denied")
+        return user
+
+    return dependency
+
+
 def ensure_owner(owner_id: UUID | None, user: CurrentUser) -> None:
     """Raise 404 unless ``user`` owns the resource; 404 does not reveal that it exists."""
     if owner_id is None or owner_id != user.id:
