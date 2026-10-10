@@ -14,6 +14,7 @@ from app.db.models import (
     AuditLog,
     Category,
     CategoryFilter,
+    InventoryItem,
     Media,
     OtpCode,
     Permission,
@@ -26,6 +27,7 @@ from app.db.models import (
     User,
     UserSession,
     VariantOption,
+    Warehouse,
 )
 
 config = context.config
@@ -49,6 +51,7 @@ _MODELS = (
     AuditLog,
     Category,
     CategoryFilter,
+    InventoryItem,
     Media,
     OtpCode,
     Permission,
@@ -61,6 +64,7 @@ _MODELS = (
     User,
     UserSession,
     VariantOption,
+    Warehouse,
 )
 
 

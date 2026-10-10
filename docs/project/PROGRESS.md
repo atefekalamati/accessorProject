@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** —. بعدی طبق M2.2-PLAN.md: CAT-11 (HIGH)، سپس PRC-02 + INV-01.
+- **Current Task:** INV-03 (batch INV-01/INV-03). بعدی: CAT-11 (HIGH)، سپس PRC-02 + CAT-08.
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 48/145 task COMPLETE · وزنی 26.7% (111h / 416.5h) · MVP 40.5%
+- **Progress:** 49/145 task COMPLETE · وزنی 27.4% (114h / 416.5h) · MVP 41.6%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** در جلسه جدید: `/batch` برای CAT-06، CAT-05، CAT-10 با plan شامل ریسک/rollback برای CAT-10 (ADR-022، ADR-023، ADR-024). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** اتمام INV-03، سپس batch بعدی: CAT-11. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**26.7%** = 111h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**27.4%** = 114h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 73.5h | 54.2% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 76.5h | 56.5% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,7 +29,7 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 305.5h ≈ ۲۰ هفته. MVP باقی‌مانده: 163h ≈ ۱۱ هفته.
+- باقی‌مانده: 302.5h ≈ ۲۰ هفته. MVP باقی‌مانده: 160h ≈ ۱۱ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -85,6 +85,8 @@
 ---
 
 ## Plan changes
+### 2026-10-10 — INV-01 و INV-03 قبل از CAT-11 (AUTOPILOT)
+- جزئیات admin محصول (CAT-11) وضعیت موجودی هر تنوع را می‌خواهد، پس batch C/D جابه‌جا شد: batch INV-01/INV-03 (5h)، سپس CAT-11، سپس PRC-02 + CAT-08. تصمیم‌های کم‌اثر در ADR-029.
 ### 2026-10-10 — AUTOPILOT و plan واحد M2.2 (تصمیم کاربر)
 - قواعد AUTOPILOT در CLAUDE.md و [REVIEW-CHECKLIST.md](REVIEW-CHECKLIST.md). plan M2.2 در [M2.2-PLAN.md](M2.2-PLAN.md) یک‌بار فرستاده شد. PRC-01، PRC-02، INV-01 و INV-03 قبل از CAT-11، CAT-08 و CAT-07 می‌آیند. CAT-05 و CAT-11 به Level HIGH رفتند. task جدید CAT-17 (`best_selling`، 1h) در M3.4 ثبت شد. کل: 145 task، 416.5h؛ MVP: 274h.
 ### 2026-10-10 — تأیید batch CAT-06/CAT-10 (تغییرات کاربر)
@@ -160,6 +162,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-10 — INV-01 COMPLETE (batch INV-01/INV-03)
+- `warehouses` (انبار پیش‌فرض با id ثابت) و `inventory_items` (migration `20261010_0013`)، ADR-029. بازبینی plan و diff توسط subagent (هر دو APPROVE WITH CHANGES، یافته‌ها اعمال شد). pytest 935 passed؛ ruff، format و mypy سبز.
+
 ### 2026-10-10 — CAT-05 COMPLETE
 - `python-multipart` و `pillow` با lock، migration `20261010_0012`، `POST /admin/media`. بازبینی plan و diff توسط subagent (هر دو APPROVE WITH CHANGES، یافته‌ها اعمال شد). pytest 881 passed؛ ruff، format و mypy سبز. CI PRC-01 سبز. `.env` محلی: `MEDIA_ALLOWED_HOSTS` و `MEDIA_PUBLIC_BASE_URL` (dev) اضافه شد.
 

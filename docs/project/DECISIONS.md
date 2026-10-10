@@ -248,6 +248,18 @@
   - composite FK `(variant_id, product_id)` تضمین می‌کند تنوع رسانه از همان محصول باشد.
 - پیامدها: CAT-05، CAT-11 (آپلود، حذف رسانه و فایل بعد از commit)، CNT-03، OPS-07.
 
+### ADR-029 — مدل موجودی و وضعیت موجودی (INV-01، INV-03)
+- تاریخ: 2026-10-10
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی subagent):
+  - `inventory_items.reserved_quantity` (Entity PRD ✓) شمارنده رزروهای فعال است. invariant: `reserved_quantity == SUM(quantity)` آیتم‌های رزرو با status `active`. INV-04 تا INV-06 آن را فقط زیر `SELECT … FOR UPDATE` تغییر می‌دهند و یک تست invariant دارند.
+  - رزرو منقضی تا آزادسازی هنوز موجودی را اشغال می‌کند (جهت محافظه‌کارانه؛ oversell ممکن نیست). هر مسیر نوشتنی (سبد، `POST /checkout/validate`، `POST /orders`) قبل از محاسبه free، رزروهای منقضی همان آیتم‌ها را زیر همان lock آزاد می‌کند (PRD: «در اولین بررسی آزاد شود»)، به‌علاوه sweep دوره‌ای (INV-06). نمایش فقط‌خواندنی ممکن است کمی کهنه باشد، فقط در جهت کمتر.
+  - ترتیب lock: سفارش چندتنوعی ردیف‌های `inventory_items` را با `ORDER BY variant_id, warehouse_id … FOR UPDATE` قفل می‌کند تا deadlock رخ ندهد.
+  - CHECKهای `0 ≤ reserved ≤ total ≤ MAX_STOCK_QUANTITY (10^6)` فقط backstop هستند. سرویس‌ها (INV-02، INV-05، INV-08) شرط را زیر lock بررسی می‌کنند و 409 (موجودی کافی نیست) یا 422 برمی‌گردانند، نه 500. commit رزرو `total` و `reserved` را در یک UPDATE کم می‌کند.
+  - وضعیت: `free = total − reserved`؛ `free == 0` → `out_of_stock`؛ `free ≤ low_stock_threshold` → `low_stock`؛ وگرنه `in_stock`. پیش‌فرض threshold صفر است، یعنی `low_stock` تا تنظیم ادمین نمایش داده نمی‌شود. تنوع بدون InventoryItem → `out_of_stock`. داده ناسازگار (منفی یا reserved > total) → `ValueError`.
+  - چند انبار (آماده برای بعد از v1): فراخواننده فقط آیتم‌های انبارهای فعال را می‌دهد و total، reserved و threshold جمع می‌شوند. وضعیت کلی محصول بهترین وضعیت بین تنوع‌هایی است که فراخواننده می‌دهد (in > low > out)؛ بدون تنوع → out. عدد موجودی فقط داخلی یا admin است و در پاسخ عمومی نمی‌آید (CAT-00 ردیف ۸).
+  - انبار پیش‌فرض با id ثابت uuid5 از migration می‌آید، partial unique دارد و باید فعال باشد. task مدیریت انبار در آینده نباید اجازه حذف یا برداشتن پیش‌فرض را بدهد.
+- پیامدها: INV-01، INV-02، INV-03، INV-04 تا INV-08، CAT-07، CAT-08، CAT-11.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
