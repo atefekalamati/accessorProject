@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** —. بعدی: batch CAT-06 → CAT-05 → CAT-10 (CAT-10 HIGH؛ plan باید تأیید شود)
+- **Current Task:** CAT-10 (batch CAT-06/CAT-10، plan تأییدشده)
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 43/144 task COMPLETE · وزنی 22.9% (95h / 415.5h) · MVP 34.8%
+- **Progress:** 44/144 task COMPLETE · وزنی 23.6% (98h / 415.5h) · MVP 35.9%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** در جلسه جدید: `/batch` برای CAT-06، CAT-05، CAT-10 با plan شامل ریسک/rollback برای CAT-10 (ADR-022، ADR-023، ADR-024). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
@@ -15,13 +15,13 @@
 ---
 
 ## Overall Progress
-**22.9%** = 95h COMPLETE / 415.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**23.6%** = 98h COMPLETE / 415.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 57.5h | 42.4% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 60.5h | 44.6% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 320.5h ≈ ۲۱ هفته. MVP باقی‌مانده: 178h ≈ ۱۲ هفته.
+- باقی‌مانده: 317.5h ≈ ۲۱ هفته. MVP باقی‌مانده: 175h ≈ ۱۲ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-10: CAT-06 (public GET /categories tree and /categories/{slug}; hidden ancestor hides subtree; ADR-022).
 - 2026-10-10: CAT-04 (VariantOption color/size/model one per key; ProductAttribute one value per key).
 - 2026-10-10: CAT-03 (ProductVariant model: global partial-unique SKU, is_active/is_purchasable, no stock or price column).
 - 2026-10-10: CAT-02 (Product model: draft/published/archived, published_at CHECK, partial-unique slug, soft delete).
@@ -151,6 +152,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-10 — CAT-06 COMPLETE (batch CAT-06/CAT-10)
+- `GET /categories` و `GET /categories/{slug}` با recursive CTE. pytest 693 passed؛ ruff، format و mypy سبز. CI CAT-04 سبز.
+
 ### 2026-10-10 — CAT-04 COMPLETE (batch ۲)
 - مدل‌های `ProductAttribute` و `VariantOption` و migration `20261010_0009`. pytest 681 passed؛ ruff، format و mypy سبز. CI CAT-03 سبز.
 
