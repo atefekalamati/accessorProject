@@ -19,4 +19,5 @@ Batch mode (rules also in CLAUDE.md section 11, "Batch mode").
    - one line per task: ID, status, commit, tests
    - totals
    - the next batch proposal
-   - a request that the user verify CI
+   - the CI result (watched with `gh run watch <id> --exit-status` after each push; red = stop and report the failed step)
+6. Speed mode: if no task is HIGH, start right after proposing without waiting. If the batch finished with CI green and had no HIGH task, auto-start the next batch. Max 2 batches per session, then report and say ready for /clear.

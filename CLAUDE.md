@@ -134,7 +134,15 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
   سپس بدون صبر برو سراغ task بعدی.
 - **توقف فوری** وقتی یکی از این‌ها پیش بیاید: تستی با علت نامشخص fail شود؛ تصمیم باز یا ابهام در PRD پیدا شود؛ کاری خارج از plan تأییدشده لازم شود؛ تغییر schema یا migration برنامه‌ریزی‌نشده لازم شود.
 - **هرگز batch نشوند:** taskهای `PAY-*` و taskهای رزرو، commit یا release موجودی. هر کدام در یک جلسه جدا انجام می‌شود.
-- پایان batch: یک گزارش واحد شامل یک خط برای هر task (ID، وضعیت، commit، تست‌ها)، جمع کل و پیشنهاد batch بعدی. از کاربر بخواه CI را بررسی کند.
+- پایان batch: یک گزارش واحد شامل یک خط برای هر task (ID، وضعیت، commit، تست‌ها)، جمع کل و پیشنهاد batch بعدی، به‌همراه نتیجه CI.
+
+### Speed mode
+
+- CI: بعد از هر push، run همان commit را با `gh run watch <id> --exit-status` دنبال کن (`gh` روی PATH نیست: `& "C:\Program Files\GitHub CLI\gh.exe"`). سبز = pass؛ قرمز = توقف و گزارش step شکست‌خورده.
+- batch بدون task HIGH: بعد از پیشنهاد، بدون انتظار شروع کن. batch با task HIGH: plan + انتظار برای تأیید (بدون تغییر).
+- زنجیره: اگر batch غیر HIGH کامل شد و CI سبز بود، batch بعدی خودکار شروع شود. حداکثر ۲ batch در هر جلسه، سپس گزارش و «آماده برای /clear».
+- مجوزها در `.claude/settings.json` (allow/deny) تعریف شده‌اند.
+- PR فاز ۲ در پایان فاز ساخته می‌شود (PR #4 بسته شد، شاخه حفظ شد).
 
 ## ارتباط با کاربر
 
