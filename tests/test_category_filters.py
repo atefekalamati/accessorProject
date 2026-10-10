@@ -106,6 +106,8 @@ class Catalog:
                     product_id=product.id,
                     sku=f"SKU-{uuid4().hex[:10].upper()}",
                     is_active=variant_active,
+                    # An active variant needs a price (ADR-027).
+                    base_price=100_000,
                 )
                 session.add(variant)
                 await session.flush()

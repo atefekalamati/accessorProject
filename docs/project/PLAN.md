@@ -102,7 +102,7 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | DEC-11 | Tax in v1 (D11) | COMPLETE | MEDIUM | LOW | 0.5 | — | ADR-010 |
-| PRC-01 | Variant price fields + PricingSetting (tax_enabled=false) + migration | NOT_STARTED | HIGH | HIGH | 3 | CAT-03, INF-02 | salePrice ≤ basePrice constraint |
+| PRC-01 | Variant price fields + PricingSetting (tax_enabled=false) + migration | COMPLETE | HIGH | HIGH | 3 | CAT-03, INF-02 | salePrice ≤ basePrice constraint | ✓ |
 | PRC-02 | Pure pricing function (sale window, discounts, tax, shipping, single rounding) | NOT_STARTED | HIGH | HIGH | 5 | INF-02 | table-driven unit tests |
 | PRC-03 | PriceHistory + admin price change + AuditLog | NOT_STARTED | HIGH | HIGH | 4 | PRC-01, INF-05, AUTH-10 | every change in history + audit |
 | PRC-04 | GET /products/{id}/pricing | NOT_STARTED | MEDIUM | HIGH | 2 | PRC-02 | server-computed only; SD rule (test) |

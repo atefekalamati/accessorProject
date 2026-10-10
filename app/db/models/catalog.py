@@ -5,6 +5,7 @@ from enum import StrEnum
 from uuid import UUID
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -21,6 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.db.models.common import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from app.shared.money import MAX_PRICE_TOMAN
 
 # Public URL slug (PRD «جزئیات محصول» ✓): lowercase Latin letters, digits and '-', 3-120 chars.
 # The API validates first; the CHECK is a backstop. A migration copies the literal it used.
@@ -142,7 +144,7 @@ class Product(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
 
 
 class ProductVariant(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
-    """Purchasable unit. Stock lives only in InventoryItem (ADR-005); price fields come in PRC-01.
+    """Purchasable unit. Stock lives only in InventoryItem (ADR-005); prices are Toman (ADR-027).
 
     Referenced by carts and orders, so it is only ever soft deleted.
     """
@@ -151,6 +153,27 @@ class ProductVariant(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base)
     __table_args__ = (
         CheckConstraint(f"sku ~ '{SKU_PATTERN}'", name="sku_format"),
         CheckConstraint("display_order >= 0", name="display_order_non_negative"),
+        # Prices are integer Toman (ADR-001, ADR-027); NULL base_price means "no price yet".
+        CheckConstraint(
+            f"base_price IS NULL OR base_price BETWEEN 1 AND {MAX_PRICE_TOMAN}",
+            name="base_price_range",
+        ),
+        CheckConstraint(
+            "sale_price IS NULL OR "
+            "(base_price IS NOT NULL AND sale_price >= 1 AND sale_price <= base_price)",
+            name="sale_price_range",
+        ),
+        CheckConstraint(
+            "sale_start_at IS NULL OR sale_end_at IS NULL OR sale_start_at < sale_end_at",
+            name="sale_window_order",
+        ),
+        CheckConstraint(
+            "sale_price IS NOT NULL OR (sale_start_at IS NULL AND sale_end_at IS NULL)",
+            name="sale_window_needs_sale_price",
+        ),
+        CheckConstraint("price_version >= 0", name="price_version_non_negative"),
+        # Backstop for the PRD rule "a variant without a valid price cannot be active".
+        CheckConstraint("NOT is_active OR base_price IS NOT NULL", name="active_needs_base_price"),
         Index("ix_product_variants_product_id_display_order", "product_id", "display_order"),
         # A soft-deleted variant frees its SKU (ADR-015).
         Index(
@@ -176,6 +199,18 @@ class ProductVariant(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base)
     )
     is_purchasable: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
+    )
+    base_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    sale_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    # The sale price applies only inside this window; an empty end is open (PRD).
+    sale_start_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sale_end_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    tax_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    # Bumped by every price change; checkout compares it to detect PRICE_CHANGED (ADR-027).
+    price_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
     )
 
 

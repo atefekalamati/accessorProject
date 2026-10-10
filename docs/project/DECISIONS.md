@@ -220,6 +220,17 @@
   - مدیریت با `catalog:manage`، جایگزینی کل مجموعه (حداکثر ۳۰)، audit `category.filters_updated`. مجموعه یکسان → بدون audit.
 - پیامدها: CAT-09، CAT-07.
 
+### ADR-027 — schema قیمت (PRC-01)
+- تاریخ: 2026-10-10
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی subagent):
+  - variant: `base_price`/`sale_price` از نوع BIGINT تومان و nullable. NULL یعنی «هنوز قیمت ندارد». سقف قیمت `MAX_PRICE_TOMAN = 10^12`. `1 ≤ sale ≤ base`. بازه sale معتبر است و فقط وقتی sale_price وجود دارد. CHECK backstop: «تنوع فعال باید `base_price` داشته باشد».
+  - `price_version` با هر تغییر قیمت variant بالا می‌رود. `pricing_settings.version` با هر تغییر تنظیمات (PRC-05) بالا می‌رود. checkout و PRC-02 هر دو را fingerprint می‌کنند تا تغییر مالیات یا گردکردن هم `PRICE_CHANGED` حساب شود.
+  - `pricing_settings` یک ردیف singleton است (`singleton` unique با CHECK) و migration آن را با id ثابت uuid5 درج می‌کند. ستون `currency` فقط `TOMAN` می‌پذیرد. نرخ مالیات به basis points (`0..10000`) است، نه float. `rounding_step` بین 1 و `10^6`. `updated_by` با `SET NULL`.
+  - در v1 نرخ مالیات per-variant وجود ندارد: فقط `tax_enabled` روی variant و `default_tax_rate_bps` سراسری (PRD entities). `taxRate` ورودی PRD همان نرخ سراسری است.
+  - migration: variant فعال بدون قیمت غیرفعال می‌شود و تعداد آن log می‌شود. اگر چنین variantی متعلق به محصول published باشد، migration با خطا متوقف می‌شود تا محصول منتشرشده بی‌تنوع فعال نماند. downgrade قیمت‌ها را حذف می‌کند و `is_active` را برنمی‌گرداند.
+  - API قیمت (CAT-11، PRC-03) باید `ge=1` و `le=MAX_PRICE_TOMAN` را اعمال کند (`Toman` فقط `ge=0` دارد).
+- پیامدها: PRC-01، PRC-02، PRC-03، PRC-05، CAT-11، ORD-03.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 

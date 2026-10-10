@@ -428,8 +428,8 @@ async def test_variant_constraints(db_session: AsyncSession, overrides: dict[str
         await db_session.flush()
 
 
-async def test_variants_have_no_stock_or_price_columns(db_engine: AsyncEngine) -> None:
-    # Stock lives only in InventoryItem (ADR-005); price fields arrive with PRC-01.
+async def test_variants_have_no_stock_columns(db_engine: AsyncEngine) -> None:
+    # Stock lives only in InventoryItem (ADR-005); price fields came with PRC-01 (ADR-027).
     assert await _columns(db_engine, "product_variants") == {
         "id",
         "product_id",
@@ -437,6 +437,12 @@ async def test_variants_have_no_stock_or_price_columns(db_engine: AsyncEngine) -
         "display_order",
         "is_active",
         "is_purchasable",
+        "base_price",
+        "sale_price",
+        "sale_start_at",
+        "sale_end_at",
+        "tax_enabled",
+        "price_version",
         "created_at",
         "updated_at",
         "deleted_at",

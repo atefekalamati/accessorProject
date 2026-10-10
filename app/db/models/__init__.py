@@ -12,6 +12,7 @@ from app.db.models.catalog import (
     VariantOption,
     VariantOptionKey,
 )
+from app.db.models.pricing import PricingSetting
 from app.db.models.rbac import Permission, Role, RolePermission, UserRole
 from app.db.models.settings import AppSetting
 from app.db.models.users import User, UserStatus
@@ -25,6 +26,7 @@ __all__ = [
     "CategoryFilterType",
     "OtpCode",
     "Permission",
+    "PricingSetting",
     "Product",
     "ProductAttribute",
     "ProductStatus",

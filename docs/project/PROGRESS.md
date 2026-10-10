@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** PRC-01 (batch جاری: CAT-09، PRC-01). CAT-05 منتظر تأیید dependency `python-multipart` است و CAT-11 منتظر CAT-05.
+- **Current Task:** —. CAT-05 منتظر تأیید dependency `python-multipart` است (استثنای AUTOPILOT) و CAT-11 منتظر CAT-05. بعدی بدون مانع: PRC-02 + INV-01 (batch C).
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 46/145 task COMPLETE · وزنی 25.0% (104h / 416.5h) · MVP 38.0%
+- **Progress:** 47/145 task COMPLETE · وزنی 25.7% (107h / 416.5h) · MVP 39.1%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** در جلسه جدید: `/batch` برای CAT-06، CAT-05، CAT-10 با plan شامل ریسک/rollback برای CAT-10 (ADR-022، ADR-023، ADR-024). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
@@ -15,13 +15,13 @@
 ---
 
 ## Overall Progress
-**25.0%** = 104h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**25.7%** = 107h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 66.5h | 49.1% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 69.5h | 51.3% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 312.5h ≈ ۲۱ هفته. MVP باقی‌مانده: 170h ≈ ۱۱ هفته.
+- باقی‌مانده: 309.5h ≈ ۲۱ هفته. MVP باقی‌مانده: 167h ≈ ۱۱ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-10: PRC-01 (variant price columns + CHECKs, pricing_settings singleton, safe data migration; ADR-027).
 - 2026-10-10: CAT-09 (CategoryFilter, public filters from real product data, admin replace + audit; ADR-026).
 - 2026-10-10: CAT-10 (admin category CRUD, audit, categories:edit_content, image_url host allowlist, depth ≤ 5; ADR-025).
 - 2026-10-10: CAT-06 (public GET /categories tree and /categories/{slug}; hidden ancestor hides subtree; ADR-022).
@@ -158,6 +159,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-10 — PRC-01 COMPLETE (پایان batch CAT-09/PRC-01)
+- migration `20261010_0011`. بازبینی plan و diff توسط subagent مستقل (هر دو APPROVE WITH CHANGES، یافته‌ها اعمال شد). pytest 822 passed؛ ruff، format و mypy سبز. CI CAT-09 سبز.
+
 ### 2026-10-10 — CAT-09 COMPLETE
 - `category_filters` (migration `20261010_0010`)، `GET /categories/{slug}/filters`، `PATCH /admin/categories/{id}/filters`. pytest 790 passed؛ ruff، format و mypy سبز. CI CAT-10 سبز. CAT-05 متوقف شد: `python-multipart` یک dependency جدید است (استثنای AUTOPILOT).
 

@@ -35,6 +35,11 @@ class RoundingMode(StrEnum):
 
 DEFAULT_ROUNDING_MODE = RoundingMode.NEAREST
 DEFAULT_ROUNDING_STEP = 1
+MAX_ROUNDING_STEP = 1_000_000
+# Upper bound of one unit price (ADR-027): quantity × price sums stay far below BIGINT max.
+MAX_PRICE_TOMAN = 1_000_000_000_000
+# Tax rates are integer basis points (1000 = 10%), never floats (ADR-027).
+MAX_TAX_RATE_BPS = 10_000
 
 
 def round_amount(
