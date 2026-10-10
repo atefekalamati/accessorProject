@@ -176,7 +176,8 @@
   - قاعده فرمت slug و SKU علاوه بر API یک CHECK در DB هم دارد (backstop)؛ migration متن literal الگو را کپی می‌کند.
   - همه FKهای بین جدول‌های کاتالوگ `ON DELETE RESTRICT` هستند تا حذف سخت رکورد ارجاع‌شده در DB هم ممکن نباشد. FKهای actor (`created_by`، `updated_by`) به `users` با `SET NULL`، مثل `audit_logs.actor_user_id`.
   - Product (CAT-02): CHECK «`published` ⇒ `published_at` دارد». `published_at` با unpublish پاک نمی‌شود.
-- پیامدها: CAT-01، CAT-02، CAT-06، CAT-10، CAT-11.
+  - ProductVariant (CAT-03): `is_active` پیش‌فرض false (تنوع بدون قیمت معتبر نباید فعال باشد؛ قانون 422 بعد از PRC-01)، `is_purchasable` پیش‌فرض true. SKU سراسری یکتا (نه per product) و CHECK روی شکل نرمال‌شده.
+- پیامدها: CAT-01، CAT-02، CAT-03، CAT-06، CAT-10، CAT-11، PRC-01.
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).

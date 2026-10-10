@@ -8,7 +8,7 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.time import utc_now
-from app.db.models import Category, Product, ProductStatus, User
+from app.db.models import Category, Product, ProductStatus, ProductVariant, User
 
 pytestmark = pytest.mark.integration
 
@@ -307,6 +307,127 @@ async def test_products_table_columns(db_engine: AsyncEngine) -> None:
         "is_featured",
         "created_by",
         "updated_by",
+        "created_at",
+        "updated_at",
+        "deleted_at",
+    }
+
+
+async def _saved_product(db_session: AsyncSession) -> Product:
+    product = _product(await _saved_category(db_session))
+    db_session.add(product)
+    await db_session.flush()
+    return product
+
+
+def _sku() -> str:
+    return f"SKU-{uuid4().hex[:12].upper()}"
+
+
+def _variant(product: Product, **overrides: object) -> ProductVariant:
+    values: dict[str, object] = {"product_id": product.id, "sku": _sku()}
+    return ProductVariant(**{**values, **overrides})
+
+
+async def test_variant_defaults(db_session: AsyncSession) -> None:
+    variant = _variant(await _saved_product(db_session))
+    db_session.add(variant)
+    await db_session.flush()
+    await db_session.refresh(variant)
+
+    assert variant.is_active is False
+    assert variant.is_purchasable is True
+    assert variant.display_order == 0
+    assert variant.deleted_at is None
+
+
+async def test_product_has_many_variants_in_display_order(db_session: AsyncSession) -> None:
+    product = await _saved_product(db_session)
+    db_session.add_all([_variant(product, display_order=order) for order in (3, 1, 2)])
+    await db_session.flush()
+
+    orders = (
+        await db_session.scalars(
+            select(ProductVariant.display_order)
+            .where(ProductVariant.product_id == product.id)
+            .order_by(ProductVariant.display_order)
+        )
+    ).all()
+    assert orders == [1, 2, 3]
+
+
+async def test_variant_requires_existing_product(db_session: AsyncSession) -> None:
+    db_session.add(ProductVariant(product_id=uuid4(), sku=_sku()))
+
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_referenced_product_cannot_be_hard_deleted(db_session: AsyncSession) -> None:
+    product = await _saved_product(db_session)
+    db_session.add(_variant(product))
+    await db_session.flush()
+
+    await db_session.delete(product)
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_sku_unique_among_non_deleted_across_products(db_session: AsyncSession) -> None:
+    sku = _sku()
+    db_session.add(_variant(await _saved_product(db_session), sku=sku))
+    await db_session.flush()
+
+    db_session.add(_variant(await _saved_product(db_session), sku=sku))
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_soft_deleted_variant_frees_its_sku(db_session: AsyncSession) -> None:
+    product = await _saved_product(db_session)
+    sku = _sku()
+    old = _variant(product, sku=sku)
+    db_session.add(old)
+    await db_session.flush()
+    old.soft_delete()
+    await db_session.flush()
+
+    new = _variant(product, sku=sku)
+    db_session.add(new)
+    await db_session.flush()
+
+    assert new.id != old.id
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"sku": "sku-lower"},
+        {"sku": ""},
+        {"sku": " SKU-1"},
+        {"sku": "SKU_1"},
+        {"sku": "A" * 65},
+        {"display_order": -1},
+    ],
+    ids=["lowercase", "empty", "untrimmed", "underscore", "too-long", "neg-order"],
+)
+async def test_variant_constraints(db_session: AsyncSession, overrides: dict[str, object]) -> None:
+    db_session.add(_variant(await _saved_product(db_session), **overrides))
+
+    # CHECK violations raise IntegrityError; the String(64) overflow raises DataError.
+    with pytest.raises(DBAPIError):
+        await db_session.flush()
+
+
+async def test_variants_have_no_stock_or_price_columns(db_engine: AsyncEngine) -> None:
+    # Stock lives only in InventoryItem (ADR-005); price fields arrive with PRC-01.
+    assert await _columns(db_engine, "product_variants") == {
+        "id",
+        "product_id",
+        "sku",
+        "display_order",
+        "is_active",
+        "is_purchasable",
         "created_at",
         "updated_at",
         "deleted_at",

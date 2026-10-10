@@ -24,6 +24,8 @@ from app.db.models.common import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKey
 # Public URL slug (PRD «جزئیات محصول» ✓): lowercase Latin letters, digits and '-', 3-120 chars.
 # The API validates first; the CHECK is a backstop. A migration copies the literal it used.
 SLUG_PATTERN = "^[a-z0-9-]{3,120}$"
+# SKU (PRD «محصولات» ✓): stored normalized (trimmed, upper case); Latin letters, digits and '-'.
+SKU_PATTERN = "^[A-Z0-9-]{1,64}$"
 
 
 class Category(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
@@ -122,4 +124,42 @@ class Product(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         PostgreSQLUUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
+    )
+
+
+class ProductVariant(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
+    """Purchasable unit. Stock lives only in InventoryItem (ADR-005); price fields come in PRC-01.
+
+    Referenced by carts and orders, so it is only ever soft deleted.
+    """
+
+    __tablename__ = "product_variants"
+    __table_args__ = (
+        CheckConstraint(f"sku ~ '{SKU_PATTERN}'", name="sku_format"),
+        CheckConstraint("display_order >= 0", name="display_order_non_negative"),
+        Index("ix_product_variants_product_id_display_order", "product_id", "display_order"),
+        # A soft-deleted variant frees its SKU (ADR-015).
+        Index(
+            "uq_product_variants_sku",
+            "sku",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
+    )
+
+    product_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("products.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    sku: Mapped[str] = mapped_column(String(64), nullable=False)
+    display_order: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    # Inactive by default: a variant without a valid price must not be active (PRD «محصولات»).
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    is_purchasable: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
     )
