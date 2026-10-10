@@ -12,6 +12,7 @@ from app.db.models.catalog import (
     VariantOption,
     VariantOptionKey,
 )
+from app.db.models.media import Media, ProductMedia
 from app.db.models.pricing import PricingSetting
 from app.db.models.rbac import Permission, Role, RolePermission, UserRole
 from app.db.models.settings import AppSetting
@@ -26,9 +27,11 @@ __all__ = [
     "CategoryFilterType",
     "OtpCode",
     "Permission",
+    "Media",
     "PricingSetting",
     "Product",
     "ProductAttribute",
+    "ProductMedia",
     "ProductStatus",
     "ProductVariant",
     "Role",

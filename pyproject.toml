@@ -16,9 +16,13 @@ dependencies = [
   "email-validator>=2.3,<3.0",
   "fastapi>=0.115,<1.0",
   "passlib[bcrypt]>=1.7.4,<2.0",
+  # Image validation, dimension checks and re-encoding that strips EXIF (CAT-05, ADR-024).
+  "pillow>=12.3,<13.0",
   "pydantic>=2.9,<3.0",
   "pydantic-settings>=2.5,<3.0",
   "PyJWT>=2.9,<3.0",
+  # multipart/form-data parsing for media uploads (CAT-05, ADR-028); 0.0.x moves fast.
+  "python-multipart>=0.0.32,<0.1",
   "sqlalchemy[asyncio]>=2.0.35,<3.0",
   "uvicorn[standard]>=0.30,<1.0",
 ]

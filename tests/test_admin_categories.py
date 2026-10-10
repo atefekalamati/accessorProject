@@ -12,7 +12,16 @@ from httpx import AsyncClient, Response
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from app.db.models import AuditLog, Category, OtpCode, Product, User, UserRole
+from app.db.models import (
+    AuditLog,
+    Category,
+    Media,
+    OtpCode,
+    Product,
+    ProductMedia,
+    User,
+    UserRole,
+)
 from app.db.seed import role_id
 from app.modules.catalog.admin_service import MAX_CATEGORY_DEPTH
 
@@ -20,7 +29,8 @@ pytestmark = pytest.mark.integration
 
 ADMIN_URL = "/api/v1/admin/categories"
 PUBLIC_URL = "/api/v1/categories"
-IMAGE = "https://cdn.example.com/banners/a.webp"
+MEDIA_BASE_URL = "https://cdn.example.com/media"  # settings fixture in conftest
+MakeMedia = Callable[[], Awaitable[Media]]
 STRUCTURAL_FIELDS: dict[str, Any] = {
     "slug": "new-slug-value",
     "parent_id": None,
@@ -101,8 +111,7 @@ async def _create(
     client: AsyncClient, actor: Account, created: list[UUID], **fields: Any
 ) -> Response:
     body = {"title": "Category", "slug": _slug(), **fields}
-    if isinstance(body.get("parent_id"), UUID):
-        body["parent_id"] = str(body["parent_id"])
+    body = {key: str(value) if isinstance(value, UUID) else value for key, value in body.items()}
     response = await client.post(ADMIN_URL, json=body, headers=actor.headers)
     if response.status_code == 201:
         created.append(UUID(response.json()["id"]))
@@ -196,9 +205,14 @@ async def test_content_manager_cannot_create_or_delete(
 
 
 async def test_content_manager_edits_content_fields(
-    auth_client: AsyncClient, admin: Account, editor: Account, created: list[UUID]
+    auth_client: AsyncClient,
+    admin: Account,
+    editor: Account,
+    created: list[UUID],
+    make_media: MakeMedia,
 ) -> None:
     category_id = await _new(auth_client, admin, created)
+    banner = await make_media()
 
     list_response = await auth_client.get(ADMIN_URL, headers=editor.headers)
     response = await _patch(
@@ -207,19 +221,16 @@ async def test_content_manager_edits_content_fields(
         category_id,
         title="Rings",
         description="All rings",
-        image_url=IMAGE,
+        image_media_id=banner.id,
         display_order=7,
     )
 
     assert list_response.status_code == 200
     assert response.status_code == 200, response.text
     body = response.json()
-    assert (body["title"], body["description"], body["image_url"], body["display_order"]) == (
-        "Rings",
-        "All rings",
-        IMAGE,
-        7,
-    )
+    assert (body["title"], body["description"], body["display_order"]) == ("Rings", "All rings", 7)
+    assert body["image_media_id"] == str(banner.id)
+    assert body["image_url"] == f"{MEDIA_BASE_URL}/{banner.storage_key}"
     assert response.headers["cache-control"] == "no-store"
 
 
@@ -253,8 +264,13 @@ async def test_content_manager_cannot_send_structural_fields(
 
 
 async def test_admin_creates_category_with_audit(
-    auth_client: AsyncClient, db_engine: AsyncEngine, admin: Account, created: list[UUID]
+    auth_client: AsyncClient,
+    db_engine: AsyncEngine,
+    admin: Account,
+    created: list[UUID],
+    make_media: MakeMedia,
 ) -> None:
+    banner = await make_media()
     parent_id = await _new(auth_client, admin, created)
     slug = _slug()
 
@@ -265,7 +281,7 @@ async def test_admin_creates_category_with_audit(
         title="  Hair  ",
         slug=slug,
         parent_id=parent_id,
-        image_url=IMAGE,
+        image_media_id=banner.id,
         display_order=3,
     )
 
@@ -279,7 +295,11 @@ async def test_admin_creates_category_with_audit(
     assert [audit.action for audit in audits] == ["category.created"]
     assert audits[0].actor_user_id == admin.id
     assert audits[0].metadata_["diff"]["slug"] == {"before": None, "after": slug, "changed": True}
-    assert (await auth_client.get(f"{PUBLIC_URL}/{slug}")).status_code == 200
+    public = await auth_client.get(f"{PUBLIC_URL}/{slug}")
+    assert public.status_code == 200
+    assert (
+        public.json()["image_url"] == body["image_url"] == f"{MEDIA_BASE_URL}/{banner.storage_key}"
+    )
 
 
 async def test_duplicate_slug_is_409(
@@ -334,46 +354,71 @@ async def test_missing_or_deleted_parent_is_422(
     _error(response, 422, "BUSINESS_RULE_VIOLATION")
 
 
-# --- image_url -----------------------------------------------------------------------
+# --- image_media_id ------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "url",
-    [
-        "javascript:alert(1)",
-        "http://cdn.example.com/a.webp",
-        "https://evil.example.org/a.webp",
-        "https://user@cdn.example.com/a.webp",
-    ],
-)
-async def test_image_url_must_be_https_on_allowed_host(
+async def test_unknown_image_media_is_422(
     auth_client: AsyncClient,
     db_engine: AsyncEngine,
     admin: Account,
     editor: Account,
     created: list[UUID],
-    url: str,
 ) -> None:
     category_id = await _new(auth_client, admin, created)
 
-    create = await _create(auth_client, admin, created, image_url=url)
-    patch = await _patch(auth_client, editor, category_id, image_url=url)
+    create = await _create(auth_client, admin, created, image_media_id=uuid4())
+    patch = await _patch(auth_client, editor, category_id, image_media_id=uuid4())
 
     for response in (create, patch):
-        _error(response, 400, "VALIDATION_ERROR")
-        assert response.json()["error"]["details"][0]["field"] == "body.image_url"
-    assert (await _category(db_engine, category_id)).image_url is None
+        _error(response, 422, "BUSINESS_RULE_VIOLATION")
+    assert (await _category(db_engine, category_id)).image_media_id is None
 
 
-async def test_image_url_can_be_cleared(
-    auth_client: AsyncClient, admin: Account, created: list[UUID]
+async def test_product_image_cannot_be_a_category_banner(
+    auth_client: AsyncClient,
+    db_engine: AsyncEngine,
+    admin: Account,
+    created: list[UUID],
+    make_media: MakeMedia,
 ) -> None:
-    category_id = await _new(auth_client, admin, created, image_url=IMAGE)
+    owner = await _new(auth_client, admin, created)
+    media = await make_media()
+    async with AsyncSession(db_engine, expire_on_commit=False) as session, session.begin():
+        product = Product(category_id=owner, title="Ring", slug=_slug("prd"))
+        session.add(product)
+        await session.flush()
+        session.add(ProductMedia(product_id=product.id, media_id=media.id, is_main=True))
+    try:
+        response = await _create(auth_client, admin, created, image_media_id=media.id)
 
-    response = await _patch(auth_client, admin, category_id, image_url=None)
+        _error(response, 422, "BUSINESS_RULE_VIOLATION")
+    finally:
+        async with AsyncSession(db_engine) as session, session.begin():
+            await session.execute(delete(ProductMedia).where(ProductMedia.media_id == media.id))
+
+
+@pytest.mark.parametrize("value", ["https://cdn.example.com/a.webp", "not-a-uuid"])
+async def test_image_url_input_is_gone(
+    auth_client: AsyncClient, admin: Account, created: list[UUID], value: str
+) -> None:
+    category_id = await _new(auth_client, admin, created)
+
+    _error(await _patch(auth_client, admin, category_id, image_url=value), 400, "VALIDATION_ERROR")
+    response = await _patch(auth_client, admin, category_id, image_media_id=value)
+    _error(response, 400, "VALIDATION_ERROR")
+
+
+async def test_image_can_be_cleared(
+    auth_client: AsyncClient, admin: Account, created: list[UUID], make_media: MakeMedia
+) -> None:
+    banner = await make_media()
+    category_id = await _new(auth_client, admin, created, image_media_id=banner.id)
+
+    response = await _patch(auth_client, admin, category_id, image_media_id=None)
 
     assert response.status_code == 200
     assert response.json()["image_url"] is None
+    assert response.json()["image_media_id"] is None
 
 
 # --- update --------------------------------------------------------------------------

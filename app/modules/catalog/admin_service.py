@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 from typing import Any, Final
-from urllib.parse import urlsplit
 from uuid import UUID
 
 from sqlalchemy import UnaryExpression
@@ -12,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
 from app.core.errors import (
-    BadRequestError,
     BusinessRuleError,
     ConflictError,
     ErrorCode,
@@ -30,9 +28,14 @@ from app.modules.catalog.admin_schemas import (
     ReplaceCategoryFiltersRequest,
     UpdateCategoryRequest,
 )
-from app.modules.catalog.repository import AdminCategoryRepository
+from app.modules.catalog.repository import (
+    AdminCategoryRepository,
+    is_product_media,
+    media_storage_keys,
+)
 from app.shared.audit import record_audit
 from app.shared.pagination import Page, PageParams
+from app.shared.storage import FileStorage
 
 logger = logging.getLogger("app.catalog")
 
@@ -45,51 +48,12 @@ _AUDITED_FIELDS: Final = (
     "slug",
     "description",
     "icon_key",
-    "image_url",
+    "image_media_id",
     "display_order",
     "is_active",
     "seo_title",
     "seo_description",
 )
-
-
-def check_image_url(url: str, allowed_hosts: Collection[str]) -> None:
-    """Accept only ``https://<allowed host>/...``; anything else is a 400 on ``image_url``.
-
-    No user info, no explicit port and no control characters, so the stored URL cannot
-    point anywhere but an allowed host (javascript:, http: and foreign hosts all fail).
-    """
-    try:
-        parts = urlsplit(url)
-        port = parts.port
-    except ValueError:
-        raise _invalid_image_url() from None
-    valid = (
-        url.isascii()
-        and url.isprintable()
-        and not any(char in url for char in " \\")
-        and parts.scheme == "https"
-        and port is None
-        and parts.hostname is not None
-        # Equal only without user info or port: "user@host" or "host:443" differ.
-        and parts.netloc.lower() == parts.hostname
-        and parts.hostname in allowed_hosts
-    )
-    if not valid:
-        raise _invalid_image_url()
-
-
-def _invalid_image_url() -> BadRequestError:
-    return BadRequestError(
-        message="Request validation failed",
-        details=[
-            {
-                "field": "body.image_url",
-                "message": "Must be an https URL on an allowed media host",
-                "type": "value_error",
-            }
-        ],
-    )
 
 
 def _not_found() -> NotFoundError:
@@ -125,10 +89,6 @@ def _filters_response(filters: Sequence[CategoryFilter]) -> AdminCategoryFilters
     )
 
 
-def _response(category: Category) -> AdminCategoryResponse:
-    return AdminCategoryResponse.model_validate(category, from_attributes=True)
-
-
 class AdminCategoryService:
     """Category administration; every write is audited in the same transaction (ADR-023)."""
 
@@ -136,11 +96,44 @@ class AdminCategoryService:
         self,
         session: AsyncSession,
         repository: AdminCategoryRepository,
-        allowed_media_hosts: Collection[str],
+        storage: FileStorage,
     ) -> None:
         self._session = session
         self._repository = repository
-        self._allowed_media_hosts = frozenset(allowed_media_hosts)
+        self._storage = storage
+
+    async def _responses(self, categories: Sequence[Category]) -> list[AdminCategoryResponse]:
+        keys = await media_storage_keys(
+            self._session, [category.image_media_id for category in categories]
+        )
+        return [
+            AdminCategoryResponse.model_validate(
+                {
+                    **{
+                        field: getattr(category, field)
+                        for field in AdminCategoryResponse.model_fields
+                        if field != "image_url"
+                    },
+                    "image_url": None
+                    if category.image_media_id is None
+                    else self._storage.url(keys[category.image_media_id]),
+                }
+            )
+            for category in categories
+        ]
+
+    async def _response(self, category: Category) -> AdminCategoryResponse:
+        return (await self._responses([category]))[0]
+
+    async def _check_image(self, media_id: UUID | None) -> None:
+        if media_id is None:
+            return
+        if not await media_storage_keys(self._session, [media_id]):
+            raise BusinessRuleError(message="Image media not found")
+        # A product image is deleted with its product media (CAT-11); sharing it would
+        # block that delete through the categories FK.
+        if await is_product_media(self._session, media_id):
+            raise BusinessRuleError(message="Image media belongs to a product")
 
     async def list_categories(
         self, order_by: Sequence[UnaryExpression[Any]], paging: PageParams
@@ -149,15 +142,15 @@ class AdminCategoryService:
             categories, total = await self._repository.list_page(
                 order_by, offset=paging.offset, limit=paging.limit
             )
-        return Page.build([_response(item) for item in categories], total=total, params=paging)
+            items = await self._responses(categories)
+        return Page.build(items, total=total, params=paging)
 
     async def create(
         self, actor: CurrentUser, payload: CreateCategoryRequest, audit_request: Request | None
     ) -> AdminCategoryResponse:
-        if payload.image_url is not None:
-            check_image_url(payload.image_url, self._allowed_media_hosts)
         async with self._session.begin():
             await self._repository.lock_tree()
+            await self._check_image(payload.image_media_id)
             if payload.parent_id is not None:
                 await self._check_parent(payload.parent_id, subtree_height=1)
             if await self._repository.slug_taken(payload.slug):
@@ -175,8 +168,9 @@ class AdminCategoryService:
                 after=_snapshot(category),
                 request=audit_request,
             )
+            response = await self._response(category)
         logger.info("category.created", extra={"category_id": str(category.id)})
-        return _response(category)
+        return response
 
     async def update(
         self,
@@ -190,8 +184,6 @@ class AdminCategoryService:
         # at all needs catalog:manage (ADR-023).
         if fields - CONTENT_FIELDS and MANAGE_PERMISSION not in actor.permissions:
             raise ForbiddenError(message="Changing category structure requires catalog:manage")
-        if payload.image_url is not None:
-            check_image_url(payload.image_url, self._allowed_media_hosts)
         async with self._session.begin():
             await self._repository.lock_tree()
             category = await self._repository.lock(category_id)
@@ -203,7 +195,9 @@ class AdminCategoryService:
                 if getattr(payload, field) != getattr(category, field)
             }
             if not changes:
-                return _response(category)
+                return await self._response(category)
+            if "image_media_id" in changes:
+                await self._check_image(changes["image_media_id"])
             if "slug" in changes and await self._repository.slug_taken(
                 changes["slug"], exclude_id=category.id
             ):
@@ -225,11 +219,12 @@ class AdminCategoryService:
                 after=_snapshot(category),
                 request=audit_request,
             )
+            response = await self._response(category)
         logger.info(
             "category.updated",
             extra={"category_id": str(category.id), "fields": sorted(changes)},
         )
-        return _response(category)
+        return response
 
     async def delete(
         self, actor: CurrentUser, category_id: UUID, audit_request: Request | None

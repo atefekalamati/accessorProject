@@ -89,6 +89,9 @@ PRODUCTION_SETTINGS: dict[str, Any] = {
     "environment": "production",
     "cors_origins": "https://shop.example.com",
     "otp_mock_enabled": False,
+    # Production requires https media on an allowed host (ADR-028).
+    "media_public_base_url": "https://cdn.example.com/media",
+    "media_allowed_hosts": "cdn.example.com",
 }
 OTP_HASH_SECRET = "test-otp-hash-secret-at-least-32-characters"
 

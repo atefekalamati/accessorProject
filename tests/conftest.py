@@ -9,6 +9,7 @@ import pytest
 import pytest_asyncio
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import delete, update
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -22,9 +23,9 @@ os.environ.setdefault("JWT_SECRET", "test-secret-that-is-at-least-32-characters"
 os.environ.setdefault("OTP_HASH_SECRET", "test-otp-hash-secret-at-least-32-characters")
 
 from alembic import command
-from app.core.config import Environment, Settings
+from app.core.config import Environment, MediaStorage, Settings
 from app.core.time import utc_now
-from app.db.models import OtpCode
+from app.db.models import Category, Media, OtpCode
 from app.db.seed import seed_rbac
 from app.main import create_app
 from app.modules.auth.otp import hash_otp_code, otp_hash_key
@@ -68,6 +69,8 @@ def settings() -> Settings:
         cors_origins=["http://localhost:3000"],
         otp_mock_enabled=True,
         otp_hash_secret="test-otp-hash-secret-at-least-32-characters",
+        media_storage=MediaStorage.MEMORY,
+        media_public_base_url="https://cdn.example.com/media",
         media_allowed_hosts=["cdn.example.com"],
     )
 
@@ -155,6 +158,38 @@ def issue_otp(settings: Settings, db_engine: AsyncEngine) -> Callable[..., Await
         return otp
 
     return _issue
+
+
+MEDIA_BASE_URL = "https://cdn.example.com/media"
+MakeMedia = Callable[[], Awaitable[Media]]
+
+
+@pytest_asyncio.fixture
+async def make_media(db_engine: AsyncEngine) -> AsyncIterator[MakeMedia]:
+    """Insert media rows (no file); their public URL is MEDIA_BASE_URL/<storage_key>."""
+    created: list[Media] = []
+
+    async def _make() -> Media:
+        media = Media(
+            storage_key=f"{uuid4().hex}.webp",
+            content_type="image/webp",
+            size_bytes=1000,
+            width=10,
+            height=10,
+        )
+        async with AsyncSession(db_engine, expire_on_commit=False) as session, session.begin():
+            session.add(media)
+        created.append(media)
+        return media
+
+    yield _make
+    ids = [media.id for media in created]
+    async with AsyncSession(db_engine) as session, session.begin():
+        # Categories of the test may still point at the media (FK RESTRICT).
+        await session.execute(
+            update(Category).where(Category.image_media_id.in_(ids)).values(image_media_id=None)
+        )
+        await session.execute(delete(Media).where(Media.id.in_(ids)))
 
 
 def unique_mobile() -> str:

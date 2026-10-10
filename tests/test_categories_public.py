@@ -11,11 +11,13 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.time import utc_now
-from app.db.models import Category
+from app.db.models import Category, Media
 
 pytestmark = pytest.mark.integration
 
 CATEGORIES_URL = "/api/v1/categories"
+MEDIA_BASE_URL = "https://cdn.example.com/media"  # settings fixture in conftest
+MakeMedia = Callable[[], Awaitable[Media]]
 MakeCategory = Callable[..., Awaitable[Category]]
 
 
@@ -98,15 +100,16 @@ async def test_tree_hides_inactive_deleted_and_their_descendants(
 
 
 async def test_detail_returns_breadcrumb_and_visible_children(
-    auth_client: AsyncClient, make_category: MakeCategory
+    auth_client: AsyncClient, make_category: MakeCategory, make_media: MakeMedia
 ) -> None:
+    banner = await make_media()
     root = await make_category(title="Accessories")
     category = await make_category(
         parent_id=root.id,
         title="Hair",
         description="Hair accessories",
         icon_key="hair",
-        image_url="https://cdn.example.com/hair.webp",
+        image_media_id=banner.id,
         seo_title="Hair accessories",
         seo_description="All hair accessories",
     )
@@ -120,7 +123,7 @@ async def test_detail_returns_breadcrumb_and_visible_children(
     body = response.json()
     assert body["id"] == str(category.id)
     assert body["description"] == "Hair accessories"
-    assert body["image_url"] == "https://cdn.example.com/hair.webp"
+    assert body["image_url"] == f"{MEDIA_BASE_URL}/{banner.storage_key}"
     assert body["seo_title"] == "Hair accessories"
     assert [item["slug"] for item in body["breadcrumb"]] == [root.slug, category.slug]
     assert [child["slug"] for child in body["children"]] == [child_a.slug, child_b.slug]

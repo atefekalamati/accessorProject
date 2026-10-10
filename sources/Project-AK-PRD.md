@@ -1425,6 +1425,8 @@ Success:
 - PATCH /admin/categories/{id}
   ویرایش دسته‌بندی، بنر، آیکون، توضیح و وضعیت
 
+- POST /admin/media
+  بارگذاری یک تصویر (multipart، فیلد `file`) برای بنر دسته؛ همان قواعد رسانه بخش «محصولات» (ADR-028)
 - DELETE /admin/categories/{id}
   حذف نرم دسته‌بندی؛ دسته دارای زیرمجموعه یا محصول حذف‌نشده → 409
 
@@ -1449,7 +1451,7 @@ Entityها:
   slug
   description
   iconKey
-  imageUrl
+  imageMediaId (بنر؛ Media، تصمیم ADR-028. خروجی‌ها `image_url` ساخته‌شده توسط سرور را دارند)
   displayOrder
   isActive
   seoTitle
@@ -6007,11 +6009,7 @@ Entityها:
   id
   productId
   variantId (اختیاری)
-  storageKey
-  contentType
-  sizeBytes
-  width
-  height
+  mediaId (unique؛ فایل در Media: storageKey، contentType، sizeBytes، width، height؛ ADR-028)
   altText
   displayOrder
   isMain (partial unique: یک تصویر اصلی برای هر productId)

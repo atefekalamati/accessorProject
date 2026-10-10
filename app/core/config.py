@@ -4,7 +4,9 @@ import json
 import re
 from enum import StrEnum
 from functools import lru_cache
+from pathlib import Path
 from typing import Annotated, Any, cast
+from urllib.parse import urlsplit
 
 from fastapi import Request
 from pydantic import BeforeValidator, Field, SecretStr, field_validator, model_validator
@@ -32,6 +34,11 @@ HostList = Annotated[list[str], NoDecode, BeforeValidator(_parse_str_list)]
 
 _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
 _HOSTNAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$")
+
+
+class MediaStorage(StrEnum):
+    LOCAL = "local"
+    MEMORY = "memory"  # tests only; holds files in process memory
 
 
 class Settings(BaseSettings):
@@ -65,8 +72,11 @@ class Settings(BaseSettings):
     access_token_ttl_seconds: int = Field(default=900, ge=60, le=3600)
     refresh_token_ttl_days: int = Field(default=30, ge=1, le=90)
     log_level: str = "INFO"
-    # Hosts allowed in admin-entered image URLs (https only); empty rejects every URL.
-    media_allowed_hosts: HostList = Field(default_factory=list)
+    # Media (CAT-05, ADR-028). The public base URL's host must be in MEDIA_ALLOWED_HOSTS.
+    media_storage: MediaStorage = MediaStorage.LOCAL
+    media_root: Path = Path("var/media")
+    media_public_base_url: str = "http://localhost:8000/media"
+    media_allowed_hosts: HostList = Field(default_factory=lambda: ["localhost"])
 
     @field_validator("database_url")
     @classmethod
@@ -104,7 +114,29 @@ class Settings(BaseSettings):
                 raise ValueError("Mock OTP must be disabled in production")
             if self.otp_hash_secret is None:
                 raise ValueError("OTP_HASH_SECRET is required in production")
+            if self.media_storage is MediaStorage.MEMORY:
+                raise ValueError("MEDIA_STORAGE=memory is forbidden in production")
+        self._check_media_base_url()
         return self
+
+    def _check_media_base_url(self) -> None:
+        parts = urlsplit(self.media_public_base_url)
+        https_only = self.environment is Environment.PRODUCTION
+        allowed_schemes = {"https"} if https_only else {"http", "https"}
+        if (
+            parts.scheme not in allowed_schemes
+            or parts.hostname is None
+            or parts.username is not None
+            or parts.query
+            or parts.fragment
+        ):
+            raise ValueError(
+                "MEDIA_PUBLIC_BASE_URL must be an absolute "
+                + ("https" if https_only else "http(s)")
+                + " URL without credentials, query or fragment"
+            )
+        if parts.hostname not in self.media_allowed_hosts:
+            raise ValueError("MEDIA_PUBLIC_BASE_URL host must be in MEDIA_ALLOWED_HOSTS")
 
     @property
     def cors_origins_list(self) -> list[str]:

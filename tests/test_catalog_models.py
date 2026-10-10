@@ -152,7 +152,7 @@ async def test_categories_table_columns(db_engine: AsyncEngine) -> None:
         "slug",
         "description",
         "icon_key",
-        "image_url",
+        "image_media_id",
         "display_order",
         "is_active",
         "seo_title",

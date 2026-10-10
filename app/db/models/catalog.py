@@ -71,7 +71,12 @@ class Category(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     slug: Mapped[str] = mapped_column(String(120), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     icon_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Banner image (ADR-025, ADR-028); the public URL is built from the media storage key.
+    image_media_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("media.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
     display_order: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )
@@ -175,6 +180,8 @@ class ProductVariant(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base)
         # Backstop for the PRD rule "a variant without a valid price cannot be active".
         CheckConstraint("NOT is_active OR base_price IS NOT NULL", name="active_needs_base_price"),
         Index("ix_product_variants_product_id_display_order", "product_id", "display_order"),
+        # Target of product_media's composite FK: media of a variant stays on its product.
+        UniqueConstraint("id", "product_id", name="uq_product_variants_id_product_id"),
         # A soft-deleted variant frees its SKU (ADR-015).
         Index(
             "uq_product_variants_sku",

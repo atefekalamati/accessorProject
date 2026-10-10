@@ -10,7 +10,7 @@ from app.db.models.catalog import SLUG_PATTERN, CategoryFilterType, VariantOptio
 
 # Fields that categories:edit_content may change; everything else needs catalog:manage
 # (ADR-023). icon_key and the SEO fields stay with catalog:manage for now.
-CONTENT_FIELDS: Final = frozenset({"title", "description", "image_url", "display_order"})
+CONTENT_FIELDS: Final = frozenset({"title", "description", "image_media_id", "display_order"})
 # Columns that cannot be NULL; PATCH may omit them but not send null.
 _NOT_NULL_FIELDS: Final = frozenset({"title", "slug", "display_order", "is_active"})
 
@@ -18,8 +18,6 @@ Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, ma
 Slug = Annotated[str, StringConstraints(pattern=SLUG_PATTERN)]
 Description = Annotated[str, StringConstraints(max_length=5000)]
 IconKey = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
-# Checked further (https, allowed host) by the service, which knows the settings.
-ImageUrl = Annotated[str, StringConstraints(min_length=1, max_length=500)]
 DisplayOrder = Annotated[int, Field(ge=0, le=1_000_000)]
 SeoTitle = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)]
 SeoDescription = Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]
@@ -33,7 +31,8 @@ class CreateCategoryRequest(BaseModel):
     parent_id: UUID | None = None
     description: Description | None = None
     icon_key: IconKey | None = None
-    image_url: ImageUrl | None = None
+    # Banner image uploaded through POST /admin/media (ADR-028).
+    image_media_id: UUID | None = None
     display_order: DisplayOrder = 0
     is_active: bool = True
     seo_title: SeoTitle | None = None
@@ -50,7 +49,7 @@ class UpdateCategoryRequest(BaseModel):
     parent_id: UUID | None = None
     description: Description | None = None
     icon_key: IconKey | None = None
-    image_url: ImageUrl | None = None
+    image_media_id: UUID | None = None
     display_order: DisplayOrder | None = None
     is_active: bool | None = None
     seo_title: SeoTitle | None = None
@@ -75,6 +74,8 @@ class AdminCategoryResponse(BaseModel):
     slug: str
     description: str | None
     icon_key: str | None
+    image_media_id: UUID | None
+    # Public URL of the banner, built from the media storage key.
     image_url: str | None
     display_order: int
     is_active: bool

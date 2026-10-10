@@ -5,23 +5,22 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import Settings, get_app_settings
 from app.db.session import get_db_session
 from app.modules.catalog.admin_service import AdminCategoryService
 from app.modules.catalog.repository import AdminCategoryRepository, CategoryRepository
 from app.modules.catalog.service import CategoryService
+from app.shared.storage import FileStorage, get_file_storage
 
 
 def get_category_service(
     session: Annotated[AsyncSession, Depends(get_db_session)],
+    storage: Annotated[FileStorage, Depends(get_file_storage)],
 ) -> CategoryService:
-    return CategoryService(session, CategoryRepository(session))
+    return CategoryService(session, CategoryRepository(session), storage)
 
 
 def get_admin_category_service(
     session: Annotated[AsyncSession, Depends(get_db_session)],
-    settings: Annotated[Settings, Depends(get_app_settings)],
+    storage: Annotated[FileStorage, Depends(get_file_storage)],
 ) -> AdminCategoryService:
-    return AdminCategoryService(
-        session, AdminCategoryRepository(session), settings.media_allowed_hosts
-    )
+    return AdminCategoryService(session, AdminCategoryRepository(session), storage)

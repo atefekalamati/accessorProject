@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import NotFoundError
 from app.db.models import Category, CategoryFilterType, VariantOptionKey
-from app.modules.catalog.repository import CategoryRepository
+from app.modules.catalog.repository import CategoryRepository, media_storage_keys
 from app.modules.catalog.schemas import (
     BreadcrumbItem,
     CategoryDetailResponse,
@@ -19,15 +19,16 @@ from app.modules.catalog.schemas import (
     FilterValue,
     PublicCategoryFilter,
 )
+from app.shared.storage import FileStorage
 
 
-def _summary(category: Category) -> CategorySummary:
+def _summary(category: Category, image_url: str | None) -> CategorySummary:
     return CategorySummary(
         id=category.id,
         title=category.title,
         slug=category.slug,
         icon_key=category.icon_key,
-        image_url=category.image_url,
+        image_url=image_url,
     )
 
 
@@ -52,18 +53,32 @@ _OPTION_KEYS = frozenset(VariantOptionKey)
 class CategoryService:
     """Public category reads; hidden categories do not exist for these endpoints (ADR-022)."""
 
-    def __init__(self, session: AsyncSession, repository: CategoryRepository) -> None:
+    def __init__(
+        self, session: AsyncSession, repository: CategoryRepository, storage: FileStorage
+    ) -> None:
         self._session = session
         self._repository = repository
+        self._storage = storage
+
+    async def _image_urls(self, categories: Sequence[Category]) -> dict[UUID, str]:
+        keys = await media_storage_keys(
+            self._session, [category.image_media_id for category in categories]
+        )
+        return {media_id: self._storage.url(key) for media_id, key in keys.items()}
+
+    @staticmethod
+    def _url(category: Category, urls: dict[UUID, str]) -> str | None:
+        return None if category.image_media_id is None else urls.get(category.image_media_id)
 
     async def tree(self) -> CategoryTreeResponse:
         async with self._session.begin():
             categories = await self._repository.list_visible()
+            urls = await self._image_urls(categories)
         children = _children_by_parent(categories)
 
         def build(category: Category) -> CategoryTreeNode:
             return CategoryTreeNode(
-                **_summary(category).model_dump(),
+                **_summary(category, self._url(category, urls)).model_dump(),
                 children=[build(child) for child in children.get(category.id, [])],
             )
 
@@ -72,7 +87,9 @@ class CategoryService:
     async def detail(self, slug: str) -> CategoryDetailResponse:
         async with self._session.begin():
             categories = await self._repository.list_visible()
-        category = _visible_by_slug(categories, slug)
+            category = _visible_by_slug(categories, slug)
+            children = _children_by_parent(categories).get(category.id, [])
+            urls = await self._image_urls([category, *children])
 
         by_id = {item.id: item for item in categories}
         path: list[Category] = []
@@ -80,21 +97,20 @@ class CategoryService:
         while current is not None:
             path.append(current)
             current = None if current.parent_id is None else by_id.get(current.parent_id)
-        children = _children_by_parent(categories).get(category.id, [])
         return CategoryDetailResponse(
             id=category.id,
             title=category.title,
             slug=category.slug,
             description=category.description,
             icon_key=category.icon_key,
-            image_url=category.image_url,
+            image_url=self._url(category, urls),
             seo_title=category.seo_title,
             seo_description=category.seo_description,
             breadcrumb=[
                 BreadcrumbItem(id=item.id, title=item.title, slug=item.slug)
                 for item in reversed(path)
             ],
-            children=[_summary(child) for child in children],
+            children=[_summary(child, self._url(child, urls)) for child in children],
         )
 
     async def filters(self, slug: str) -> CategoryFiltersResponse:

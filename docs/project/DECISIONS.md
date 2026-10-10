@@ -231,6 +231,23 @@
   - API قیمت (CAT-11، PRC-03) باید `ge=1` و `le=MAX_PRICE_TOMAN` را اعمال کند (`Toman` فقط `ge=0` دارد).
 - پیامدها: PRC-01، PRC-02، PRC-03، PRC-05، CAT-11، ORD-03.
 
+### ADR-028 — رسانه و آپلود (CAT-05)
+- تاریخ: 2026-10-10
+- تصمیم (کاربر تأیید کرد: گزینه الف و M2.2-PLAN.md):
+  - dependencyها: `python-multipart` 0.0.32 و `pillow` 12.3 از طریق lock با hash.
+  - سقف حجم هنگام stream اعمال می‌شود: Content-Length بزرگ‌تر از `MAX_REQUEST_BYTES` و stream بدون Content-Length هر دو قبل از خواندن کامل body رد می‌شوند. حداکثر یک فایل و تعداد محدود فیلد. فایل‌ها در temp file روی دیسک spool و همیشه بسته می‌شوند.
+  - جدول عمومی `media` (storage_key، content_type، size_bytes، width، height) و `product_media` با `media_id` (unique). این از entity داخلی PRD فاصله دارد تا بنر دسته و بعداً بنر محتوا از همان رسانه استفاده کنند. `categories.image_url` با `image_media_id` جایگزین شد (ADR-025) و پاسخ‌ها `image_url` ساخته‌شده توسط سرور را دارند. endpoint `POST /admin/media` با `catalog:manage` یا `categories:edit_content` و audit `media.uploaded`. آپلود تصویر محصول در CAT-11 (`POST /admin/products/{id}/media`) است.
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی subagent):
+  - `MAX_UPLOAD_BYTES = 5 MiB = 5_242_880` و `MAX_REQUEST_BYTES` = همان + 64 KiB.
+  - حداکثر ابعاد ۶۰۰۰px در هر ضلع و ۳۶M پیکسل. این ابعاد از header بررسی می‌شوند، قبل از decode، و `DecompressionBombWarning` به خطا تبدیل می‌شود.
+  - حداکثر ۲ decode همزمان (CapacityLimiter). تصویر animated رد می‌شود.
+  - re-encode از pixel خام، پس exif، xmp، icc، comment و text chunk حذف می‌شوند. orientation قبل از حذف اعمال می‌شود. فایل ذخیره‌شده حداکثر ۴ برابر سقف آپلود است.
+  - `MEDIA_ALLOWED_HOSTS` می‌ماند و host `MEDIA_PUBLIC_BASE_URL` باید در آن باشد. production فقط https و storage غیر `memory` می‌پذیرد.
+  - کلید را سرور می‌سازد (uuid hex + پسوند) و regex و resolve زیر root بررسی می‌شوند. نوشتن اتمیک با temp در همان پوشه انجام می‌شود. `/media` فقط در development و با `nosniff` mount می‌شود.
+  - اگر نوشتن DB شکست بخورد یا درخواست cancel شود، فایل ذخیره‌شده حذف می‌شود. فایل‌ها و ردیف‌های یتیم در crash window → task پاک‌سازی OPS.
+  - composite FK `(variant_id, product_id)` تضمین می‌کند تنوع رسانه از همان محصول باشد.
+- پیامدها: CAT-05، CAT-11 (آپلود، حذف رسانه و فایل بعد از commit)، CNT-03، OPS-07.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
@@ -247,6 +264,7 @@
 | 2026-10-09 | «جزئیات محصول» ✓، «محصولات» ✓، «معماری سیستم» | بازنویسی دو بخش قالبی (CAT-00)؛ `GET /products/{id}` → `GET /products/{slug}` | D24 (ADR-020) |
 | 2026-10-10 | «دسته‌بندی محصولات» ✓ | افزودن `GET /categories` (درخت)؛ قاعده پنهان‌شدن با جد غیرفعال؛ مجوز `categories:edit_content` برای content_manager | D26 (ADR-022)، D27 (ADR-023) |
 | 2026-10-10 | «دسته‌بندی محصولات» ✓ | افزودن `DELETE /admin/categories/{id}` (حذف نرم، 409 با زیرمجموعه یا محصول) | ADR-025 |
+| 2026-10-10 | «دسته‌بندی محصولات» ✓، «محصولات» ✓ | `imageUrl` دسته → `imageMediaId`؛ افزودن `POST /admin/media`؛ ProductMedia با `mediaId` به Media | ADR-028 |
 
 قاعده: هر task نوع `XX-00` بخش قالبی ماژول خود را در PRD بازنویسی می‌کند، به عنوان آن بخش «✓ بازبینی‌شده» اضافه می‌کند و یک ردیف به این جدول می‌افزاید.
 

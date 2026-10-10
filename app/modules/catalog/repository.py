@@ -11,8 +11,10 @@ from sqlalchemy.orm import aliased
 from app.db.models import (
     Category,
     CategoryFilter,
+    Media,
     Product,
     ProductAttribute,
+    ProductMedia,
     ProductStatus,
     ProductVariant,
     VariantOption,
@@ -92,6 +94,22 @@ class CategoryRepository:
         )
         rows = (await self._session.execute(statement)).all()
         return [(row[0], row[1], int(row[2])) for row in rows]
+
+
+async def media_storage_keys(
+    session: AsyncSession, media_ids: Collection[UUID | None]
+) -> dict[UUID, str]:
+    """Storage keys of the given media ids, in one query."""
+    ids = {media_id for media_id in media_ids if media_id is not None}
+    if not ids:
+        return {}
+    rows = await session.execute(select(Media.id, Media.storage_key).where(Media.id.in_(ids)))
+    return {row.id: row.storage_key for row in rows}
+
+
+async def is_product_media(session: AsyncSession, media_id: UUID) -> bool:
+    statement = select(exists().where(ProductMedia.media_id == media_id))
+    return bool(await session.scalar(statement))
 
 
 def _public_products_of(category_id: UUID) -> tuple[ColumnElement[bool], ...]:
