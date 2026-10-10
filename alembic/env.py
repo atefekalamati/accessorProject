@@ -12,6 +12,7 @@ from app.db.models import (
     Address,
     AppSetting,
     AuditLog,
+    Category,
     OtpCode,
     Permission,
     Role,
@@ -34,7 +35,17 @@ if not database_url:
 target_metadata = Base.metadata
 
 # Keep model imports explicit so Alembic can discover every table.
-_MODELS = (Address, AppSetting, AuditLog, OtpCode, Permission, Role, User, UserSession)
+_MODELS = (
+    Address,
+    AppSetting,
+    AuditLog,
+    Category,
+    OtpCode,
+    Permission,
+    Role,
+    User,
+    UserSession,
+)
 
 
 def run_migrations_offline() -> None:

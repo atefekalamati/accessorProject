@@ -31,6 +31,7 @@
 | D22 | احراز هویت هر درخواست، permission و مالکیت | AUTH-08، AUTH-09، AUTH-10 | — | resolved (ADR-018) |
 | D23 | مدیریت کاربر توسط مدیران (وضعیت و نقش) | AUTH-11 | — | resolved (ADR-019) |
 | D24 | نیازمندی‌های محصول (جزئیات و admin) | CAT-00 | — | resolved (ADR-020) |
+| D25 | جزئیات schema کاتالوگ (FK، پیش‌فرض، CHECK) | — | — | resolved (ADR-021) |
 
 ## ADR
 
@@ -166,6 +167,15 @@
   - `default_variant_id` و `price_range` در پاسخ جزئیات می‌مانند. قاعده SCOPE?: فیلد read-only مشتق از داده موجود می‌ماند و هر feature جدید کاربرمحور حذف می‌شود.
 - تصمیم‌های کم‌اثر (خودم): گراف وضعیت draft↔published، published/draft → archived، archived → draft؛ `published_at` فقط در اولین انتشار؛ `discount_percent` به پایین گرد می‌شود و فقط نمایشی است؛ slug را ادمین وارد می‌کند (حروف کوچک لاتین، رقم و `-`، ۳ تا ۱۲۰)؛ SKU به حروف بزرگ نرمال می‌شود؛ گزینه‌های تنوع متن آزاد با کلیدهای color/size/model؛ بدون restore در v1؛ تغییر وضعیت و تغییرات تنوع/رسانه روی ردیف Product قفل می‌گیرند؛ ProductHistory حذف و AuditLog جایگزین شد.
 - پیامدها: CAT-02 تا CAT-05، CAT-07، CAT-08، CAT-11، PRC-01 (قانون «تنوع فعال بدون قیمت → 422» بعد از PRC-01). حذف EXIF و تشخیص magic bytes در CAT-05 احتمالاً dependency جدید لازم دارد (مثل Pillow) که در plan آن task با دلیل ذکر می‌شود.
+
+### ADR-021 — جزئیات schema کاتالوگ (D25)
+- تاریخ: 2026-10-10
+- زمینه: PRD فیلدها را می‌گوید، ولی FK، پیش‌فرض‌ها و CHECKها را نه. همه تصمیم‌ها کم‌اثر و خودم (CLAUDE.md پروتکل ۸).
+- تصمیم:
+  - Category (CAT-01): soft-deletable (شرط انتشار محصول «دسته soft-delete نشده» را فرض می‌کند). slug همان قاعده slug محصول (`^[a-z0-9-]{3,120}$`) و partial unique (ADR-015). `parent_id` با `ON DELETE RESTRICT` و CHECK `parent_id <> id`؛ چرخه عمیق‌تر در CAT-10. `is_active` پیش‌فرض true.
+  - قاعده فرمت slug و SKU علاوه بر API یک CHECK در DB هم دارد (backstop)؛ migration متن literal الگو را کپی می‌کند.
+  - همه FKهای کاتالوگ `ON DELETE RESTRICT` هستند تا حذف سخت رکورد ارجاع‌شده در DB هم ممکن نباشد.
+- پیامدها: CAT-01، CAT-06، CAT-10.
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
