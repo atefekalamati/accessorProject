@@ -1,8 +1,20 @@
 from __future__ import annotations
 
+from datetime import datetime
+from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Index, Integer, String, Text, text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -51,3 +63,63 @@ class Category(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     )
     seo_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     seo_description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+class ProductStatus(StrEnum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
+
+class Product(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
+    """Referenced by variants, carts and orders, so it is only ever soft deleted (PRD «محصولات»)."""
+
+    __tablename__ = "products"
+    __table_args__ = (
+        CheckConstraint("length(trim(title)) > 0", name="title_not_blank"),
+        CheckConstraint(f"slug ~ '{SLUG_PATTERN}'", name="slug_format"),
+        CheckConstraint(
+            "status IN ('draft', 'published', 'archived')",
+            name="valid_status",
+        ),
+        # Set on the first publish and never cleared (sort key for «newest»).
+        CheckConstraint(
+            "status <> 'published' OR published_at IS NOT NULL",
+            name="published_has_published_at",
+        ),
+        Index("ix_products_category_id", "category_id"),
+        Index("ix_products_status_published_at", "status", "published_at"),
+        # A soft-deleted product frees its slug (ADR-015).
+        Index(
+            "uq_products_slug",
+            "slug",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
+    )
+
+    category_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("categories.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    slug: Mapped[str] = mapped_column(String(120), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=ProductStatus.DRAFT, server_default="draft"
+    )
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_featured: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    created_by: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    updated_by: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )

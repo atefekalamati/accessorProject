@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** batch SEC-07 → SEC-06 → CAT-01..03 (SEC-07، SEC-06، CAT-01 COMPLETE). بعدی: CAT-02
+- **Current Task:** batch SEC-07 → SEC-06 → CAT-01..03 (SEC-07، SEC-06، CAT-01، CAT-02 COMPLETE). بعدی: CAT-03
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 40/144 task COMPLETE · وزنی 20.7% (86h / 415.5h) · MVP 31.5%
+- **Progress:** 41/144 task COMPLETE · وزنی 21.4% (89h / 415.5h) · MVP 32.6%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** بررسی CI روی commit CAT-00. batch بعدی: SEC-06 (بدون HIGH)، سپس CAT-01 تا CAT-03 طبق ADR-020. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
@@ -15,13 +15,13 @@
 ---
 
 ## Overall Progress
-**20.7%** = 86h COMPLETE / 415.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**21.4%** = 89h COMPLETE / 415.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 48.5h | 35.8% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 51.5h | 38.0% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 100.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 329.5h ≈ ۲۲ هفته. MVP باقی‌مانده: 187h ≈ ۱۳ هفته.
+- باقی‌مانده: 326.5h ≈ ۲۲ هفته. MVP باقی‌مانده: 184h ≈ ۱۲ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-10: CAT-02 (Product model: draft/published/archived, published_at CHECK, partial-unique slug, soft delete).
 - 2026-10-10: CAT-01 (Category model: tree, partial-unique slug, is_active, display_order, soft delete; ADR-021).
 - 2026-10-10: SEC-06 (hashed universal locks via uv; CI and Docker install with --require-hashes; drift check).
 - 2026-10-10: SEC-07 (CI runner pinned to ubuntu-24.04; actions/checkout@v7, actions/setup-python@v7).
@@ -146,6 +147,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-10 — CAT-02 COMPLETE
+- مدل `Product` و migration `20261010_0007`؛ ADR-021 تکمیل شد. pytest 654 passed؛ ruff، format و mypy سبز. CI CAT-01 سبز.
+
 ### 2026-10-10 — CAT-01 COMPLETE
 - مدل `Category` و migration `20261010_0006`؛ ADR-021 (D25). pytest 637 passed؛ ruff، format و mypy سبز. CI SEC-06 سبز.
 

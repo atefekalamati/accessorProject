@@ -174,8 +174,9 @@
 - تصمیم:
   - Category (CAT-01): soft-deletable (شرط انتشار محصول «دسته soft-delete نشده» را فرض می‌کند). slug همان قاعده slug محصول (`^[a-z0-9-]{3,120}$`) و partial unique (ADR-015). `parent_id` با `ON DELETE RESTRICT` و CHECK `parent_id <> id`؛ چرخه عمیق‌تر در CAT-10. `is_active` پیش‌فرض true.
   - قاعده فرمت slug و SKU علاوه بر API یک CHECK در DB هم دارد (backstop)؛ migration متن literal الگو را کپی می‌کند.
-  - همه FKهای کاتالوگ `ON DELETE RESTRICT` هستند تا حذف سخت رکورد ارجاع‌شده در DB هم ممکن نباشد.
-- پیامدها: CAT-01، CAT-06، CAT-10.
+  - همه FKهای بین جدول‌های کاتالوگ `ON DELETE RESTRICT` هستند تا حذف سخت رکورد ارجاع‌شده در DB هم ممکن نباشد. FKهای actor (`created_by`، `updated_by`) به `users` با `SET NULL`، مثل `audit_logs.actor_user_id`.
+  - Product (CAT-02): CHECK «`published` ⇒ `published_at` دارد». `published_at` با unpublish پاک نمی‌شود.
+- پیامدها: CAT-01، CAT-02، CAT-06، CAT-10، CAT-11.
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).

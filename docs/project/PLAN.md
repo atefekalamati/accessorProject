@@ -69,7 +69,7 @@
 | DEC-03 | Stock model (D3) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-005 |
 | CAT-00 | Rewrite «جزئیات محصول» + «محصولات» (admin) requirements | COMPLETE | HIGH | HIGH | 3 | — | PRD section ✓ بازبینی‌شده + approved |
 | CAT-01 | Category model + migration (tree, slug, status, order) | COMPLETE | HIGH | MEDIUM | 3 | INF-04 | unique slug; inactive hidden | ✓ |
-| CAT-02 | Product model + soft delete + draft/published/archived | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-01, INF-04 | referenced products soft-deleted only |
+| CAT-02 | Product model + soft delete + draft/published/archived | COMPLETE | HIGH | MEDIUM | 3 | CAT-01, INF-04 | referenced products soft-deleted only | ✓ |
 | CAT-03 | ProductVariant model (SKU, active, purchasable; no stock column) | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-02, ADR-005 | unique SKU |
 | CAT-04 | Attributes & values (color/size/model) | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-03 | variant ↔ attribute values |
 | CAT-05 | Media model + storage interface + local fake | NOT_STARTED | MEDIUM | MEDIUM | 4 | CAT-02, ADR-009 | ordered media, main image |

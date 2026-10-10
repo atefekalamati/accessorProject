@@ -7,7 +7,8 @@ from sqlalchemy import inspect, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from app.db.models import Category
+from app.core.time import utc_now
+from app.db.models import Category, Product, ProductStatus, User
 
 pytestmark = pytest.mark.integration
 
@@ -147,6 +148,165 @@ async def test_categories_table_columns(db_engine: AsyncEngine) -> None:
         "is_active",
         "seo_title",
         "seo_description",
+        "created_at",
+        "updated_at",
+        "deleted_at",
+    }
+
+
+async def _saved_category(db_session: AsyncSession) -> Category:
+    category = _category()
+    db_session.add(category)
+    await db_session.flush()
+    return category
+
+
+def _product(category: Category, **overrides: object) -> Product:
+    values: dict[str, object] = {
+        "category_id": category.id,
+        "title": "Gold necklace",
+        "slug": _slug("product"),
+    }
+    return Product(**{**values, **overrides})
+
+
+async def test_product_defaults_to_draft(db_session: AsyncSession) -> None:
+    product = _product(await _saved_category(db_session))
+    db_session.add(product)
+    await db_session.flush()
+    await db_session.refresh(product)
+
+    assert product.status == ProductStatus.DRAFT
+    assert product.published_at is None
+    assert product.is_featured is False
+    assert (product.created_by, product.updated_by, product.deleted_at) == (None, None, None)
+
+
+async def test_product_requires_existing_category(db_session: AsyncSession) -> None:
+    db_session.add(Product(category_id=uuid4(), title="Ring", slug=_slug("product")))
+
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_category_with_products_cannot_be_hard_deleted(db_session: AsyncSession) -> None:
+    category = await _saved_category(db_session)
+    db_session.add(_product(category))
+    await db_session.flush()
+
+    await db_session.delete(category)
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+@pytest.mark.parametrize("status", list(ProductStatus))
+async def test_product_accepts_every_status(
+    db_session: AsyncSession, status: ProductStatus
+) -> None:
+    published_at = None if status == ProductStatus.DRAFT else utc_now()
+    product = _product(await _saved_category(db_session), status=status, published_at=published_at)
+    db_session.add(product)
+    await db_session.flush()
+
+    assert product.status == status
+
+
+async def test_published_product_needs_published_at(db_session: AsyncSession) -> None:
+    db_session.add(_product(await _saved_category(db_session), status=ProductStatus.PUBLISHED))
+
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_unpublished_product_keeps_published_at(db_session: AsyncSession) -> None:
+    first_publish = utc_now()
+    product = _product(
+        await _saved_category(db_session),
+        status=ProductStatus.PUBLISHED,
+        published_at=first_publish,
+    )
+    db_session.add(product)
+    await db_session.flush()
+
+    product.status = ProductStatus.DRAFT
+    await db_session.flush()
+    await db_session.refresh(product)
+
+    assert product.published_at == first_publish
+
+
+async def test_product_slug_unique_among_non_deleted(db_session: AsyncSession) -> None:
+    category = await _saved_category(db_session)
+    slug = _slug("product")
+    db_session.add(_product(category, slug=slug))
+    await db_session.flush()
+
+    db_session.add(_product(category, slug=slug))
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_soft_deleted_product_frees_its_slug(db_session: AsyncSession) -> None:
+    category = await _saved_category(db_session)
+    slug = _slug("product")
+    old = _product(category, slug=slug)
+    db_session.add(old)
+    await db_session.flush()
+    old.soft_delete()
+    await db_session.flush()
+
+    new = _product(category, slug=slug)
+    db_session.add(new)
+    await db_session.flush()
+
+    assert new.id != old.id
+
+
+async def test_product_audit_users_are_set_null_on_user_delete(db_session: AsyncSession) -> None:
+    user = User(phone=f"+989{uuid4().int % 1_000_000_000:09d}")
+    db_session.add(user)
+    await db_session.flush()
+    product = _product(await _saved_category(db_session), created_by=user.id, updated_by=user.id)
+    db_session.add(product)
+    await db_session.flush()
+
+    await db_session.delete(user)
+    await db_session.flush()
+    await db_session.refresh(product)
+
+    assert (product.created_by, product.updated_by) == (None, None)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"title": " "},
+        {"slug": "Gold-Necklace"},
+        {"slug": "x"},
+        {"status": "deleted"},
+        {"created_by": uuid4()},
+    ],
+    ids=["blank-title", "uppercase-slug", "short-slug", "unknown-status", "unknown-creator"],
+)
+async def test_product_constraints(db_session: AsyncSession, overrides: dict[str, object]) -> None:
+    db_session.add(_product(await _saved_category(db_session), **overrides))
+
+    with pytest.raises(IntegrityError):
+        await db_session.flush()
+
+
+async def test_products_table_columns(db_engine: AsyncEngine) -> None:
+    assert await _columns(db_engine, "products") == {
+        "id",
+        "category_id",
+        "title",
+        "slug",
+        "description",
+        "status",
+        "published_at",
+        "is_featured",
+        "created_by",
+        "updated_by",
         "created_at",
         "updated_at",
         "deleted_at",
