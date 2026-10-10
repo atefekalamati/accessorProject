@@ -117,7 +117,7 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 
 فایل‌های برنامه‌ریزی، مراحل هر task، قواعد تغییر برنامه و نگاشت درخواست‌های رایج («کجاییم؟»، «قدم بعدی؟» و…) در [docs/project/WORKFLOW.md](docs/project/WORKFLOW.md) هستند. بدون validation هرگز COMPLETE نزن و به درخواست‌های وضعیت همیشه از فایل‌ها جواب بده.
 
-- هر task قبل از اجرا plan تأییدشده توسط کاربر لازم دارد.
+- هر task قبل از اجرا plan لازم دارد (تأیید کاربر طبق قواعد AUTOPILOT در Speed mode).
 - هر فایل task یک خط `Level: LOW|MEDIUM|HIGH` دارد.
 - HIGH شامل این موارد است: موجودی/رزرو، پرداخت، OTP/token/auth، ویرایش PRD، تغییر رفتار API، و هر task که مبلغ پولی، موجودی، مصرف کد تخفیف یا وضعیت سفارش/پرداخت را محاسبه یا ذخیره کند. plan این taskها باید ریسک‌ها، مراحل rollback و تست‌های اضافه را هم فهرست کند.
 - بعد از هر `/done`، شاخه فعلی push شود (`git push`، بدون force).
@@ -140,8 +140,10 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 ### Speed mode
 
 - CI: بعد از هر push، run همان commit را با `gh run watch <id> --exit-status` دنبال کن (`gh` روی PATH نیست: `& "C:\Program Files\GitHub CLI\gh.exe"`). سبز = pass؛ قرمز = توقف و گزارش step شکست‌خورده.
-- batch بدون task HIGH: بعد از پیشنهاد، بدون انتظار شروع کن. batch با task HIGH: plan + انتظار برای تأیید (بدون تغییر).
-- زنجیره: اگر batch غیر HIGH کامل شد و CI سبز بود، batch بعدی خودکار شروع شود. حداکثر ۲ batch در هر جلسه، سپس گزارش و «آماده برای /clear».
+- **AUTOPILOT (2026-10-10):** plan هیچ batch یا task، حتی HIGH، منتظر تأیید نمی‌ماند، مگر: `PAY-*`، رزرو/commit/release موجودی، تغییر scope در PRD، dependency بیرونی جدید یا ابهام در PRD. در این موارد توقف کن و plan را بفرست.
+- هر task HIGH: plan با [REVIEW-CHECKLIST.md](docs/project/REVIEW-CHECKLIST.md) چک می‌شود. سپس یک subagent بازبین مستقل plan و diff نهایی را در برابر همان فهرست بررسی می‌کند. یافته‌ها قبل از commit رفع می‌شوند و نتیجه بازبینی در Log فایل task ثبت می‌شود.
+- milestone: در شروع هر milestone یک plan واحد (≤۶۰ خط؛ برای هر task: scope، level و ریسک‌های کلیدی) یک‌بار برای کاربر فرستاده می‌شود. بعد از آن همه batchهای آن milestone بدون تأیید دوباره اجرا می‌شوند.
+- زنجیره: اگر batch کامل شد و CI سبز بود، batch بعدی خودکار شروع می‌شود. حداکثر ۳ batch در هر جلسه، سپس گزارش و «آماده برای /clear».
 - مجوزها در `.claude/settings.json` (allow/deny) تعریف شده‌اند.
 - PR فاز ۲ در پایان فاز ساخته می‌شود (PR #4 بسته شد، شاخه حفظ شد).
 
