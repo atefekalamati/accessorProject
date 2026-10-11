@@ -12,7 +12,13 @@ from app.db.models.catalog import (
     VariantOption,
     VariantOptionKey,
 )
-from app.db.models.inventory import InventoryItem, Warehouse, WarehouseStatus
+from app.db.models.inventory import (
+    InventoryItem,
+    InventoryMovement,
+    MovementType,
+    Warehouse,
+    WarehouseStatus,
+)
 from app.db.models.media import Media, ProductMedia
 from app.db.models.pricing import PricingSetting
 from app.db.models.rbac import Permission, Role, RolePermission, UserRole
@@ -27,9 +33,11 @@ __all__ = [
     "CategoryFilter",
     "CategoryFilterType",
     "InventoryItem",
+    "InventoryMovement",
     "OtpCode",
     "Permission",
     "Media",
+    "MovementType",
     "PricingSetting",
     "Product",
     "ProductAttribute",

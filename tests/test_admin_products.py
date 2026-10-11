@@ -19,6 +19,7 @@ from app.db.models import (
     AuditLog,
     Category,
     InventoryItem,
+    InventoryMovement,
     Media,
     Product,
     ProductAttribute,
@@ -128,6 +129,10 @@ async def created(db_engine: AsyncEngine) -> AsyncIterator[Created]:
         media_ids = list((await session.scalars(media)).all())
         await session.execute(delete(ProductMedia).where(ProductMedia.product_id.in_(products)))
         await session.execute(delete(Media).where(Media.id.in_(media_ids)))
+        items = select(InventoryItem.id).where(InventoryItem.product_id.in_(products))
+        await session.execute(
+            delete(InventoryMovement).where(InventoryMovement.inventory_item_id.in_(items))
+        )
         await session.execute(delete(InventoryItem).where(InventoryItem.product_id.in_(products)))
         await session.execute(delete(VariantOption).where(VariantOption.variant_id.in_(variants)))
         await session.execute(delete(ProductVariant).where(ProductVariant.product_id.in_(products)))

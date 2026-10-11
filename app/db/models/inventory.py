@@ -19,7 +19,7 @@ from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.db.models.common import TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.models.common import CreatedAtMixin, TimestampMixin, UUIDPrimaryKeyMixin
 from app.shared.inventory import MAX_STOCK_QUANTITY
 
 # The v1 default warehouse, inserted by migration 20261010_0013 (ADR-005).
@@ -32,6 +32,40 @@ class WarehouseStatus(StrEnum):
 
 
 WAREHOUSE_STATUSES_SQL: Final = ", ".join(f"'{status.value}'" for status in WarehouseStatus)
+
+
+class MovementType(StrEnum):
+    """Why a stock counter changed (PRD «موجودی و رزرو» ✓, InventoryMovement)."""
+
+    INCREASE = "increase"
+    DECREASE = "decrease"
+    RESERVE = "reserve"
+    RELEASE = "release"
+    COMMIT = "commit"
+    CORRECTION = "correction"
+    RETURN = "return"
+
+
+MOVEMENT_TYPES_SQL: Final = ", ".join(f"'{kind.value}'" for kind in MovementType)
+MAX_MOVEMENT_REASON_LENGTH: Final = 500
+# What a movement may point at (reservation flows in INV-04..06, returns later).
+MOVEMENT_REFERENCE_TYPES: Final = ("reservation", "order", "payment", "return")
+MOVEMENT_REFERENCE_TYPES_SQL: Final = ", ".join(f"'{kind}'" for kind in MOVEMENT_REFERENCE_TYPES)
+# Each type moves the counters in one fixed way; ``quantity`` is always |change| > 0.
+MOVEMENT_DELTAS_SQL: Final = (
+    "(movement_type IN ('increase', 'return')"
+    " AND total_after = total_before + quantity AND reserved_after = reserved_before)"
+    " OR (movement_type = 'decrease'"
+    " AND total_after = total_before - quantity AND reserved_after = reserved_before)"
+    " OR (movement_type = 'correction'"
+    " AND abs(total_after - total_before) = quantity AND reserved_after = reserved_before)"
+    " OR (movement_type = 'reserve'"
+    " AND reserved_after = reserved_before + quantity AND total_after = total_before)"
+    " OR (movement_type = 'release'"
+    " AND reserved_after = reserved_before - quantity AND total_after = total_before)"
+    " OR (movement_type = 'commit' AND total_after = total_before - quantity"
+    " AND reserved_after = reserved_before - quantity)"
+)
 
 
 class Warehouse(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -115,4 +149,73 @@ class InventoryItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     low_stock_threshold: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
+    )
+
+
+class InventoryMovement(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
+    """One change of an InventoryItem's counters, with both sides of it (INV-02, ADR-034).
+
+    Append-only: every manual adjustment, reservation, release and commit writes one row in
+    the same transaction as the counter change.
+    """
+
+    __tablename__ = "inventory_movements"
+    __table_args__ = (
+        CheckConstraint(f"movement_type IN ({MOVEMENT_TYPES_SQL})", name="valid_movement_type"),
+        CheckConstraint(f"quantity BETWEEN 1 AND {MAX_STOCK_QUANTITY}", name="quantity_range"),
+        CheckConstraint(
+            f"total_before BETWEEN 0 AND {MAX_STOCK_QUANTITY}"
+            f" AND total_after BETWEEN 0 AND {MAX_STOCK_QUANTITY}",
+            name="total_range",
+        ),
+        CheckConstraint(
+            "reserved_before BETWEEN 0 AND total_before"
+            " AND reserved_after BETWEEN 0 AND total_after",
+            name="reserved_range",
+        ),
+        CheckConstraint(MOVEMENT_DELTAS_SQL, name="consistent_delta"),
+        CheckConstraint(
+            "(reference_type IS NULL) = (reference_id IS NULL)", name="reference_complete"
+        ),
+        CheckConstraint(
+            f"reference_type IS NULL OR reference_type IN ({MOVEMENT_REFERENCE_TYPES_SQL})",
+            name="valid_reference_type",
+        ),
+        # Reservation flows always say which reservation; manual changes always say why.
+        CheckConstraint(
+            "movement_type NOT IN ('reserve', 'release', 'commit') OR reference_id IS NOT NULL",
+            name="reservation_has_reference",
+        ),
+        CheckConstraint(
+            "movement_type NOT IN ('increase', 'decrease', 'correction') OR reason IS NOT NULL",
+            name="manual_has_reason",
+        ),
+        CheckConstraint(
+            f"reason IS NULL OR length(trim(reason)) BETWEEN 1 AND {MAX_MOVEMENT_REASON_LENGTH}",
+            name="reason_length",
+        ),
+        Index("ix_inventory_movements_item_created_at", "inventory_item_id", "created_at", "id"),
+        Index("ix_inventory_movements_reference", "reference_type", "reference_id"),
+    )
+
+    inventory_item_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("inventory_items.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    movement_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    # Size of the change, always positive; the direction is in the before/after pairs.
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_before: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_after: Mapped[int] = mapped_column(Integer, nullable=False)
+    reserved_before: Mapped[int] = mapped_column(Integer, nullable=False)
+    reserved_after: Mapped[int] = mapped_column(Integer, nullable=False)
+    # What caused it, e.g. ("reservation", <id>); NULL for manual adjustments.
+    reference_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    reference_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=True)
+    reason: Mapped[str | None] = mapped_column(String(MAX_MOVEMENT_REASON_LENGTH), nullable=True)
+    created_by: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
     )

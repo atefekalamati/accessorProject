@@ -35,6 +35,7 @@
 | D26 | قرارداد API عمومی دسته (`GET /categories`، شکل پاسخ، والد غیرفعال) | — | — | resolved (ADR-022) |
 | D27 | دسترسی content_manager به دسته‌ها | — | — | resolved (ADR-023) |
 | D28 | مبنای مالیات، تقسیم تخفیف کد و مرحله گردکردن | — | — | resolved (ADR-031) |
+| D29 | معنای `PATCH /admin/products/{id}/price` برای محصول چندتنوعی | PRC-03 | PRC-03 | open (سؤال از کاربر) |
 
 ## ADR
 
@@ -327,6 +328,15 @@
   - `tax_enabled = true` با نرخ 0 مجاز است. در v1 هیچ API‌ای `tax_enabled` تنوع را تنظیم نمی‌کند (ADR-030)، پس فعال‌کردن مالیات هنوز روی قیمت‌ها اثری ندارد. این در توضیح پاسخ آمده است.
   - repository تنظیمات یک `PricingPolicy` با `RoundingMode` واقعی می‌سازد، برای CART-03 و ORD-03.
 - پیامدها: PRC-04، PRC-05، INV-07، CART-03، ORD-03، PRC-06.
+
+### ADR-034 — InventoryMovement و اصلاح دستی موجودی (INV-02)
+- تاریخ: 2026-10-11
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی subagent):
+  - هر تغییر شمارنده‌های InventoryItem یک ردیف `inventory_movements` در همان تراکنش و زیر همان lock دارد: `movement_type`، `quantity` = |تغییر| (همیشه > 0؛ correction به مقدار مطلق هم |after − before| ذخیره می‌کند)، و هر دو طرف (`total_before/after`، `reserved_before/after`). CHECKها سازگاری هر نوع را تضمین می‌کنند: increase/return فقط total را +q، decrease −q، correction فقط total، reserve/release فقط reserved را ±q، commit هر دو را −q. reserve/release/commit مرجع اجباری دارند (`reference_type` از allowlist: reservation، order، payment، return). increase/decrease/correction دلیل اجباری دارند (۱..۵۰۰ کاراکتر بعد از trim).
+  - اصلاح دستی (سرویس داخلی؛ endpoint در INV-08): فقط در انبار پیش‌فرض. InventoryItem نبود → با `INSERT … ON CONFLICT DO NOTHING` ساخته می‌شود. increase بیش از `MAX_STOCK_QUANTITY` → 422. decrease یا correction زیر reserved → 409 `INSUFFICIENT_STOCK`. correction به مقدار فعلی → no-op بدون movement و audit. مقدار غیر int (از جمله bool) یا خارج از بازه و دلیل خالی → 400. variant ناموجود یا حذف‌شده → 404.
+  - ترتیب lock برای هر نوشتن موجودی: variant (`FOR SHARE`، تا با حذف نرم همزمان CAT-11 سریال شود) → inventory_item (`FOR UPDATE`؛ چند آیتم به ترتیب `variant_id, warehouse_id`، ADR-029). ردیف Product قفل نمی‌شود. INV-04..06 همین ترتیب را رعایت می‌کنند. فقط اصلاح دستی InventoryItem می‌سازد؛ مسیرهای رزرو آیتم ناموجود را «ناموجود» حساب می‌کنند و آیتم نمی‌سازند.
+  - audit `inventory.adjusted` روی `inventory_item` با total قبل و بعد، نوع، دلیل و شناسه movement. actor خالی → `actor: system` (برای job انقضا).
+- پیامدها: INV-02، INV-04..06، INV-08.
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).

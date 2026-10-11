@@ -89,7 +89,7 @@
 | DEC-04 | Warehouses (D4) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-005 |
 | DEC-06 | Reservation moment (D6) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-007 |
 | INV-01 | Warehouse (1 default) + InventoryItem per variant+warehouse | COMPLETE | HIGH | HIGH | 3 | CAT-03, ADR-005 | stock only in InventoryItem |
-| INV-02 | InventoryMovement + manual adjustment with reason + audit | NOT_STARTED | HIGH | HIGH | 3 | INV-01, INF-05 | every change → movement + AuditLog |
+| INV-02 | InventoryMovement + manual adjustment with reason + audit | COMPLETE | HIGH | HIGH | 3 | INV-01, INF-05 | every change → movement + AuditLog |
 | INV-03 | Pure free-stock & stock-status functions | COMPLETE | HIGH | HIGH | 2 | INV-01 | free = total − active reservations |
 | INV-04 | Reservation models + reserve service (row lock), used by POST /orders | NOT_STARTED | HIGH | HIGH | 5 | INV-03, ADR-007 | 15-min; SELECT … FOR UPDATE |
 | INV-05 | Commit / release services (idempotent, internal) | NOT_STARTED | HIGH | HIGH | 3 | INV-04, ADR-008 | expired → 409 RESERVATION_EXPIRED |

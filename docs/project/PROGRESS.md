@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
-- **Current Task:** —. batch PRC-04/PRC-05/INV-07 کامل شد.
+- **Current Task:** —. batch INV-02/PRC-03 بعد از INV-02 متوقف شد (D29).
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 58/145 task COMPLETE · وزنی 34.8% (145h / 416.5h) · MVP 52.9%
-- **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** batch بعدی INV-02 + PRC-03 (7h)؛ plan واحد رزرو (INV-04..06) منتظر تأیید کاربر. سپس plan واحد رزرو (INV-04..06) برای تأیید کاربر.
+- **Progress:** 59/145 task COMPLETE · وزنی 35.5% (148h / 416.5h) · MVP 54.0%
+- **Blockers:** فاز ۲: PRC-03 منتظر D29؛ INV-04..06 منتظر تأیید plan. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
+- **Next Action:** منتظر کاربر: (۱) پاسخ D29 برای PRC-03؛ (۲) تأیید plan مشترک رزرو در `tasks/phase-02/INV-04-reservation-reserve.md`. سپس PRC-03، بعد INV-04، INV-05، INV-06 (هر کدام batch جدا). سپس plan واحد رزرو (INV-04..06) برای تأیید کاربر.
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**34.8%** = 145h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**35.5%** = 148h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 107.5h | 79.3% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 110.5h | 81.5% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 271.5h ≈ ۱۸ هفته. MVP باقی‌مانده: 129h ≈ ۹ هفته.
+- باقی‌مانده: 268.5h ≈ ۱۸ هفته. MVP باقی‌مانده: 126h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-11: INV-02 (InventoryMovement با CHECKهای سازگاری، اصلاح دستی موجودی با lock و audit؛ ADR-034).
 - 2026-10-11: INV-07 (GET /products/{id}/availability؛ وضعیت بدون عدد موجودی، فقط انبار فعال؛ ADR-033).
 - 2026-10-11: PRC-05 (GET/PATCH /admin/pricing/settings با `pricing_settings:update`؛ row lock، bump نسخه، audit؛ ADR-033).
 - 2026-10-11: PRC-04 (GET /products/{id}/pricing؛ قیمت سرور با `unit_price`، `calculated_at`، SD rule؛ ADR-033).
@@ -82,6 +83,8 @@
 ## Blockers
 | Blocked task | Cause |
 |---|---|
+| PRC-03 | D29 — معنای قیمت محصول چندتنوعی (سؤال از کاربر) |
+| INV-04..06 | تأیید plan مشترک رزرو توسط کاربر |
 | PAY-07 | D8 — انتخاب درگاه واقعی (قبل از فاز ۵) |
 | OPS-05 | D9 — انتخاب SMS provider (قبل از فاز ۵) |
 | OPS-07 | D10 — انتخاب file storage (قبل از فاز ۵) |
@@ -175,6 +178,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-11 — INV-02 COMPLETE؛ batch INV-02/PRC-03 متوقف (D29)
+- movement و اصلاح دستی موجودی؛ ۱۸ تست. بازبینی plan و diff: APPROVE WITH CHANGES، اعمال شد. PRC-03 به‌خاطر ابهام PRD متوقف شد. plan مشترک رزرو نوشته شد. CI INV-07 سبز.
+
 ### 2026-10-11 — INV-07 COMPLETE (پایان batch PRC-04/PRC-05/INV-07)
 - وضعیت موجودی عمومی محصول؛ ۹ تست. بازبینی diff: APPROVE. CI PRC-05 سبز.
 
