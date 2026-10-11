@@ -149,3 +149,39 @@ class ProductCard(BaseModel):
 
 
 ProductListResponse = Page[ProductCard]
+
+
+# --- pricing and availability (PRC-04, INV-07; ADR-033) ---------------------------------
+
+
+class VariantPricing(BaseModel):
+    variant_id: UUID
+    sku: str
+    price: VariantPriceOut
+
+
+class ProductPricingResponse(BaseModel):
+    """Server-computed prices only: no price version, tax flag or stock numbers."""
+
+    product_id: UUID
+    currency: str
+    tax_included: bool
+    # The moment the prices were computed (the sale window is evaluated at this time).
+    calculated_at: datetime
+    price_range: PublicPriceRange | None
+    variants: list[VariantPricing]
+
+
+class VariantAvailability(BaseModel):
+    variant_id: UUID
+    sku: str
+    availability: str
+    purchasable: bool
+
+
+class ProductAvailabilityResponse(BaseModel):
+    """Stock status only; stock numbers stay internal (ADR-029)."""
+
+    product_id: UUID
+    availability: str
+    variants: list[VariantAvailability]

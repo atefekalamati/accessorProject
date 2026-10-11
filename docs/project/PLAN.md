@@ -105,7 +105,7 @@
 | PRC-01 | Variant price fields + PricingSetting (tax_enabled=false) + migration | COMPLETE | HIGH | HIGH | 3 | CAT-03, INF-02 | salePrice ≤ basePrice constraint | ✓ |
 | PRC-02 | Pure pricing function (sale window, discounts, tax, shipping, single rounding) | COMPLETE | HIGH | HIGH | 5 | INF-02 | table-driven unit tests |
 | PRC-03 | PriceHistory + admin price change + AuditLog | NOT_STARTED | HIGH | HIGH | 4 | PRC-01, INF-05, AUTH-10 | every change in history + audit |
-| PRC-04 | GET /products/{id}/pricing | NOT_STARTED | MEDIUM | HIGH | 2 | PRC-02 | server-computed only; SD rule (test) |
+| PRC-04 | GET /products/{id}/pricing | COMPLETE | MEDIUM | HIGH | 2 | PRC-02 | server-computed only; SD rule (test) |
 | PRC-05 | Pricing settings (super_admin only) | NOT_STARTED | MEDIUM | HIGH | 3 | PRC-01, AUTH-10 | others → 403 |
 | PRC-06 | Pricing tests (unit table + tamper API) | NOT_STARTED | HIGH | HIGH | 3 | PRC-02…05 | client amounts ignored |
 

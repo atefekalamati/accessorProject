@@ -1,5 +1,6 @@
-"""Public product detail and listing (CAT-08, CAT-07; PRD «جزئیات محصول» ✓ and
-«دسته‌بندی محصولات» ✓; ADR-020, ADR-029, ADR-031, ADR-032)."""
+"""Public product reads: detail, listing and pricing (CAT-08, CAT-07, PRC-04; PRD
+«جزئیات محصول» ✓, «دسته‌بندی محصولات» ✓ and «قیمت و مالیات» ✓; ADR-020, ADR-029,
+ADR-031, ADR-032, ADR-033)."""
 
 from __future__ import annotations
 
@@ -31,10 +32,12 @@ from app.modules.catalog.schemas import (
     ProductCard,
     ProductDetailResponse,
     ProductListResponse,
+    ProductPricingResponse,
     PublicPriceRange,
     PublicProductMedia,
     PublicVariant,
     VariantPriceOut,
+    VariantPricing,
 )
 from app.modules.inventory.stock import (
     StockLevel,
@@ -44,7 +47,7 @@ from app.modules.inventory.stock import (
     stock_status,
     variant_level,
 )
-from app.modules.pricing.calculator import UnitPrice, VariantPrice, unit_price
+from app.modules.pricing.calculator import CURRENCY, UnitPrice, VariantPrice, unit_price
 from app.shared.pagination import Page, PageParams
 from app.shared.storage import FileStorage
 
@@ -189,6 +192,45 @@ class ProductService:
         ]
         return Page.build(cards, total=total, params=request.params)
 
+    async def pricing(
+        self, product_id: UUID, *, variant_id: UUID | None = None, at: datetime | None = None
+    ) -> ProductPricingResponse:
+        """Current prices of a published product's public variants (or of one of them)."""
+        now = at or utc_now()
+        async with self._session.begin():
+            variants = await self._public_variants(product_id, variant_id)
+        units = [(variant, _unit(variant, now)) for variant in variants]
+        finals = [unit.final for _variant, unit in units]
+        return ProductPricingResponse(
+            product_id=product_id,
+            currency=CURRENCY,
+            tax_included=TAX_INCLUDED,
+            calculated_at=now,
+            price_range=PublicPriceRange(min=min(finals), max=max(finals)) if finals else None,
+            variants=[
+                VariantPricing(variant_id=variant.id, sku=variant.sku, price=_price_out(unit))
+                for variant, unit in units
+            ],
+        )
+
+    async def _public_variants(
+        self, product_id: UUID, variant_id: UUID | None
+    ) -> list[ProductVariant]:
+        """The public variants of a published product; ``variant_id`` narrows to one.
+
+        A hidden product and a variant that is not public (or belongs to another product)
+        get the same 404 as an unknown one (SD rule).
+        """
+        if await self._repository.get_published_by_id(product_id) is None:
+            raise _not_found()
+        variants = (await self._repository.public_variants_of([product_id]))[product_id]
+        if variant_id is None:
+            return variants
+        selected = [variant for variant in variants if variant.id == variant_id]
+        if not selected:
+            raise NotFoundError(message="Variant not found")
+        return selected
+
     async def _visible_category(self, slug: str) -> UUID:
         # Same visibility rule as GET /categories/{slug} (ADR-022).
         categories = await self._categories.list_visible()
@@ -257,12 +299,8 @@ class ProductService:
                 raise _not_found()
             chain = await self._repository.category_chain(product.category_id)
             attributes = await self._repository.attributes_of(product.id)
-            # Active, non-deleted variants only (the active ones always have a price).
-            variants = [
-                variant
-                for variant in await self._repository.variants_of(product.id)
-                if variant.is_active and variant.base_price is not None
-            ]
+            # Public variants only: active, priced, not deleted (same set as CAT-07, PRC-04).
+            variants = (await self._repository.public_variants_of([product.id]))[product.id]
             ids = [variant.id for variant in variants]
             options = await self._repository.options_of(ids)
             inventory = await self._repository.inventory_of(ids)

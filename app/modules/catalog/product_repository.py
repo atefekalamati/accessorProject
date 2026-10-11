@@ -108,6 +108,14 @@ class ProductRepository:
         )
         return (await self._session.scalars(statement)).one_or_none()
 
+    async def get_published_by_id(self, product_id: UUID) -> Product | None:
+        statement = select(Product).where(
+            Product.id == product_id,
+            Product.status == ProductStatus.PUBLISHED,
+            not_deleted(Product),
+        )
+        return (await self._session.scalars(statement)).one_or_none()
+
     async def list_public(
         self, filters: ListingFilters, sort: ProductSort, now: datetime, params: PageParams
     ) -> tuple[list[Product], int]:

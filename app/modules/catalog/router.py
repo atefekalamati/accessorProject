@@ -1,5 +1,6 @@
 import re
 from typing import Annotated, Any, Final
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response
 
@@ -14,6 +15,7 @@ from app.modules.catalog.schemas import (
     CategoryTreeResponse,
     ProductDetailResponse,
     ProductListResponse,
+    ProductPricingResponse,
 )
 from app.modules.catalog.service import CategoryService
 from app.shared.money import MAX_PRICE_TOMAN
@@ -200,6 +202,22 @@ async def list_products(
     # Price and stock are computed per request (PRD): never cache the answer.
     response.headers["Cache-Control"] = "no-store"
     return await service.list_products(query, category_slug=category_slug)
+
+
+@products_router.get(
+    "/{product_id}/pricing",
+    response_model=ProductPricingResponse,
+    summary="Current server-computed prices of a published product's variants",
+    dependencies=[Depends(allowed_query_params("variant_id"))],
+)
+async def get_product_pricing(
+    product_id: UUID,
+    response: Response,
+    service: Annotated[ProductService, Depends(get_product_service)],
+    variant_id: UUID | None = None,
+) -> ProductPricingResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return await service.pricing(product_id, variant_id=variant_id)
 
 
 @products_router.get(

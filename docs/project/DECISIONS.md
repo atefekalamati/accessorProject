@@ -316,6 +316,18 @@
   - `Cache-Control: no-store` (قیمت و موجودی هر درخواست تازه، مثل CAT-08).
 - پیامدها: CAT-07، CAT-09 (`min`/`max` فیلتر `price`)، CAT-17، SRCH، WISH.
 
+### ADR-033 — قیمت و موجودی عمومی محصول و تنظیمات قیمت (PRC-04، PRC-05، INV-07)
+- تاریخ: 2026-10-11
+- زمینه: PRD شکل پاسخ `GET /products/{id}/pricing`، `GET /products/{id}/availability` و تنظیمات قیمت را تعیین نکرده است. همه تصمیم‌ها کم‌اثر و خودم (بازبینی subagent).
+- تصمیم‌های کم‌اثر (خودم):
+  - هر دو endpoint عمومی با id محصول (ADR-020) و `variant_id` اختیاری هستند. فقط محصول published و حذف‌نشده و فقط تنوع‌های عمومی (فعال، قیمت‌دار، حذف‌نشده؛ همان مجموعه CAT-07/CAT-08) برمی‌گردند. محصول پنهان → 404 یکسان. `variant_id` که تنوع عمومی همان محصول نیست → 404. id غیر UUID → 400. `Cache-Control: no-store` روی پاسخ موفق (مثل CAT-07/CAT-08).
+  - pricing: `product_id`، `currency` (TOMAN)، `tax_included` (false، ADR-010/D11)، `calculated_at` (لحظه محاسبه، «timestamp محاسبه» PRD؛ `price_version` عمومی نیست)، `price_range` و برای هر تنوع `variant_id`، `sku` و `price` (همان شکل جزئیات).
+  - availability: `product_id`، `availability` (بهترین وضعیت، ADR-029) و برای هر تنوع `variant_id`، `sku`، `availability` و `purchasable`. «حداکثر تعداد قابل خرید» خروجی PRD عملاً همان موجودی آزاد است، پس در پاسخ عمومی نمی‌آید (ADR-029، CAT-00 ردیف ۸). سقف تعداد در سبد و checkout (CART، `POST /checkout/validate`) اعمال و با 409 اعلام می‌شود. خواندن بدون lock است (ADR-029).
+  - تنظیمات: `GET` و `PATCH /admin/pricing/settings` هر دو با `pricing_settings:update` (در v1 فقط super_admin). مجوز خواندن جدا وجود ندارد؛ نقش مالی آینده باید مجوز خواندن جدا بگیرد تا دسترسی نوشتن را به ارث نبرد. فیلدهای قابل تغییر: `tax_enabled`، `default_tax_rate_bps` (`0..10000`)، `rounding_mode`، `rounding_step` (`1..10^6`)، با نوع strict (float، رشته یا bool جای عدد → 400). `id`، `currency`، `version`، `updated_by`، `updated_at` و `singleton` فیلد سیستمی‌اند و نادیده گرفته می‌شوند. بدنه‌ای که بعد از حذف آن‌ها خالی بماند → 400. تغییر → `version + 1`، `updated_by` و audit `pricing.settings_updated` در همان تراکنش، زیر `FOR UPDATE` ردیف singleton. بدون تغییر → 200 بدون audit و bump. نبود ردیف → 404.
+  - `tax_enabled = true` با نرخ 0 مجاز است. در v1 هیچ API‌ای `tax_enabled` تنوع را تنظیم نمی‌کند (ADR-030)، پس فعال‌کردن مالیات هنوز روی قیمت‌ها اثری ندارد. این در توضیح پاسخ آمده است.
+  - repository تنظیمات یک `PricingPolicy` با `RoundingMode` واقعی می‌سازد، برای CART-03 و ORD-03.
+- پیامدها: PRC-04، PRC-05، INV-07، CART-03، ORD-03، PRC-06.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
