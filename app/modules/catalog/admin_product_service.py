@@ -53,7 +53,7 @@ from app.modules.catalog.admin_product_schemas import (
     UpdateProductRequest,
     UpdateVariantRequest,
 )
-from app.modules.catalog.product_repository import AdminProductRepository, ProductFilters
+from app.modules.catalog.product_repository import ProductFilters, ProductRepository
 from app.modules.inventory.stock import free_quantity, stock_status, variant_level
 from app.shared.audit import record_audit
 from app.shared.media import process_image_async
@@ -176,7 +176,7 @@ class AdminProductService:
     def __init__(
         self,
         session: AsyncSession,
-        repository: AdminProductRepository,
+        repository: ProductRepository,
         storage: FileStorage,
     ) -> None:
         self._session = session

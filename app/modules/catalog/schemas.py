@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -58,3 +59,63 @@ class PublicCategoryFilter(BaseModel):
 
 class CategoryFiltersResponse(BaseModel):
     items: list[PublicCategoryFilter]
+
+
+# --- product detail (CAT-08, PRD «جزئیات محصول» ✓) -------------------------------------
+
+
+class ProductAttributeOut(BaseModel):
+    key: str
+    value: str
+
+
+class VariantPriceOut(BaseModel):
+    base_price: int
+    # Null unless the sale window is open now.
+    sale_price: int | None
+    final_price: int
+    discount_amount: int
+    discount_percent: int
+
+
+class PublicVariant(BaseModel):
+    id: UUID
+    sku: str
+    options: dict[str, str]
+    price: VariantPriceOut
+    availability: str
+    purchasable: bool
+
+
+class PublicPriceRange(BaseModel):
+    min: int
+    max: int
+
+
+class PublicProductMedia(BaseModel):
+    id: UUID
+    url: str
+    alt_text: str | None
+    is_main: bool
+    variant_id: UUID | None
+    width: int
+    height: int
+
+
+class ProductDetailResponse(BaseModel):
+    """Explicit allowlist: no stock numbers, thresholds, price versions or actor ids."""
+
+    id: UUID
+    slug: str
+    title: str
+    description: str | None
+    published_at: datetime | None
+    breadcrumb: list[BreadcrumbItem]
+    attributes: list[ProductAttributeOut]
+    options: dict[str, list[str]]
+    variants: list[PublicVariant]
+    default_variant_id: UUID | None
+    price_range: PublicPriceRange | None
+    tax_included: bool
+    availability: str
+    media: list[PublicProductMedia]

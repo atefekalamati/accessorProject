@@ -1,20 +1,23 @@
 import re
 from typing import Annotated, Final
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
-from app.core.errors import NotFoundError
+from app.core.errors import BadRequestError, NotFoundError
 from app.db.models.catalog import SLUG_PATTERN
-from app.modules.catalog.dependencies import get_category_service
+from app.modules.catalog.dependencies import get_category_service, get_product_service
+from app.modules.catalog.product_service import ProductService
 from app.modules.catalog.schemas import (
     CategoryDetailResponse,
     CategoryFiltersResponse,
     CategoryTreeResponse,
+    ProductDetailResponse,
 )
 from app.modules.catalog.service import CategoryService
 from app.shared.pagination import allowed_query_params
 
 router = APIRouter(prefix="/categories", tags=["categories"])
+products_router = APIRouter(prefix="/products", tags=["products"])
 
 _SLUG: Final = re.compile(SLUG_PATTERN)
 
@@ -63,3 +66,25 @@ def _check_slug(slug: str) -> None:
     # A malformed slug cannot match any category, so it is answered like an unknown one.
     if _SLUG.fullmatch(slug) is None:
         raise NotFoundError(message="Category not found")
+
+
+@products_router.get(
+    "/{slug}",
+    response_model=ProductDetailResponse,
+    summary="A published product with its active variants, prices, stock status and images",
+    dependencies=[Depends(allowed_query_params())],
+)
+async def get_product(
+    slug: str,
+    response: Response,
+    service: Annotated[ProductService, Depends(get_product_service)],
+) -> ProductDetailResponse:
+    # Validated before any query; unlike categories, the PRD wants a 400 here.
+    if _SLUG.fullmatch(slug) is None:
+        raise BadRequestError(
+            message="Request validation failed",
+            details=[{"field": "path.slug", "message": "Invalid slug", "type": "value_error"}],
+        )
+    # Price and stock are computed per request (PRD): never cache the answer.
+    response.headers["Cache-Control"] = "no-store"
+    return await service.detail(slug)

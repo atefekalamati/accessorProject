@@ -5,8 +5,19 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, UnaryExpression, delete, exists, func, or_, select, update
+from sqlalchemy import (
+    ColumnElement,
+    UnaryExpression,
+    delete,
+    exists,
+    func,
+    literal,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from app.db.models import (
     Category,
@@ -15,6 +26,7 @@ from app.db.models import (
     Product,
     ProductAttribute,
     ProductMedia,
+    ProductStatus,
     ProductVariant,
     VariantOption,
     Warehouse,
@@ -69,9 +81,43 @@ def _list_criteria(filters: ProductFilters) -> list[ColumnElement[bool]]:
     return criteria
 
 
-class AdminProductRepository:
+# Recursive walks stop here even if corrupt data ever contained a cycle.
+_MAX_WALK = 64
+
+
+class ProductRepository:
+    """Product reads and writes shared by the admin (CAT-11) and public (CAT-08) services."""
+
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    # --- public reads ------------------------------------------------------------------
+
+    async def get_published(self, slug: str) -> Product | None:
+        statement = select(Product).where(
+            Product.slug == slug,
+            Product.status == ProductStatus.PUBLISHED,
+            not_deleted(Product),
+        )
+        return (await self._session.scalars(statement)).one_or_none()
+
+    async def category_chain(self, category_id: UUID) -> list[Category]:
+        """The category and its ancestors, root first, in one recursive query."""
+        chain = (
+            select(Category.id, Category.parent_id, literal(1).label("level"))
+            .where(Category.id == category_id)
+            .cte("product_category_chain", recursive=True)
+        )
+        parent = aliased(Category)
+        chain = chain.union_all(
+            select(parent.id, parent.parent_id, chain.c.level + 1)
+            .join(chain, parent.id == chain.c.parent_id)
+            .where(chain.c.level < _MAX_WALK)
+        )
+        statement = (
+            select(Category).join(chain, chain.c.id == Category.id).order_by(chain.c.level.desc())
+        )
+        return list((await self._session.scalars(statement)).all())
 
     # --- products ----------------------------------------------------------------------
 
