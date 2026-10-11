@@ -1,196 +1,21 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
-from contextlib import contextmanager
-from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import Any
-from uuid import UUID, uuid4
 
 import pytest
-import pytest_asyncio
+from conftest import INTERNAL_FIELDS, Catalog, count_queries, nested_keys, unique_slug
 from httpx import AsyncClient
-from sqlalchemy import delete, event, select, update
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.time import utc_now
 from app.db.models import (
-    Category,
-    InventoryItem,
-    Media,
     Product,
-    ProductAttribute,
-    ProductMedia,
     ProductStatus,
     ProductVariant,
-    VariantOption,
 )
-from app.db.models.inventory import DEFAULT_WAREHOUSE_ID
 
 pytestmark = pytest.mark.integration
 
 URL = "/api/v1/products"
-MakeMedia = Callable[[], Awaitable[Media]]
-INTERNAL_FIELDS = {
-    "created_by",
-    "updated_by",
-    "deleted_at",
-    "low_stock_threshold",
-    "total",
-    "reserved",
-    "free",
-    "total_quantity",
-    "reserved_quantity",
-    "price_version",
-    "tax_enabled",
-    "is_active",
-    "is_purchasable",
-    "status",
-}
-
-
-def _slug(prefix: str = "prd") -> str:
-    return f"{prefix}-{uuid4().hex[:12]}"
-
-
-@dataclass
-class Catalog:
-    """Builds catalog rows directly in the database and removes them afterwards."""
-
-    engine: AsyncEngine
-    make_media: MakeMedia
-    categories: list[UUID] = field(default_factory=list)
-
-    async def category(self, *, parent: UUID | None = None, active: bool = True) -> Category:
-        category = Category(title="Rings", slug=_slug("cat"), parent_id=parent, is_active=active)
-        async with AsyncSession(self.engine, expire_on_commit=False) as session, session.begin():
-            session.add(category)
-        self.categories.append(category.id)
-        return category
-
-    async def product(
-        self, *, category: UUID | None = None, status: str = ProductStatus.PUBLISHED
-    ) -> Product:
-        category = category or (await self.category()).id
-        product = Product(
-            category_id=category,
-            title="Silver ring",
-            slug=_slug(),
-            description="Handmade",
-            status=status,
-            published_at=utc_now() if status == ProductStatus.PUBLISHED else None,
-        )
-        async with AsyncSession(self.engine, expire_on_commit=False) as session, session.begin():
-            session.add(product)
-            await session.flush()
-            session.add(
-                ProductAttribute(
-                    product_id=product.id, attribute_key="material", attribute_value="silver"
-                )
-            )
-        return product
-
-    async def variant(
-        self,
-        product: Product,
-        *,
-        options: dict[str, str] | None = None,
-        stock: tuple[int, int, int] | None = None,
-        **fields: Any,
-    ) -> ProductVariant:
-        values: dict[str, Any] = {"base_price": 100_000, "is_active": True} | fields
-        variant = ProductVariant(
-            product_id=product.id, sku=f"SKU-{uuid4().hex[:10].upper()}", **values
-        )
-        async with AsyncSession(self.engine, expire_on_commit=False) as session, session.begin():
-            session.add(variant)
-            await session.flush()
-            session.add_all(
-                VariantOption(variant_id=variant.id, option_key=key, value=value)
-                for key, value in (options or {}).items()
-            )
-            if stock is not None:
-                total, reserved, threshold = stock
-                session.add(
-                    InventoryItem(
-                        warehouse_id=DEFAULT_WAREHOUSE_ID,
-                        product_id=product.id,
-                        variant_id=variant.id,
-                        total_quantity=total,
-                        reserved_quantity=reserved,
-                        low_stock_threshold=threshold,
-                    )
-                )
-        return variant
-
-    async def image(
-        self,
-        product: Product,
-        *,
-        is_main: bool = False,
-        variant: ProductVariant | None = None,
-        order: int = 0,
-    ) -> ProductMedia:
-        media = await self.make_media()
-        item = ProductMedia(
-            product_id=product.id,
-            media_id=media.id,
-            variant_id=None if variant is None else variant.id,
-            is_main=is_main,
-            display_order=order,
-        )
-        async with AsyncSession(self.engine, expire_on_commit=False) as session, session.begin():
-            session.add(item)
-        return item
-
-    async def set(self, model: Any, row_id: UUID, **values: Any) -> None:
-        async with AsyncSession(self.engine) as session, session.begin():
-            await session.execute(update(model).where(model.id == row_id).values(**values))
-
-
-@pytest_asyncio.fixture
-async def catalog(db_engine: AsyncEngine, make_media: MakeMedia) -> AsyncIterator[Catalog]:
-    built = Catalog(db_engine, make_media)
-    yield built
-    ids = built.categories
-    async with AsyncSession(db_engine) as session, session.begin():
-        products = select(Product.id).where(Product.category_id.in_(ids))
-        variants = select(ProductVariant.id).where(ProductVariant.product_id.in_(products))
-        await session.execute(delete(ProductMedia).where(ProductMedia.product_id.in_(products)))
-        await session.execute(delete(InventoryItem).where(InventoryItem.product_id.in_(products)))
-        await session.execute(delete(VariantOption).where(VariantOption.variant_id.in_(variants)))
-        await session.execute(delete(ProductVariant).where(ProductVariant.product_id.in_(products)))
-        await session.execute(
-            delete(ProductAttribute).where(ProductAttribute.product_id.in_(products))
-        )
-        await session.execute(delete(Product).where(Product.category_id.in_(ids)))
-        await session.execute(update(Category).where(Category.id.in_(ids)).values(parent_id=None))
-        await session.execute(delete(Category).where(Category.id.in_(ids)))
-
-
-@contextmanager
-def _count_queries(client: AsyncClient) -> Iterator[list[str]]:
-    engine = client._transport.app.state.db_engine.sync_engine  # type: ignore[attr-defined]
-    statements: list[str] = []
-
-    def record(*args: Any) -> None:
-        statements.append(args[2])
-
-    event.listen(engine, "before_cursor_execute", record)
-    try:
-        yield statements
-    finally:
-        event.remove(engine, "before_cursor_execute", record)
-
-
-def _keys(value: Any) -> set[str]:
-    if isinstance(value, dict):
-        nested = set().union(*(_keys(item) for item in value.values())) if value else set()
-        return set(value) | nested
-    if isinstance(value, list):
-        return set().union(*(_keys(item) for item in value)) if value else set()
-    return set()
-
 
 # --- contract ------------------------------------------------------------------------
 
@@ -237,7 +62,7 @@ async def test_published_product_contract(auth_client: AsyncClient, catalog: Cat
         "availability",
         "media",
     }
-    assert not _keys(body) & INTERNAL_FIELDS
+    assert not nested_keys(body) & INTERNAL_FIELDS
     assert [item["id"] for item in body["breadcrumb"]] == [str(root.id), str(main.id)]
     assert body["attributes"] == [{"key": "material", "value": "silver"}]
     assert body["options"] == {"color": ["Gold", "Silver"], "size": ["M"]}
@@ -270,7 +95,7 @@ async def test_hidden_products_get_the_same_404(auth_client: AsyncClient, catalo
     await catalog.set(Product, deleted.id, deleted_at=utc_now())
 
     bodies = []
-    for slug in (draft.slug, archived.slug, deleted.slug, _slug()):
+    for slug in (draft.slug, archived.slug, deleted.slug, unique_slug()):
         response = await auth_client.get(f"{URL}/{slug}")
         assert response.status_code == 404
         body = response.json()
@@ -290,7 +115,7 @@ async def test_invalid_slug_is_400(auth_client: AsyncClient, slug: str) -> None:
 
 
 async def test_unknown_query_parameter_is_400(auth_client: AsyncClient) -> None:
-    response = await auth_client.get(f"{URL}/{_slug()}", params={"debug": "1"})
+    response = await auth_client.get(f"{URL}/{unique_slug()}", params={"debug": "1"})
 
     assert response.status_code == 400
 
@@ -432,9 +257,9 @@ async def test_query_count_does_not_grow_with_variants_or_media(
         await catalog.image(large, variant=variant, is_main=index == 0)
     await auth_client.get(f"{URL}/{small.slug}")  # warm-up (connection setup)
 
-    with _count_queries(auth_client) as small_queries:
+    with count_queries(auth_client) as small_queries:
         assert (await auth_client.get(f"{URL}/{small.slug}")).status_code == 200
-    with _count_queries(auth_client) as large_queries:
+    with count_queries(auth_client) as large_queries:
         assert (await auth_client.get(f"{URL}/{large.slug}")).status_code == 200
 
     assert len(large_queries) == len(small_queries)

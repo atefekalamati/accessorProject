@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import os
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
-from datetime import timedelta
-from uuid import uuid4
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import delete, update
+from sqlalchemy import delete, event, select, update
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -25,7 +28,20 @@ os.environ.setdefault("OTP_HASH_SECRET", "test-otp-hash-secret-at-least-32-chara
 from alembic import command
 from app.core.config import Environment, MediaStorage, Settings
 from app.core.time import utc_now
-from app.db.models import Category, Media, OtpCode
+from app.db.models import (
+    Category,
+    CategoryFilter,
+    InventoryItem,
+    Media,
+    OtpCode,
+    Product,
+    ProductAttribute,
+    ProductMedia,
+    ProductStatus,
+    ProductVariant,
+    VariantOption,
+)
+from app.db.models.inventory import DEFAULT_WAREHOUSE_ID
 from app.db.seed import seed_rbac
 from app.main import create_app
 from app.modules.auth.otp import hash_otp_code, otp_hash_key
@@ -199,3 +215,190 @@ def unique_mobile() -> str:
 @pytest.fixture
 def new_mobile() -> str:
     return unique_mobile()
+
+
+# --- catalog builder (CAT-07, CAT-08, CAT-12) -------------------------------------
+
+INTERNAL_FIELDS = {
+    "created_by",
+    "updated_by",
+    "deleted_at",
+    "low_stock_threshold",
+    "total",
+    "reserved",
+    "free",
+    "total_quantity",
+    "reserved_quantity",
+    "price_version",
+    "tax_enabled",
+    "is_active",
+    "is_purchasable",
+    "status",
+}
+
+
+def unique_slug(prefix: str = "prd") -> str:
+    return f"{prefix}-{uuid4().hex[:12]}"
+
+
+@dataclass
+class Catalog:
+    """Builds catalog rows directly in the database and removes them afterwards."""
+
+    engine: AsyncEngine
+    make_media: MakeMedia
+    categories: list[UUID] = field(default_factory=list)
+
+    async def category(self, *, parent: UUID | None = None, active: bool = True) -> Category:
+        category = Category(
+            title="Rings", slug=unique_slug("cat"), parent_id=parent, is_active=active
+        )
+        async with AsyncSession(self.engine, expire_on_commit=False) as session, session.begin():
+            session.add(category)
+        self.categories.append(category.id)
+        return category
+
+    async def product(
+        self,
+        *,
+        category: UUID | None = None,
+        status: str = ProductStatus.PUBLISHED,
+        title: str = "Silver ring",
+        published_at: datetime | None = None,
+        attributes: dict[str, str] | None = None,
+    ) -> Product:
+        category = category or (await self.category()).id
+        if status == ProductStatus.PUBLISHED and published_at is None:
+            published_at = utc_now()
+        product = Product(
+            category_id=category,
+            title=title,
+            slug=unique_slug(),
+            description="Handmade",
+            status=status,
+            published_at=published_at,
+        )
+        async with AsyncSession(self.engine, expire_on_commit=False) as session, session.begin():
+            session.add(product)
+            await session.flush()
+            session.add_all(
+                ProductAttribute(product_id=product.id, attribute_key=key, attribute_value=value)
+                for key, value in (attributes or {"material": "silver"}).items()
+            )
+        return product
+
+    async def variant(
+        self,
+        product: Product,
+        *,
+        options: dict[str, str] | None = None,
+        stock: tuple[int, int, int] | None = None,
+        **fields: Any,
+    ) -> ProductVariant:
+        values: dict[str, Any] = {"base_price": 100_000, "is_active": True} | fields
+        variant = ProductVariant(
+            product_id=product.id, sku=f"SKU-{uuid4().hex[:10].upper()}", **values
+        )
+        async with AsyncSession(self.engine, expire_on_commit=False) as session, session.begin():
+            session.add(variant)
+            await session.flush()
+            session.add_all(
+                VariantOption(variant_id=variant.id, option_key=key, value=value)
+                for key, value in (options or {}).items()
+            )
+            if stock is not None:
+                total, reserved, threshold = stock
+                session.add(
+                    InventoryItem(
+                        warehouse_id=DEFAULT_WAREHOUSE_ID,
+                        product_id=product.id,
+                        variant_id=variant.id,
+                        total_quantity=total,
+                        reserved_quantity=reserved,
+                        low_stock_threshold=threshold,
+                    )
+                )
+        return variant
+
+    async def image(
+        self,
+        product: Product,
+        *,
+        is_main: bool = False,
+        variant: ProductVariant | None = None,
+        order: int = 0,
+    ) -> ProductMedia:
+        media = await self.make_media()
+        item = ProductMedia(
+            product_id=product.id,
+            media_id=media.id,
+            variant_id=None if variant is None else variant.id,
+            is_main=is_main,
+            display_order=order,
+        )
+        async with AsyncSession(self.engine, expire_on_commit=False) as session, session.begin():
+            session.add(item)
+        return item
+
+    async def filters(self, category: Category, *items: tuple[str, str]) -> None:
+        """Active CategoryFilters ``(attribute_key, filter_type)`` in the given order."""
+        async with AsyncSession(self.engine) as session, session.begin():
+            session.add_all(
+                CategoryFilter(
+                    category_id=category.id,
+                    attribute_key=key,
+                    label=key.title(),
+                    filter_type=filter_type,
+                    display_order=index,
+                )
+                for index, (key, filter_type) in enumerate(items)
+            )
+
+    async def set(self, model: Any, row_id: UUID, **values: Any) -> None:
+        async with AsyncSession(self.engine) as session, session.begin():
+            await session.execute(update(model).where(model.id == row_id).values(**values))
+
+
+@pytest_asyncio.fixture
+async def catalog(db_engine: AsyncEngine, make_media: MakeMedia) -> AsyncIterator[Catalog]:
+    built = Catalog(db_engine, make_media)
+    yield built
+    ids = built.categories
+    async with AsyncSession(db_engine) as session, session.begin():
+        products = select(Product.id).where(Product.category_id.in_(ids))
+        variants = select(ProductVariant.id).where(ProductVariant.product_id.in_(products))
+        await session.execute(delete(ProductMedia).where(ProductMedia.product_id.in_(products)))
+        await session.execute(delete(InventoryItem).where(InventoryItem.product_id.in_(products)))
+        await session.execute(delete(VariantOption).where(VariantOption.variant_id.in_(variants)))
+        await session.execute(delete(ProductVariant).where(ProductVariant.product_id.in_(products)))
+        await session.execute(
+            delete(ProductAttribute).where(ProductAttribute.product_id.in_(products))
+        )
+        await session.execute(delete(Product).where(Product.category_id.in_(ids)))
+        await session.execute(delete(CategoryFilter).where(CategoryFilter.category_id.in_(ids)))
+        await session.execute(update(Category).where(Category.id.in_(ids)).values(parent_id=None))
+        await session.execute(delete(Category).where(Category.id.in_(ids)))
+
+
+@contextmanager
+def count_queries(client: AsyncClient) -> Iterator[list[str]]:
+    engine = client._transport.app.state.db_engine.sync_engine  # type: ignore[attr-defined]
+    statements: list[str] = []
+
+    def record(*args: Any) -> None:
+        statements.append(args[2])
+
+    event.listen(engine, "before_cursor_execute", record)
+    try:
+        yield statements
+    finally:
+        event.remove(engine, "before_cursor_execute", record)
+
+
+def nested_keys(value: Any) -> set[str]:
+    if isinstance(value, dict):
+        nested = set().union(*(nested_keys(item) for item in value.values())) if value else set()
+        return set(value) | nested
+    if isinstance(value, list):
+        return set().union(*(nested_keys(item) for item in value)) if value else set()
+    return set()

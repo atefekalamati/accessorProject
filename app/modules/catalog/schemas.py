@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.shared.pagination import Page
+
 
 class CategorySummary(BaseModel):
     """Public card of a category: enough for menus, breadcrumbs and sub-category links."""
@@ -54,7 +56,10 @@ class PublicCategoryFilter(BaseModel):
     key: str
     label: str
     type: str
+    # Empty for the ``range`` (price) filter, which has ``min`` and ``max`` instead.
     values: list[FilterValue]
+    min: int | None = None
+    max: int | None = None
 
 
 class CategoryFiltersResponse(BaseModel):
@@ -119,3 +124,28 @@ class ProductDetailResponse(BaseModel):
     tax_included: bool
     availability: str
     media: list[PublicProductMedia]
+
+
+# --- product listing (CAT-07, PRD «دسته‌بندی محصولات» ✓) --------------------------------
+
+
+class ProductCard(BaseModel):
+    """Explicit allowlist, like the detail: no stock numbers or internal fields."""
+
+    id: UUID
+    slug: str
+    title: str
+    published_at: datetime | None
+    image_url: str | None
+    # The cheapest variant's price: the listing price, used by the price filter and sort.
+    price: VariantPriceOut
+    price_range: PublicPriceRange
+    # Highest current discount among the variants (display only, floored).
+    max_discount_percent: int
+    availability: str
+    # The only variant, when the product has exactly one and it can be bought now;
+    # otherwise null and the client opens the product page to pick a variant.
+    quick_add_variant_id: UUID | None
+
+
+ProductListResponse = Page[ProductCard]

@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** —. بعدی طبق M2.2-PLAN.md: CAT-07 + CAT-12 (batch E).
+- **Current Task:** CAT-12 (batch E: CAT-07 COMPLETE).
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 53/145 task COMPLETE · وزنی 31.0% (129h / 416.5h) · MVP 47.1%
+- **Progress:** 54/145 task COMPLETE · وزنی 32.4% (135h / 416.5h) · MVP 49.3%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** در جلسه جدید: `/batch` برای CAT-07 + CAT-12 (9h، MEDIUM). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** CAT-12 (همین batch). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**31.0%** = 129h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**32.4%** = 135h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 91.5h | 67.5% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 97.5h | 72.0% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 287.5h ≈ ۱۹ هفته. MVP باقی‌مانده: 145h ≈ ۱۰ هفته.
+- باقی‌مانده: 281.5h ≈ ۱۹ هفته. MVP باقی‌مانده: 139h ≈ ۹ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-11: CAT-07 (GET /products و GET /categories/{slug}/products؛ فیلتر، sort و صفحه‌بندی در DB؛ helper `paginate`؛ بازه price در /filters؛ ADR-032).
 - 2026-10-10: CAT-05 (media + product_media, FileStorage local/memory, streaming-capped upload, safe re-encode, POST /admin/media, category image_media_id; ADR-028).
 - 2026-10-10: PRC-01 (variant price columns + CHECKs, pricing_settings singleton, safe data migration; ADR-027).
 - 2026-10-10: CAT-09 (CategoryFilter, public filters from real product data, admin replace + audit; ADR-026).
@@ -168,6 +169,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-11 — CAT-07 COMPLETE (batch CAT-07/CAT-12)
+- لیست عمومی محصولات با قیمت لیست (کمترین final) در SQL و کارت با `unit_price`؛ ۳۰ تست API شامل SD rule، 400/404/422، صفحه‌بندی بدون تکرار و شمارش query. ADR-032.
+
 ### 2026-10-11 — CAT-08 COMPLETE (پایان batch PRC-02/CAT-08)
 - `GET /products/{slug}` با قیمت PRC-02 و وضعیت موجودی INV-03؛ ۱۳ تست API شامل SD rule و شمارش query. CI PRC-02 سبز.
 

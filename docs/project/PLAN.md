@@ -76,7 +76,7 @@
 | CAT-04 | Attributes & values (color/size/model) | COMPLETE | HIGH | MEDIUM | 3 | CAT-03 | variant ↔ attribute values | ✓ |
 | CAT-05 | Media model + storage interface + local fake | COMPLETE | MEDIUM | HIGH | 4 | CAT-02, ADR-009 | ordered media, main image; replace `categories.image_url` with `media_id` (ADR-025) | ✓ |
 | CAT-06 | Public GET /categories, /categories/{slug} | COMPLETE | HIGH | MEDIUM | 3 | CAT-01 | only active categories; SD rule (test) | ✓ |
-| CAT-07 | Public product listing with filters/sort/pagination | NOT_STARTED | HIGH | MEDIUM | 6 | CAT-03, INF-03, PRC-02, INV-03 | allowlisted filters; no N+1; shared paginated-query helper (count + offset, deterministic `id` tie-break) + DB-level pagination tests (no dup/skip across pages, correct total); SD rule (test) |
+| CAT-07 | Public product listing with filters/sort/pagination | COMPLETE | HIGH | MEDIUM | 6 | CAT-03, INF-03, PRC-02, INV-03 | allowlisted filters; no N+1; shared paginated-query helper (count + offset, deterministic `id` tie-break) + DB-level pagination tests (no dup/skip across pages, correct total); SD rule (test) |
 | CAT-08 | Public product detail GET /products/{slug} | COMPLETE | HIGH | MEDIUM | 3 | CAT-00, CAT-04, CAT-05, PRC-02, INV-03 | published only; stable contract; SD rule (test) |
 | CAT-09 | Category filters endpoint + CategoryFilter | COMPLETE | MEDIUM | MEDIUM | 3 | CAT-04 | filters from data; SD rule (test) | ✓ |
 | CAT-10 | Admin category CRUD + AuditLog + `categories:edit_content` (ADR-023) | COMPLETE | HIGH | HIGH | 3 | CAT-01, AUTH-10, INF-05 | changes audited | ✓ |

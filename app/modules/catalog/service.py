@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Sequence
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import NotFoundError
+from app.core.time import utc_now
 from app.db.models import Category, CategoryFilterType, VariantOptionKey
 from app.modules.catalog.repository import CategoryRepository, media_storage_keys
 from app.modules.catalog.schemas import (
@@ -113,36 +115,52 @@ class CategoryService:
             children=[_summary(child, self._url(child, urls)) for child in children],
         )
 
-    async def filters(self, slug: str) -> CategoryFiltersResponse:
+    async def filters(self, slug: str, *, at: datetime | None = None) -> CategoryFiltersResponse:
         """Active filters of a visible category, each with the values its published products
         actually have; a filter without values is left out.
 
-        ``range`` (price) filters have no data until product prices exist (CAT-07).
+        The ``range`` filter (only ``price``, ADR-026) has the lowest and highest listing
+        price instead: the price ``GET /categories/{slug}/products`` filters on (CAT-07).
         """
+        now = at or utc_now()
         async with self._session.begin():
             category = _visible_by_slug(await self._repository.list_visible(), slug)
-            filters = [
-                item
-                for item in await self._repository.active_filters(category.id)
+            filters = await self._repository.active_filters(category.id)
+            keys = {
+                item.attribute_key
+                for item in filters
                 if item.filter_type != CategoryFilterType.RANGE
-            ]
-            keys = {item.attribute_key for item in filters}
+            }
             counts = [
                 *await self._repository.option_value_counts(category.id, keys & _OPTION_KEYS),
                 *await self._repository.attribute_value_counts(category.id, keys - _OPTION_KEYS),
             ]
+            has_range = any(item.filter_type == CategoryFilterType.RANGE for item in filters)
+            bounds = await self._repository.price_bounds(category.id, now) if has_range else None
         values: dict[str, list[FilterValue]] = defaultdict(list)
         for key, value, count in counts:
             values[key].append(FilterValue(value=value, count=count))
-        return CategoryFiltersResponse(
-            items=[
-                PublicCategoryFilter(
-                    key=item.attribute_key,
-                    label=item.label,
-                    type=item.filter_type,
-                    values=values[item.attribute_key],
+        items: list[PublicCategoryFilter] = []
+        for item in filters:
+            if item.filter_type == CategoryFilterType.RANGE:
+                if bounds is not None:
+                    items.append(
+                        PublicCategoryFilter(
+                            key=item.attribute_key,
+                            label=item.label,
+                            type=item.filter_type,
+                            values=[],
+                            min=bounds[0],
+                            max=bounds[1],
+                        )
+                    )
+            elif values.get(item.attribute_key):
+                items.append(
+                    PublicCategoryFilter(
+                        key=item.attribute_key,
+                        label=item.label,
+                        type=item.filter_type,
+                        values=values[item.attribute_key],
+                    )
                 )
-                for item in filters
-                if values.get(item.attribute_key)
-            ]
-        )
+        return CategoryFiltersResponse(items=items)

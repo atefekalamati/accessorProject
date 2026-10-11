@@ -222,15 +222,25 @@ async def test_filters_come_from_published_products_of_the_category(
 
     assert response.status_code == 200
     items = response.json()["items"]
-    assert [item["key"] for item in items] == ["color", "material", "size"]
+    assert [item["key"] for item in items] == ["color", "material", "size", "price"]
     assert items[0] == {
         "key": "color",
         "label": "Color",
         "type": "color",
         "values": [{"value": "gold", "count": 2}, {"value": "silver", "count": 1}],
+        "min": None,
+        "max": None,
     }
     assert items[1]["values"] == [{"value": "steel", "count": 2}]
     assert items[2]["values"] == [{"value": "M", "count": 1}]
+    # Listing-price bounds (CAT-07) over the two published products (100_000 each).
+    price = items[3]
+    assert (price["type"], price["values"], price["min"], price["max"]) == (
+        "range",
+        [],
+        100_000,
+        100_000,
+    )
 
 
 async def test_inactive_filters_are_hidden(auth_client: AsyncClient, catalog: Catalog) -> None:

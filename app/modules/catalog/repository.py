@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Sequence
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -20,6 +21,7 @@ from app.db.models import (
     VariantOption,
 )
 from app.db.models.common import not_deleted
+from app.modules.catalog.product_query import price_bounds
 
 
 class CategoryRepository:
@@ -77,6 +79,11 @@ class CategoryRepository:
         )
         rows = (await self._session.execute(statement)).all()
         return [(row[0], row[1], int(row[2])) for row in rows]
+
+    async def price_bounds(self, category_id: UUID, now: datetime) -> tuple[int, int] | None:
+        """Lowest and highest listing price of the category's public products (CAT-07)."""
+        row = (await self._session.execute(price_bounds(category_id, now))).one()
+        return None if row[0] is None else (int(row[0]), int(row[1]))
 
     async def attribute_value_counts(
         self, category_id: UUID, keys: Collection[str]

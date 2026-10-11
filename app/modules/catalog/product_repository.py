@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -33,6 +34,12 @@ from app.db.models import (
     WarehouseStatus,
 )
 from app.db.models.common import not_deleted
+from app.modules.catalog.product_query import (
+    ListingFilters,
+    ProductSort,
+    public_products,
+)
+from app.shared.pagination import PageParams, paginate
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +107,41 @@ class ProductRepository:
             not_deleted(Product),
         )
         return (await self._session.scalars(statement)).one_or_none()
+
+    async def list_public(
+        self, filters: ListingFilters, sort: ProductSort, now: datetime, params: PageParams
+    ) -> tuple[list[Product], int]:
+        """One page of public products; card prices are computed by the service."""
+        query = public_products(filters, sort, now)
+        rows, total = await paginate(
+            self._session,
+            query.statement,
+            query.order_by,
+            tie_breaker=Product.id,
+            params=params,
+        )
+        return [row[0] for row in rows], total
+
+    async def public_variants_of(
+        self, product_ids: Collection[UUID]
+    ) -> dict[UUID, list[ProductVariant]]:
+        """Active, priced, non-deleted variants per product, in ``display_order``."""
+        variants: dict[UUID, list[ProductVariant]] = {product_id: [] for product_id in product_ids}
+        if not product_ids:
+            return variants
+        statement = (
+            select(ProductVariant)
+            .where(
+                ProductVariant.product_id.in_(product_ids),
+                ProductVariant.is_active.is_(True),
+                ProductVariant.base_price.is_not(None),
+                not_deleted(ProductVariant),
+            )
+            .order_by(ProductVariant.display_order, ProductVariant.id)
+        )
+        for variant in await self._session.scalars(statement):
+            variants[variant.product_id].append(variant)
+        return variants
 
     async def category_chain(self, category_id: UUID) -> list[Category]:
         """The category and its ancestors, root first, in one recursive query."""

@@ -299,6 +299,23 @@
 - به‌روزرسانی 2026-10-11 (تصمیم کاربر): هر task از CART-* و ORD-* که تابع قیمت را صدا می‌زند (اکنون CART-03، ORD-03، ORD-04) خطوط را با ترتیب پایدار (بر اساس id خط) می‌دهد و یک تست دارد که ورودی با ترتیب به‌هم‌ریخته خروجی یکسان می‌دهد. این معیار در PLAN آن taskها ثبت شد و هنگام ساخت فایل task به Acceptance Criteria منتقل می‌شود.
 - پیامدها: PRC-02، CAT-07، CAT-08، CART، ORD-03، ORD-04، DSC.
 
+### ADR-032 — لیست عمومی محصولات (CAT-07)
+- تاریخ: 2026-10-11
+- زمینه: PRD ورودی‌های لیست را نام می‌برد ولی شکل پارامتر، معنای قیمت محصول چندتنوعی و شکل پاسخ را نه. همه تصمیم‌ها کم‌اثر و خودم (CLAUDE.md پروتکل ۸).
+- تصمیم‌های کم‌اثر (خودم):
+  - endpointها: `GET /categories/{slug}/products` و `GET /products` (با `category_slug` اختیاری)، با پارامترهای یکسان. پاسخ فقط صفحه کارت‌هاست (`items`، `total`، `page`، `limit`، `pages`). اطلاعات دسته، زیرمجموعه‌ها و فیلترها از `GET /categories/{slug}` و `/filters` می‌آیند.
+  - «تنوع عمومی» = فعال، قیمت‌دار و حذف‌نشده. محصول بدون تنوع عمومی در لیست نمی‌آید. **قیمت لیست** محصول = کمترین `final_price` تنوع‌های عمومی در لحظه درخواست (بازه sale نیمه‌باز، همان `unit_price`). فیلتر قیمت، sortهای قیمت و `min`/`max` فیلتر `price` در `/filters` همه روی همین عدد هستند.
+  - کارت: `price` (قیمت کامل تنوع ارزان‌تر؛ در تساوی، `display_order` کمتر)، `price_range` روی final، `max_discount_percent` (بیشترین درصد تخفیف فعلی، floor)، `availability` (بهترین وضعیت، ADR-029)، `image_url` تصویر اصلی، و `quick_add_variant_id` (فقط وقتی محصول دقیقاً یک تنوع عمومی دارد و قابل خرید است؛ وگرنه null یعنی «انتخاب تنوع لازم است»).
+  - sortها: `newest` (پیش‌فرض، `published_at` نزولی)، `price_asc` و `price_desc` (قیمت لیست)، `discount_desc` (`max_discount_percent`، سپس newest). همه با tie-break نهایی `id`. `best_selling` تا CAT-17 → 400.
+  - فیلترها: `min_price`/`max_price` (`0..MAX_PRICE_TOMAN`؛ min > max → 400)، `in_stock` (حداقل یک تنوع عمومی با free > 0 در انبار فعال)، `has_discount` (حداقل یک تنوع با final < base). مقدار `false` یعنی بدون محدودیت. فیلتر ویژگی: `colors`، `sizes`، `materials`، `brands` (پارامتر تکراری؛ کلیدهای color، size، material، brand) و `attributes=key:value` برای هر کلید دیگر. کلید گزینه تنوع روی تنوع‌های عمومی و بقیه روی ProductAttribute تطبیق می‌شوند. مقادیر یک کلید OR و کلیدهای مختلف AND هستند (هر کلید مستقل، نه لزوماً روی یک تنوع؛ همان مبنای شمارش‌های `/filters`).
+  - سقف‌ها: حداکثر ۲۰ مقدار برای هر پارامتر، مقدار ۱ تا ۲۰۰ و کلید ۱ تا ۵۰ کاراکتر؛ تخطی → 400. page و limit طبق INF-03.
+  - سازگاری با دسته: در لیست دسته (هر دو مسیر)، کلید ویژگی‌ای که در CategoryFilterهای فعال دسته نیست → 422 `BUSINESS_RULE_VIOLATION` با `type: filter_not_applicable`. قیمت، موجودی و تخفیف همیشه مجازند. `GET /products` بدون دسته هر کلیدی را می‌پذیرد.
+  - دسته پنهان یا ناموجود → 404 (ADR-022). slug نامعتبر در مسیر → 404 (مثل بقیه endpointهای دسته) و در `category_slug` → 400 (validation پارامتر). محصولات زیرمجموعه‌ها در لیست دسته نمی‌آیند (همان قاعده ADR-026). محصول منتشرشده در دسته پنهان در `GET /products` بدون دسته می‌آید، چون صفحه‌اش عمومی است (ADR-020).
+  - اولویت محصولات ویژه (`is_featured`) در v1 اعمال نمی‌شود: PRD آن را مشروط به «سیاست نمایش فعال» کرده و چنین تنظیمی وجود ندارد. جست‌وجوی متنی (`q`) مال بخش «جست‌وجو» است. وضعیت علاقه‌مندی با ماژول wishlist اضافه می‌شود.
+  - بدون migration: indexهای موجود `products (status, published_at)` و `products (category_id)` و `product_variants (product_id, display_order)` کافی‌اند. count و صفحه دو query هستند (helper مشترک `paginate`) و کل پاسخ تعداد query ثابت دارد.
+  - `Cache-Control: no-store` (قیمت و موجودی هر درخواست تازه، مثل CAT-08).
+- پیامدها: CAT-07، CAT-09 (`min`/`max` فیلتر `price`)، CAT-17، SRCH، WISH.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 

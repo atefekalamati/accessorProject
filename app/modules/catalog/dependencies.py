@@ -40,4 +40,4 @@ def get_product_service(
     session: Annotated[AsyncSession, Depends(get_db_session)],
     storage: Annotated[FileStorage, Depends(get_file_storage)],
 ) -> ProductService:
-    return ProductService(session, ProductRepository(session), storage)
+    return ProductService(session, ProductRepository(session), CategoryRepository(session), storage)

@@ -1,27 +1,43 @@
-"""Public product detail (CAT-08, PRD «جزئیات محصول» ✓, ADR-020, ADR-029, ADR-031)."""
+"""Public product detail and listing (CAT-08, CAT-07; PRD «جزئیات محصول» ✓ and
+«دسته‌بندی محصولات» ✓; ADR-020, ADR-029, ADR-031, ADR-032)."""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Final
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import NotFoundError
+from app.core.errors import BusinessRuleError, NotFoundError
 from app.core.time import utc_now
-from app.db.models import Category, InventoryItem, Media, ProductMedia, ProductVariant
+from app.db.models import (
+    Category,
+    InventoryItem,
+    Media,
+    Product,
+    ProductMedia,
+    ProductVariant,
+)
 from app.db.models.catalog import VariantOptionKey
+from app.modules.catalog.product_query import ListingFilters, ProductSort
 from app.modules.catalog.product_repository import ProductRepository
+from app.modules.catalog.repository import CategoryRepository
 from app.modules.catalog.schemas import (
     BreadcrumbItem,
     ProductAttributeOut,
+    ProductCard,
     ProductDetailResponse,
+    ProductListResponse,
     PublicPriceRange,
     PublicProductMedia,
     PublicVariant,
     VariantPriceOut,
 )
 from app.modules.inventory.stock import (
+    StockLevel,
     StockStatus,
     free_quantity,
     product_stock_status,
@@ -29,6 +45,7 @@ from app.modules.inventory.stock import (
     variant_level,
 )
 from app.modules.pricing.calculator import UnitPrice, VariantPrice, unit_price
+from app.shared.pagination import Page, PageParams
 from app.shared.storage import FileStorage
 
 # Displayed prices never include tax; the display policy once tax is on is D11 (ADR-010).
@@ -75,6 +92,37 @@ def _price_out(unit: UnitPrice) -> VariantPriceOut:
     )
 
 
+def _purchasable(variant: ProductVariant, unit: UnitPrice, level: StockLevel | None) -> bool:
+    return (
+        variant.is_active
+        and variant.is_purchasable
+        and unit.original > 0
+        and free_quantity(level) > 0
+    )
+
+
+def _unit(variant: ProductVariant, now: datetime) -> UnitPrice:
+    unit = unit_price(_variant_price(variant), now)
+    if unit is None:  # callers pass active variants, and those always have a base price
+        raise RuntimeError(f"variant {variant.id} has no price")
+    return unit
+
+
+@dataclass(frozen=True, slots=True)
+class ListingRequest:
+    """Validated query of a listing endpoint (parsed by the router)."""
+
+    params: PageParams
+    sort: ProductSort
+    min_price: int | None = None
+    max_price: int | None = None
+    in_stock: bool = False
+    has_discount: bool = False
+    values: Mapping[str, frozenset[str]] = field(default_factory=dict)
+    # Filter key → the query parameter it came from (for error details).
+    sources: Mapping[str, str] = field(default_factory=dict)
+
+
 def _options(variants: list[tuple[ProductVariant, dict[str, str]]]) -> dict[str, list[str]]:
     values: dict[str, list[str]] = {}
     for key in VariantOptionKey:
@@ -90,11 +138,115 @@ def _options(variants: list[tuple[ProductVariant, dict[str, str]]]) -> dict[str,
 
 class ProductService:
     def __init__(
-        self, session: AsyncSession, repository: ProductRepository, storage: FileStorage
+        self,
+        session: AsyncSession,
+        repository: ProductRepository,
+        categories: CategoryRepository,
+        storage: FileStorage,
     ) -> None:
         self._session = session
         self._repository = repository
+        self._categories = categories
         self._storage = storage
+
+    async def list_products(
+        self,
+        request: ListingRequest,
+        *,
+        category_slug: str | None = None,
+        at: datetime | None = None,
+    ) -> ProductListResponse:
+        """Published products, filtered, sorted and paged in the database (ADR-032)."""
+        now = at or utc_now()
+        async with self._session.begin():
+            category_id = None
+            if category_slug is not None:
+                category_id = await self._visible_category(category_slug)
+                await self._check_applicable(category_id, request)
+            filters = ListingFilters(
+                category_id=category_id,
+                min_price=request.min_price,
+                max_price=request.max_price,
+                in_stock=request.in_stock,
+                has_discount=request.has_discount,
+                values=request.values,
+            )
+            listed, total = await self._repository.list_public(
+                filters, request.sort, now, request.params
+            )
+            ids = [product.id for product in listed]
+            variants = await self._repository.public_variants_of(ids)
+            inventory = await self._repository.inventory_of(
+                [variant.id for items in variants.values() for variant in items]
+            )
+            images = await self._repository.main_image_keys(ids)
+
+        cards = [
+            card
+            for product in listed
+            if (card := self._card(product, variants[product.id], inventory, images, now))
+            is not None
+        ]
+        return Page.build(cards, total=total, params=request.params)
+
+    async def _visible_category(self, slug: str) -> UUID:
+        # Same visibility rule as GET /categories/{slug} (ADR-022).
+        categories = await self._categories.list_visible()
+        category = next((item for item in categories if item.slug == slug), None)
+        if category is None:
+            raise NotFoundError(message="Category not found")
+        return category.id
+
+    async def _check_applicable(self, category_id: UUID, request: ListingRequest) -> None:
+        """Attribute filters must be among the category's active filters (PRD: 422)."""
+        filters = await self._categories.active_filters(category_id)
+        active = {item.attribute_key for item in filters}
+        unknown = sorted(key for key in request.values if key not in active)
+        if unknown:
+            raise BusinessRuleError(
+                message="Filter does not apply to this category",
+                details=[
+                    {
+                        "field": request.sources.get(key, "query"),
+                        "message": f"Filter '{key}' is not available in this category",
+                        "type": "filter_not_applicable",
+                    }
+                    for key in unknown
+                ],
+            )
+
+    def _card(
+        self,
+        product: Product,
+        variants: list[ProductVariant],
+        inventory: dict[UUID, list[InventoryItem]],
+        images: dict[UUID, str],
+        now: datetime,
+    ) -> ProductCard | None:
+        if not variants:  # its last variant went away between the two reads
+            return None
+        units = [(variant, _unit(variant, now)) for variant in variants]
+        levels = {variant.id: variant_level(inventory[variant.id]) for variant in variants}
+        # ``min`` keeps the first of equal prices, i.e. the lowest ``display_order``.
+        cheapest = min((unit for _variant, unit in units), key=lambda unit: unit.final)
+        finals = [unit.final for _variant, unit in units]
+        only, only_unit = units[0]
+        quick_add = len(units) == 1 and _purchasable(only, only_unit, levels[only.id])
+        key = images.get(product.id)
+        return ProductCard(
+            id=product.id,
+            slug=product.slug,
+            title=product.title,
+            published_at=product.published_at,
+            image_url=None if key is None else self._storage.url(key),
+            price=_price_out(cheapest),
+            price_range=PublicPriceRange(min=min(finals), max=max(finals)),
+            max_discount_percent=max(unit.discount_percent for _variant, unit in units),
+            availability=product_stock_status(
+                stock_status(levels[variant.id]) for variant in variants
+            ),
+            quick_add_variant_id=only.id if quick_add else None,
+        )
 
     async def detail(self, slug: str, *, at: datetime | None = None) -> ProductDetailResponse:
         """A published product; price and stock are read fresh on every request."""
@@ -153,9 +305,7 @@ class ProductService:
         items: list[InventoryItem],
         now: datetime,
     ) -> PublicVariant:
-        unit = unit_price(_variant_price(variant), now)
-        if unit is None:  # filtered out above: active variants always have a base price
-            raise RuntimeError(f"variant {variant.id} has no price")
+        unit = _unit(variant, now)
         level = variant_level(items)
         return PublicVariant(
             id=variant.id,
@@ -163,10 +313,7 @@ class ProductService:
             options=options,
             price=_price_out(unit),
             availability=stock_status(level),
-            purchasable=variant.is_active
-            and variant.is_purchasable
-            and unit.original > 0
-            and free_quantity(level) > 0,
+            purchasable=_purchasable(variant, unit, level),
         )
 
     def _media(
