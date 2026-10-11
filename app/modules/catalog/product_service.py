@@ -1,6 +1,6 @@
-"""Public product reads: detail, listing and pricing (CAT-08, CAT-07, PRC-04; PRD
-«جزئیات محصول» ✓, «دسته‌بندی محصولات» ✓ and «قیمت و مالیات» ✓; ADR-020, ADR-029,
-ADR-031, ADR-032, ADR-033)."""
+"""Public product reads: detail, listing, pricing and availability (CAT-08, CAT-07,
+PRC-04, INV-07; PRD «جزئیات محصول» ✓, «دسته‌بندی محصولات» ✓, «قیمت و مالیات» ✓ and
+«موجودی و رزرو» ✓; ADR-020, ADR-029, ADR-031, ADR-032, ADR-033)."""
 
 from __future__ import annotations
 
@@ -29,6 +29,7 @@ from app.modules.catalog.repository import CategoryRepository
 from app.modules.catalog.schemas import (
     BreadcrumbItem,
     ProductAttributeOut,
+    ProductAvailabilityResponse,
     ProductCard,
     ProductDetailResponse,
     ProductListResponse,
@@ -36,6 +37,7 @@ from app.modules.catalog.schemas import (
     PublicPriceRange,
     PublicProductMedia,
     PublicVariant,
+    VariantAvailability,
     VariantPriceOut,
     VariantPricing,
 )
@@ -211,6 +213,34 @@ class ProductService:
                 VariantPricing(variant_id=variant.id, sku=variant.sku, price=_price_out(unit))
                 for variant, unit in units
             ],
+        )
+
+    async def availability(
+        self, product_id: UUID, *, variant_id: UUID | None = None, at: datetime | None = None
+    ) -> ProductAvailabilityResponse:
+        """Stock status of a published product's public variants; no stock numbers.
+
+        A read without locks: it may lag a concurrent order, only towards less (ADR-029).
+        """
+        now = at or utc_now()
+        async with self._session.begin():
+            variants = await self._public_variants(product_id, variant_id)
+            inventory = await self._repository.inventory_of([variant.id for variant in variants])
+        items: list[VariantAvailability] = []
+        for variant in variants:
+            level = variant_level(inventory[variant.id])
+            items.append(
+                VariantAvailability(
+                    variant_id=variant.id,
+                    sku=variant.sku,
+                    availability=stock_status(level),
+                    purchasable=_purchasable(variant, _unit(variant, now), level),
+                )
+            )
+        return ProductAvailabilityResponse(
+            product_id=product_id,
+            availability=product_stock_status(StockStatus(item.availability) for item in items),
+            variants=items,
         )
 
     async def _public_variants(

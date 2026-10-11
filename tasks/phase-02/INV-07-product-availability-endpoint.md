@@ -1,6 +1,6 @@
 # INV-07 — Public GET /products/{id}/availability
 
-**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** INV-03, CAT-08 · **Level:** HIGH
+**Status:** COMPLETE · **Priority:** MEDIUM · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** INV-03, CAT-08 · **Level:** HIGH
 
 ## Objective
 وضعیت موجودی محصول منتشرشده و تنوع‌های عمومی آن (in/low/out و قابل‌خرید)، بدون عدد موجودی.
@@ -16,12 +16,16 @@
 - Rollback: بدون schema؛ `git revert`.
 
 ## Acceptance Criteria
-- [ ] وضعیت و purchasable برابر `GET /products/{slug}` (تست)؛ تنوع بدون InventoryItem → out_of_stock؛ رزرو کامل → out_of_stock؛ low_stock طبق threshold.
-- [ ] InventoryItem انبار غیرفعال حساب نمی‌شود (تست).
-- [ ] SD rule و 404/400 مثل PRC-04 (تست).
-- [ ] بدون عدد موجودی یا فیلد داخلی (تست کلیدها)؛ `Cache-Control: no-store`.
-- [ ] بدون N+1 (تعداد query مستقل از تعداد تنوع؛ تست).
-- [ ] pytest، ruff، format و mypy سبز.
+- [x] وضعیت و purchasable برابر `GET /products/{slug}` (تست)؛ تنوع بدون InventoryItem → out_of_stock؛ رزرو کامل → out_of_stock؛ low_stock طبق threshold.
+- [x] InventoryItem انبار غیرفعال حساب نمی‌شود (تست).
+- [x] SD rule و 404/400 مثل PRC-04 (تست).
+- [x] بدون عدد موجودی یا فیلد داخلی (تست کلیدها)؛ `Cache-Control: no-store`.
+- [x] بدون N+1 (تعداد query مستقل از تعداد تنوع؛ تست).
+- [x] pytest، ruff، format و mypy سبز.
+
+## Implementation Notes
+- کد: `product_service.py` (`availability` با همان helperهای جزئیات: `_public_variants`، `variant_level`، `stock_status`، `_purchasable`، `product_stock_status`)، `router.py`. schemaها با PRC-04 commit شدند. تست: `tests/test_product_availability.py` (۹ تست)؛ ردیف جدید در نقشه `COVERAGE`.
+- **Rollback:** بدون schema؛ `git revert`.
 
 ## Validation
 ```powershell
@@ -31,3 +35,4 @@ python -m ruff check .; python -m ruff format --check .; python -m mypy app test
 
 ## Log
 - 2026-10-11: plan (batch PRC-04/PRC-05/INV-07).
+- 2026-10-11: REVIEW-CHECKLIST (خودم): §3، §5، §7، §9 پاس؛ بقیه N/A (خواندن عمومی بدون lock). بازبینی diff: APPROVE؛ nitها اعمال شد (مستند شدن وضعیت کلی با `variant_id` در ADR-033، تست انبار غیرفعال کنار انبار فعال، پیام 404 تنوع). pytest (1270)، ruff، format و mypy سبز. COMPLETE.

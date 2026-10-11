@@ -98,6 +98,10 @@ COVERAGE: Final[dict[tuple[str, str], dict[int, str]]] = {
         s400="test_product_pricing::test_invalid_request_is_400",
         s404="test_product_pricing::test_hidden_products_and_variants_are_404",
     ),
+    ("GET", "/products/{product_id}/availability"): _public(
+        s400="test_product_availability::test_invalid_request_is_400",
+        s404="test_product_availability::test_hidden_products_and_variants_are_404",
+    ),
     # --- admin categories -------------------------------------------------------------
     ("GET", "/admin/categories"): _categories(
         s400="test_admin_categories::test_invalid_list_query_is_400",

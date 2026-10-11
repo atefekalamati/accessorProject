@@ -13,6 +13,7 @@ from app.modules.catalog.schemas import (
     CategoryDetailResponse,
     CategoryFiltersResponse,
     CategoryTreeResponse,
+    ProductAvailabilityResponse,
     ProductDetailResponse,
     ProductListResponse,
     ProductPricingResponse,
@@ -218,6 +219,22 @@ async def get_product_pricing(
 ) -> ProductPricingResponse:
     response.headers["Cache-Control"] = "no-store"
     return await service.pricing(product_id, variant_id=variant_id)
+
+
+@products_router.get(
+    "/{product_id}/availability",
+    response_model=ProductAvailabilityResponse,
+    summary="Stock status of a published product's variants (no stock numbers)",
+    dependencies=[Depends(allowed_query_params("variant_id"))],
+)
+async def get_product_availability(
+    product_id: UUID,
+    response: Response,
+    service: Annotated[ProductService, Depends(get_product_service)],
+    variant_id: UUID | None = None,
+) -> ProductAvailabilityResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return await service.availability(product_id, variant_id=variant_id)
 
 
 @products_router.get(
