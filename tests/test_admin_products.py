@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import io
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
+from conftest import Account, MakeAccount
 from httpx import AsyncClient, Response
 from PIL import Image
 from sqlalchemy import delete, func, select, update
@@ -19,14 +20,12 @@ from app.db.models import (
     Category,
     InventoryItem,
     Media,
-    OtpCode,
     Product,
     ProductAttribute,
     ProductMedia,
     ProductVariant,
     Role,
     RolePermission,
-    User,
     UserRole,
     VariantOption,
 )
@@ -71,46 +70,6 @@ def _error(response: Response, status: int, code: str) -> dict[str, Any]:
 
 
 # --- fixtures ------------------------------------------------------------------------
-
-
-@dataclass(frozen=True, slots=True)
-class Account:
-    id: UUID
-    headers: dict[str, str]
-
-
-MakeAccount = Callable[..., Awaitable[Account]]
-
-
-@pytest_asyncio.fixture
-async def make_account(
-    auth_client: AsyncClient,
-    issue_otp: Callable[..., Awaitable[OtpCode]],
-    db_engine: AsyncEngine,
-) -> AsyncIterator[MakeAccount]:
-    mobiles: list[str] = []
-
-    async def _make(*roles: str) -> Account:
-        mobile = f"+989{uuid4().int % 1_000_000_000:09d}"
-        mobiles.append(mobile)
-        await issue_otp(mobile)
-        response = await auth_client.post(
-            "/api/v1/auth/verify-otp", json={"mobile": mobile, "code": "123456"}
-        )
-        assert response.status_code == 200
-        async with AsyncSession(db_engine) as session, session.begin():
-            user_id: UUID = (
-                await session.scalars(select(User.id).where(User.phone == mobile))
-            ).one()
-            await session.execute(delete(UserRole).where(UserRole.user_id == user_id))
-            session.add_all(UserRole(user_id=user_id, role_id=role_id(name)) for name in roles)
-        return Account(
-            id=user_id, headers={"Authorization": f"Bearer {response.json()['access_token']}"}
-        )
-
-    yield _make
-    async with AsyncSession(db_engine) as session, session.begin():
-        await session.execute(delete(User).where(User.phone.in_(mobiles)))
 
 
 @pytest_asyncio.fixture

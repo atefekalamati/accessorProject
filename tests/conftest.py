@@ -39,10 +39,12 @@ from app.db.models import (
     ProductMedia,
     ProductStatus,
     ProductVariant,
+    User,
+    UserRole,
     VariantOption,
 )
 from app.db.models.inventory import DEFAULT_WAREHOUSE_ID
-from app.db.seed import seed_rbac
+from app.db.seed import role_id, seed_rbac
 from app.main import create_app
 from app.modules.auth.otp import hash_otp_code, otp_hash_key
 
@@ -217,6 +219,49 @@ def new_mobile() -> str:
     return unique_mobile()
 
 
+# --- staff accounts (CAT-11, CAT-12) ---------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Account:
+    id: UUID
+    headers: dict[str, str]
+
+
+MakeAccount = Callable[..., Awaitable[Account]]
+
+
+@pytest_asyncio.fixture
+async def make_account(
+    auth_client: AsyncClient,
+    issue_otp: Callable[..., Awaitable[OtpCode]],
+    db_engine: AsyncEngine,
+) -> AsyncIterator[MakeAccount]:
+    mobiles: list[str] = []
+
+    async def _make(*roles: str) -> Account:
+        mobile = f"+989{uuid4().int % 1_000_000_000:09d}"
+        mobiles.append(mobile)
+        await issue_otp(mobile)
+        response = await auth_client.post(
+            "/api/v1/auth/verify-otp", json={"mobile": mobile, "code": "123456"}
+        )
+        assert response.status_code == 200
+        async with AsyncSession(db_engine) as session, session.begin():
+            user_id: UUID = (
+                await session.scalars(select(User.id).where(User.phone == mobile))
+            ).one()
+            await session.execute(delete(UserRole).where(UserRole.user_id == user_id))
+            session.add_all(UserRole(user_id=user_id, role_id=role_id(name)) for name in roles)
+        return Account(
+            id=user_id, headers={"Authorization": f"Bearer {response.json()['access_token']}"}
+        )
+
+    yield _make
+    async with AsyncSession(db_engine) as session, session.begin():
+        await session.execute(delete(User).where(User.phone.in_(mobiles)))
+
+
 # --- catalog builder (CAT-07, CAT-08, CAT-12) -------------------------------------
 
 INTERNAL_FIELDS = {
@@ -367,6 +412,12 @@ async def catalog(db_engine: AsyncEngine, make_media: MakeMedia) -> AsyncIterato
     async with AsyncSession(db_engine) as session, session.begin():
         products = select(Product.id).where(Product.category_id.in_(ids))
         variants = select(ProductVariant.id).where(ProductVariant.product_id.in_(products))
+        # Images uploaded through the admin API (make_media removes its own rows).
+        media = list(
+            await session.scalars(
+                select(ProductMedia.media_id).where(ProductMedia.product_id.in_(products))
+            )
+        )
         await session.execute(delete(ProductMedia).where(ProductMedia.product_id.in_(products)))
         await session.execute(delete(InventoryItem).where(InventoryItem.product_id.in_(products)))
         await session.execute(delete(VariantOption).where(VariantOption.variant_id.in_(variants)))
@@ -378,6 +429,7 @@ async def catalog(db_engine: AsyncEngine, make_media: MakeMedia) -> AsyncIterato
         await session.execute(delete(CategoryFilter).where(CategoryFilter.category_id.in_(ids)))
         await session.execute(update(Category).where(Category.id.in_(ids)).values(parent_id=None))
         await session.execute(delete(Category).where(Category.id.in_(ids)))
+        await session.execute(delete(Media).where(Media.id.in_(media)))
 
 
 @contextmanager
