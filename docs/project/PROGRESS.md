@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** PRC-02 — BLOCKED (D28، منتظر تصمیم کاربر). بعد از آن: CAT-08، سپس CAT-07 + CAT-12.
+- **Current Task:** CAT-08 (batch PRC-02/CAT-08). بعدی: CAT-07 + CAT-12.
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 51/145 task COMPLETE · وزنی 29.1% (121h / 416.5h) · MVP 44.2%
-- **Blockers:** فاز ۲: PRC-02 منتظر D28 (مبنای مالیات، تقسیم تخفیف کد، مرحله گردکردن)؛ CAT-08 و CAT-07 به PRC-02 وابسته‌اند. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** پاسخ کاربر به D28 (سه سؤال در [PRC-02](../../tasks/phase-02/PRC-02-pricing-function.md))، سپس `/batch` برای PRC-02 + CAT-08. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Progress:** 52/145 task COMPLETE · وزنی 30.3% (126h / 416.5h) · MVP 46.0%
+- **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
+- **Next Action:** اتمام CAT-08؛ batch بعدی CAT-07 + CAT-12. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**29.1%** = 121h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**30.3%** = 126h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 83.5h | 61.6% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 88.5h | 65.3% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,7 +29,7 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 295.5h ≈ ۲۰ هفته. MVP باقی‌مانده: 153h ≈ ۱۰ هفته.
+- باقی‌مانده: 290.5h ≈ ۱۹ هفته. MVP باقی‌مانده: 148h ≈ ۱۰ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -77,7 +77,6 @@
 ## Blockers
 | Blocked task | Cause |
 |---|---|
-| PRC-02 | D28 — مبنای مالیات، تقسیم تخفیف کد و مرحله گردکردن (پول، PRD مبهم) |
 | PAY-07 | D8 — انتخاب درگاه واقعی (قبل از فاز ۵) |
 | OPS-05 | D9 — انتخاب SMS provider (قبل از فاز ۵) |
 | OPS-07 | D10 — انتخاب file storage (قبل از فاز ۵) |
@@ -86,6 +85,8 @@
 ---
 
 ## Plan changes
+### 2026-10-11 — D28 تأیید شد (تصمیم کاربر)
+- مبنای مالیات بعد از تخفیف محصول و سهم کد، ارسال بدون مالیات (سیاست آن D11)، هر جزء یک‌بار گرد و grand_total = جمع اجزا، largest-remainder با tie-break ترتیب خطوط؛ guardها و تست invariant روی ≥۱۰۰۰ سبد تصادفی (ADR-031). PRC-02 از BLOCKED خارج شد.
 ### 2026-10-11 — PRC-02 مسدود (AUTOPILOT)
 - PRD قاعده مبنای مالیات، تقسیم تخفیف کد و مرحله گردکردن را مشخص نمی‌کند؛ موضوع پولی است، پس D28 باز شد و batch ۳ قبل از پیاده‌سازی متوقف شد.
 ### 2026-10-10 — INV-01 و INV-03 قبل از CAT-11 (AUTOPILOT)
@@ -165,6 +166,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-11 — PRC-02 COMPLETE (batch PRC-02/CAT-08)
+- `app/modules/pricing/calculator.py` (ADR-031). بازبینی plan و diff توسط subagent (هر دو APPROVE WITH CHANGES، اعمال شد). 82 تست واحد شامل ۱۵۰۰ سبد تصادفی با oracle مستقل.
+
 ### 2026-10-11 — CAT-11 COMPLETE (batch ۲ جلسه)
 - ۱۲ endpoint مدیریت محصول، تنوع و رسانه؛ ADR-030. بازبینی plan و diff توسط subagent (هر دو APPROVE WITH CHANGES، یافته‌ها اعمال شد؛ یک باگ audit رفع شد). CI INV-03 سبز.
 
