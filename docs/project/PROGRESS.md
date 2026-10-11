@@ -3,25 +3,25 @@
 **Last Updated:** 2026-10-11
 
 ## Current / Next
-- **Phase › Milestone:** 2 Core domain › M2.2 Catalog (COMPLETE) → M2.3/M2.4
-- **Current Task:** —. M2.2 کامل شد (batch E: CAT-07، CAT-12).
+- **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
+- **Current Task:** PRC-05 (batch PRC-04/PRC-05/INV-07؛ PRC-04 COMPLETE).
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 55/145 task COMPLETE · وزنی 33.1% (138h / 416.5h) · MVP 50.4%
+- **Progress:** 56/145 task COMPLETE · وزنی 33.6% (140h / 416.5h) · MVP 51.1%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** plan واحد milestone باقی‌مانده فاز ۲ (M2.3 بدون رزرو + M2.4) برای تأیید کاربر؛ پیشنهاد batch بعدی: PRC-04 + PRC-05 + INV-07 (7h). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Next Action:** PRC-05، سپس INV-07 (همین batch). سپس plan واحد رزرو (INV-04..06) برای تأیید کاربر.
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**33.1%** = 138h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**33.6%** = 140h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 100.5h | 74.2% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 102.5h | 75.6% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 278.5h ≈ ۱۹ هفته. MVP باقی‌مانده: 136h ≈ ۹ هفته.
+- باقی‌مانده: 276.5h ≈ ۱۸ هفته. MVP باقی‌مانده: 134h ≈ ۹ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-11: PRC-04 (GET /products/{id}/pricing؛ قیمت سرور با `unit_price`، `calculated_at`، SD rule؛ ADR-033).
 - 2026-10-11: CAT-12 (نقشه پوشش خطای ۲۲ endpoint کاتالوگ با نگهبان route، 400 برای id نامعتبر، تست end-to-end کاتالوگ). M2.2 کامل شد.
 - 2026-10-11: CAT-07 (GET /products و GET /categories/{slug}/products؛ فیلتر، sort و صفحه‌بندی در DB؛ helper `paginate`؛ بازه price در /filters؛ ADR-032).
 - 2026-10-10: CAT-05 (media + product_media, FileStorage local/memory, streaming-capped upload, safe re-encode, POST /admin/media, category image_media_id; ADR-028).
@@ -87,6 +88,8 @@
 ---
 
 ## Plan changes
+### 2026-10-11 — تأیید همه milestoneهای باقی‌مانده فاز ۲ (تصمیم کاربر)
+- M2.3 و M2.4 بدون plan جداگانه milestone تأیید شدند. سقف این جلسه ۴ batch. رزرو (INV-04..06): یک plan مشترک برای تأیید کاربر، سپس هر task در یک batch جدا با بازبین subagent. قیود طراحی کاربر (lock مرتب بر اساس variant_id، all-or-nothing، idempotent، 409 RESERVATION_EXPIRED، job انقضا با SKIP LOCKED و actor=system، تست‌های همزمانی) در آن plan رعایت می‌شوند.
 ### 2026-10-11 — قرارداد ترتیب خطوط قیمت (تصمیم کاربر)
 - معیار پذیرش جدید برای CART-03، ORD-03 و ORD-04 (هر CART-*/ORD-* که تابع قیمت را صدا می‌زند): خطوط با ترتیب پایدار (بر اساس id خط) و تست «ورودی به‌هم‌ریخته → خروجی یکسان» (ADR-031). بدون تغییر برآورد.
 ### 2026-10-11 — D28 تأیید شد (تصمیم کاربر)
@@ -170,6 +173,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-11 — PRC-04 COMPLETE (batch PRC-04/PRC-05/INV-07)
+- `GET /products/{id}/pricing`؛ ADR-033. بازبینی plan (APPROVE WITH CHANGES) و diff (APPROVE) توسط subagent؛ یافته‌ها اعمال شد.
+
 ### 2026-10-11 — CAT-12 COMPLETE (پایان batch CAT-07/CAT-12؛ M2.2 کامل)
 - `tests/test_catalog_api.py`: نقشه endpoint × کد خطا با نگهبان route و وجود تست؛ ۴۰ تست جدید شامل end-to-end. CI CAT-07 سبز.
 
