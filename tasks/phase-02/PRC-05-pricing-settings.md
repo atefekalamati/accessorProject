@@ -1,6 +1,6 @@
 # PRC-05 — Pricing settings (super_admin only)
 
-**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** PRC-01, AUTH-10 · **Level:** HIGH
+**Status:** COMPLETE · **Priority:** MEDIUM · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** PRC-01, AUTH-10 · **Level:** HIGH
 
 ## Objective
 `GET` و `PATCH /admin/pricing/settings` برای مالیات و گردکردن، فقط با `pricing_settings:update` (در v1 فقط super_admin، D2).
@@ -17,12 +17,17 @@
 - Rollback: بدون migration؛ `git revert`. اگر تنظیمات اشتباه ذخیره شد، با PATCH برمی‌گردد (audit دارد).
 
 ## Acceptance Criteria
-- [ ] 401 بدون token، 403 برای هر نقش بدون `pricing_settings:update`، روی GET و PATCH.
-- [ ] 400 برای کلید ناشناخته، null، float، bool رشته‌ای، بازه نامعتبر و بدنه خالی؛ فیلد سیستمی نادیده گرفته می‌شود.
-- [ ] تغییر → `version` +1، `updated_by`، audit با before/after؛ بدون تغییر → بدون audit و bump.
-- [ ] دو PATCH همزمان سریال می‌شوند (تست).
-- [ ] نبود ردیف → 404 (تست).
-- [ ] pytest، ruff، format و mypy سبز.
+- [x] 401 بدون token، 403 برای هر نقش بدون `pricing_settings:update`، روی GET و PATCH.
+- [x] 400 برای کلید ناشناخته، null، float، bool رشته‌ای، بازه نامعتبر و بدنه خالی؛ فیلد سیستمی نادیده گرفته می‌شود.
+- [x] تغییر → `version` +1، `updated_by`، audit با before/after؛ بدون تغییر → بدون audit و bump.
+- [x] دو PATCH همزمان سریال می‌شوند (تست).
+- [x] نبود ردیف → 404 (تست).
+- [x] pytest، ruff، format و mypy سبز.
+
+## Implementation Notes
+- کد: `app/modules/pricing/{schemas,repository,service,dependencies,router}.py`؛ ثبت در `app/api/v1/router.py`. `to_policy` / `PricingSettingsRepository.policy()` برای CART-03 و ORD-03 (`RoundingMode` واقعی).
+- تست: `tests/test_pricing_settings.py` (۳۰ تست)؛ fixture `restore_settings` ردیف سراسری را بعد از هر تست برمی‌گرداند و audit با actor هر تست فیلتر می‌شود.
+- **Rollback:** بدون migration؛ `git revert`.
 
 ## Validation
 ```powershell
@@ -32,3 +37,4 @@ python -m ruff check .; python -m ruff format --check .; python -m mypy app test
 
 ## Log
 - 2026-10-11: plan (batch PRC-04/PRC-05/INV-07).
+- 2026-10-11: REVIEW-CHECKLIST (خودم): §1، §2، §3، §6، §7، §9 پاس؛ §4، §5، §8 N/A. بازبینی plan: APPROVE WITH CHANGES (auth قبل از validation، تست همزمانی با دو مقدار متفاوت، بدنه خالی بعد از حذف فیلد سیستمی، `PricingPolicy` با `RoundingMode`؛ همه اعمال شد). بازبینی diff: APPROVE WITH CHANGES (ترتیب audit در تست همزمانی به‌خاطر ساعت Windows، assert وضعیت، comment؛ اعمال شد). pytest (1260)، ruff، format و mypy سبز. COMPLETE.

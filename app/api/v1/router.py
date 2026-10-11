@@ -8,6 +8,7 @@ from app.modules.catalog.admin_router import router as admin_categories_router
 from app.modules.catalog.router import products_router
 from app.modules.catalog.router import router as categories_router
 from app.modules.media.router import router as admin_media_router
+from app.modules.pricing.router import router as admin_pricing_router
 from app.shared.database.router import readiness_router
 from app.shared.health.router import router as health_router
 
@@ -22,3 +23,4 @@ api_router.include_router(products_router)
 api_router.include_router(admin_categories_router)
 api_router.include_router(admin_products_router)
 api_router.include_router(admin_media_router)
+api_router.include_router(admin_pricing_router)

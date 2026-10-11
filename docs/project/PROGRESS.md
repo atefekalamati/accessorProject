@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
-- **Current Task:** PRC-05 (batch PRC-04/PRC-05/INV-07؛ PRC-04 COMPLETE).
+- **Current Task:** INV-07 (batch PRC-04/PRC-05/INV-07؛ PRC-04 و PRC-05 COMPLETE).
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 56/145 task COMPLETE · وزنی 33.6% (140h / 416.5h) · MVP 51.1%
+- **Progress:** 57/145 task COMPLETE · وزنی 34.3% (143h / 416.5h) · MVP 52.2%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** PRC-05، سپس INV-07 (همین batch). سپس plan واحد رزرو (INV-04..06) برای تأیید کاربر.
+- **Next Action:** INV-07 (همین batch). سپس plan واحد رزرو (INV-04..06) برای تأیید کاربر.
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**33.6%** = 140h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**34.3%** = 143h COMPLETE / 416.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 135.5h | 102.5h | 75.6% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 135.5h | 105.5h | 77.9% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 276.5h ≈ ۱۸ هفته. MVP باقی‌مانده: 134h ≈ ۹ هفته.
+- باقی‌مانده: 273.5h ≈ ۱۸ هفته. MVP باقی‌مانده: 131h ≈ ۹ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-11: PRC-05 (GET/PATCH /admin/pricing/settings با `pricing_settings:update`؛ row lock، bump نسخه، audit؛ ADR-033).
 - 2026-10-11: PRC-04 (GET /products/{id}/pricing؛ قیمت سرور با `unit_price`، `calculated_at`، SD rule؛ ADR-033).
 - 2026-10-11: CAT-12 (نقشه پوشش خطای ۲۲ endpoint کاتالوگ با نگهبان route، 400 برای id نامعتبر، تست end-to-end کاتالوگ). M2.2 کامل شد.
 - 2026-10-11: CAT-07 (GET /products و GET /categories/{slug}/products؛ فیلتر، sort و صفحه‌بندی در DB؛ helper `paginate`؛ بازه price در /filters؛ ADR-032).
@@ -173,6 +174,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-11 — PRC-05 COMPLETE (batch PRC-04/PRC-05/INV-07)
+- تنظیمات مالیات و گردکردن؛ ۳۰ تست شامل همزمانی و 401/403 قبل از validation. بازبینی diff: APPROVE WITH CHANGES، اعمال شد. CI PRC-04 سبز.
+
 ### 2026-10-11 — PRC-04 COMPLETE (batch PRC-04/PRC-05/INV-07)
 - `GET /products/{id}/pricing`؛ ADR-033. بازبینی plan (APPROVE WITH CHANGES) و diff (APPROVE) توسط subagent؛ یافته‌ها اعمال شد.
 
