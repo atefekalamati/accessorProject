@@ -80,7 +80,7 @@
 | CAT-08 | Public product detail GET /products/{slug} | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-00, CAT-04, CAT-05, PRC-02, INV-03 | published only; stable contract; SD rule (test) |
 | CAT-09 | Category filters endpoint + CategoryFilter | COMPLETE | MEDIUM | MEDIUM | 3 | CAT-04 | filters from data; SD rule (test) | ✓ |
 | CAT-10 | Admin category CRUD + AuditLog + `categories:edit_content` (ADR-023) | COMPLETE | HIGH | HIGH | 3 | CAT-01, AUTH-10, INF-05 | changes audited | ✓ |
-| CAT-11 | Admin product/variant CRUD + publish rules | NOT_STARTED | HIGH | HIGH | 5 | CAT-03, CAT-05, AUTH-10, PRC-01 | published needs active variant + main media; SD rule (test) |
+| CAT-11 | Admin product/variant CRUD + publish rules | COMPLETE | HIGH | HIGH | 5 | CAT-03, CAT-05, AUTH-10, PRC-01 | published needs active variant + main media; SD rule (test) |
 | CAT-12 | Catalog API tests | NOT_STARTED | HIGH | MEDIUM | 3 | CAT-06…11 | 400/401/403/404/409/422 covered |
 
 ### M2.3 Inventory & reservation — PRD «موجودی و رزرو» ✓، «انبار» (قالبی)
