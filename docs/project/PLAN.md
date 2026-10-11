@@ -122,7 +122,7 @@
 | CART-00 | Rewrite cart & guest-checkout requirements | NOT_STARTED | HIGH | HIGH | 2 | ADR-006 | PRD sections ✓ بازبینی‌شده + approved |
 | CART-01 | Cart & CartItem models + secure guest cart token | NOT_STARTED | HIGH | MEDIUM | 4 | CART-00, CAT-03 | guest and user carts |
 | CART-02 | Add/update/remove items with free-stock check (no reservation) | NOT_STARTED | HIGH | HIGH | 4 | CART-01, INV-03 | qty ≤ free stock; add ≠ reserve; SD rule (test) |
-| CART-03 | GET /cart computed server-side with price/stock change flags | NOT_STARTED | HIGH | HIGH | 3 | CART-02, PRC-02 | changes reported |
+| CART-03 | GET /cart computed server-side with price/stock change flags | NOT_STARTED | HIGH | HIGH | 3 | CART-02, PRC-02 | changes reported; pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
 | CART-04 | Guest → user cart merge on login | NOT_STARTED | HIGH | MEDIUM | 3 | CART-01, AUTH-06 | deterministic merge |
 | CART-05 | Cart tests | NOT_STARTED | HIGH | MEDIUM | 3 | CART-02…04 | ownership 403/404 covered |
 
@@ -151,8 +151,8 @@
 | ORD-00 | Rewrite checkout & order requirements | NOT_STARTED | HIGH | HIGH | 2 | ADR-006, ADR-007 | PRD sections ✓ بازبینی‌شده + approved |
 | ORD-01 | Order, OrderItem snapshot, OrderPriceSnapshot, address snapshot | NOT_STARTED | HIGH | HIGH | 5 | ORD-00, PRC-01 | past orders immune to product changes; order number format cannot resemble a mobile number (e.g. `ORD-YYYY-NNNNNN`) |
 | ORD-02 | Idempotency-Key infrastructure | NOT_STARTED | HIGH | HIGH | 3 | INF-01 | same key → same result |
-| ORD-03 | POST /checkout/validate | NOT_STARTED | HIGH | HIGH | 3 | CART-03, DSC-03, ADDR-02 | price/stock/discount/shipping re-checked; SD rule (test) |
-| ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | NOT_STARTED | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional; SD rule (test) |
+| ORD-03 | POST /checkout/validate | NOT_STARTED | HIGH | HIGH | 3 | CART-03, DSC-03, ADDR-02 | price/stock/discount/shipping re-checked; SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
+| ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | NOT_STARTED | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional; SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
 | ORD-05 | Order state machine (order/payment/shipment) | NOT_STARTED | HIGH | HIGH | 4 | ORD-01 | invalid transitions → 422 |
 | CAT-17 | `best_selling` sort for product listing (from successful OrderItems) | NOT_STARTED | MEDIUM | MEDIUM | 1 | CAT-07, ORD-01 | sort allowlisted; ties by `id` |
 | ORD-06 | Order tests (idempotency, price-changed, insufficient stock) | NOT_STARTED | HIGH | HIGH | 3 | ORD-03…05 | duplicate create → one order; SD rule (test) |

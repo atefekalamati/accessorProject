@@ -296,6 +296,7 @@
   - `fingerprint` = sha256 روی JSON مرتب از (`key`، `price_version`، قیمت اصلی، قیمت نهایی، `tax_enabled`) هر خط و `pricing_settings.version`، تا شروع یا پایان بازه sale هم `PRICE_CHANGED` شود.
   - نگاشت OrderItem: `unitPrice = original`، `discountAmount = product_discount + code_discount`، `taxAmount = tax`، `finalLineTotal = total`. خروجی `currency` و `calculated_at` هم دارد. سبد خالی → صفر به‌علاوه shipping ورودی.
   - guardها: قیمت ≤ `MAX_PRICE_TOMAN`، تعداد ≤ `MAX_STOCK_QUANTITY`، بازه sale معتبر، policy با نوع درست (`RoundingMode`، bool)، و هر مبلغ خروجی در BIGINT؛ وگرنه `TypeError`/`ValueError`.
+- به‌روزرسانی 2026-10-11 (تصمیم کاربر): هر task از CART-* و ORD-* که تابع قیمت را صدا می‌زند (اکنون CART-03، ORD-03، ORD-04) خطوط را با ترتیب پایدار (بر اساس id خط) می‌دهد و یک تست دارد که ورودی با ترتیب به‌هم‌ریخته خروجی یکسان می‌دهد. این معیار در PLAN آن taskها ثبت شد و هنگام ساخت فایل task به Acceptance Criteria منتقل می‌شود.
 - پیامدها: PRC-02، CAT-07، CAT-08، CART، ORD-03، ORD-04، DSC.
 
 ### تصمیم‌های deferred
