@@ -34,6 +34,7 @@
 | D25 | جزئیات schema کاتالوگ (FK، پیش‌فرض، CHECK) | — | — | resolved (ADR-021) |
 | D26 | قرارداد API عمومی دسته (`GET /categories`، شکل پاسخ، والد غیرفعال) | — | — | resolved (ADR-022) |
 | D27 | دسترسی content_manager به دسته‌ها | — | — | resolved (ADR-023) |
+| D28 | مبنای مالیات، تقسیم تخفیف کد و مرحله گردکردن | — | PRC-02 | open (2026-10-11؛ پیشنهاد در فایل task PRC-02) |
 
 ## ADR
 

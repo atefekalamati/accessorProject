@@ -4,11 +4,11 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.2 Catalog
-- **Current Task:** —. بعدی طبق M2.2-PLAN.md و Plan changes: PRC-02 + CAT-08، سپس CAT-07 + CAT-12.
+- **Current Task:** PRC-02 — BLOCKED (D28، منتظر تصمیم کاربر). بعد از آن: CAT-08، سپس CAT-07 + CAT-12.
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
 - **Progress:** 51/145 task COMPLETE · وزنی 29.1% (121h / 416.5h) · MVP 44.2%
-- **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** batch بعدی: PRC-02 (HIGH، 5h) + CAT-08 (MEDIUM، 3h). سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
+- **Blockers:** فاز ۲: PRC-02 منتظر D28 (مبنای مالیات، تقسیم تخفیف کد، مرحله گردکردن)؛ CAT-08 و CAT-07 به PRC-02 وابسته‌اند. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
+- **Next Action:** پاسخ کاربر به D28 (سه سؤال در [PRC-02](../../tasks/phase-02/PRC-02-pricing-function.md))، سپس `/batch` برای PRC-02 + CAT-08. سابقه PR فاز ۱: [PR-phase-1.md](PR-phase-1.md).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
@@ -77,6 +77,7 @@
 ## Blockers
 | Blocked task | Cause |
 |---|---|
+| PRC-02 | D28 — مبنای مالیات، تقسیم تخفیف کد و مرحله گردکردن (پول، PRD مبهم) |
 | PAY-07 | D8 — انتخاب درگاه واقعی (قبل از فاز ۵) |
 | OPS-05 | D9 — انتخاب SMS provider (قبل از فاز ۵) |
 | OPS-07 | D10 — انتخاب file storage (قبل از فاز ۵) |
@@ -85,6 +86,8 @@
 ---
 
 ## Plan changes
+### 2026-10-11 — PRC-02 مسدود (AUTOPILOT)
+- PRD قاعده مبنای مالیات، تقسیم تخفیف کد و مرحله گردکردن را مشخص نمی‌کند؛ موضوع پولی است، پس D28 باز شد و batch ۳ قبل از پیاده‌سازی متوقف شد.
 ### 2026-10-10 — INV-01 و INV-03 قبل از CAT-11 (AUTOPILOT)
 - جزئیات admin محصول (CAT-11) وضعیت موجودی هر تنوع را می‌خواهد، پس batch C/D جابه‌جا شد: batch INV-01/INV-03 (5h)، سپس CAT-11، سپس PRC-02 + CAT-08. تصمیم‌های کم‌اثر در ADR-029.
 ### 2026-10-10 — AUTOPILOT و plan واحد M2.2 (تصمیم کاربر)
