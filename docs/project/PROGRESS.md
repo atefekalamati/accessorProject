@@ -6,7 +6,7 @@
 - **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
 - **Current Task:** —. batch INV-08 + INV-09 + PRC-06 COMPLETE (جلسه `/phase`، batch ۱). M2.3 و M2.4 کامل شدند.
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 67/148 task COMPLETE · وزنی 41.3% (174.5h / 423h) · MVP 62.2%
+- **Progress:** 68/148 task COMPLETE · وزنی 42.0% (177.5h / 423h) · MVP 63.3%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** `/phase`: OPS-08 → OPS-09 → دروازه فاز ۲ (ADR-037) → نیازمندی‌های فاز ۳ (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00؛ یک خلاصه برای تأیید).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
@@ -15,13 +15,13 @@
 ---
 
 ## Overall Progress
-**41.3%** = 174.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**42.0%** = 177.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 142h | 137h | 96.5% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 142h | 140h | 98.6% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 248.5h ≈ ۱۷ هفته. MVP باقی‌مانده: 106h ≈ ۸ هفته.
+- باقی‌مانده: 245.5h ≈ ۱۷ هفته. MVP باقی‌مانده: 103h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-12: OPS-08 (staging موقت در CI: image، دیتابیس خالی، migration، seed و smoke؛ project جدای compose).
 - 2026-10-12: PRC-06 (suite تجمیعی قیمت: نقشه ۳۲ قاعده → تست با guard، خروجی int، ترتیب بی‌اثر، گردکردن فقط اجزای محاسبه‌شده، tamper API).
 - 2026-10-12: INV-09 (تست همزمانی oversell: خریداران موازی، سبدهای متقاطع، ترکیب reserve/commit/release/sweep/اصلاح دستی؛ دفتر movement سازگار).
 - 2026-10-12: INV-08 (GET/PATCH /admin/inventory، رزروها و تاریخچه؛ موجودی مؤثر در SQL، وضعیت expired مستقل از job، expected_total؛ ADR-038).
@@ -192,6 +193,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-12 — OPS-08 COMPLETE (batch ۲ جلسه phase)
+- job `staging-smoke` در CI سبز (42s).
 ### 2026-10-12 — PRC-06 COMPLETE (batch ۱ جلسه phase)
 - suite تجمیعی قیمت با نقشه قاعده → تست؛ بدون تغییر کد تولید؛ بازبینی diff با subagent.
 ### 2026-10-12 — INV-09 COMPLETE (batch ۱ جلسه phase)

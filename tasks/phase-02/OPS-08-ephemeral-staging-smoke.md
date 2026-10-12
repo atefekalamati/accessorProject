@@ -1,6 +1,6 @@
 # OPS-08 — Ephemeral staging smoke in CI
 
-**Status:** IN_PROGRESS · **Priority:** MEDIUM · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-03, FND-07 · **Level:** MEDIUM
+**Status:** COMPLETE · **Priority:** MEDIUM · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** FND-03, FND-07 · **Level:** MEDIUM
 
 ## Objective
 یک job در CI که image را از Dockerfile می‌سازد، stack را با docker compose روی دیتابیس خالی بالا می‌آورد، `alembic upgrade head` و seed را اجرا می‌کند و smoke انجام می‌دهد: health/ready، ورود OTP با SMS جعلی، خواندن کاتالوگ و یک نوشتن ادمین. هر شکست PR را قرمز می‌کند (ADR-037).
@@ -23,10 +23,10 @@ ADR-037 (دروازه فاز)؛ ADR-009 (provider جعلی)؛ ADR-013 (دیتا�
 - Rollback: حذف job؛ `git revert`.
 
 ## Acceptance Criteria
-- [ ] job `staging-smoke` image را می‌سازد، migration و seed را روی دیتابیس خالی اجرا می‌کند و هر چهار smoke را پاس می‌کند (CI سبز روی شاخه فاز).
-- [ ] شکست هر مرحله job را قرمز می‌کند (exit code غیرصفر؛ بررسی محلی با URL اشتباه).
-- [ ] هیچ secret واقعی یا فایل env در repo نیست؛ مجوز job `contents: read`.
-- [ ] ruff، format و mypy سبز (اسکریپت در `scripts/` تحت ruff است).
+- [x] job `staging-smoke` image را می‌سازد، migration و seed را روی دیتابیس خالی اجرا می‌کند و هر چهار smoke را پاس می‌کند (CI سبز روی شاخه فاز).
+- [x] شکست هر مرحله job را قرمز می‌کند (exit code غیرصفر؛ بررسی محلی با URL اشتباه).
+- [x] هیچ secret واقعی یا فایل env در repo نیست؛ مجوز job `contents: read`.
+- [x] ruff، format و mypy سبز (اسکریپت در `scripts/` تحت ruff است).
 
 ## Implementation Notes
 - `scripts/smoke.py` (stdlib، دو مرحله `login`/`admin`)؛ job `staging-smoke` در `.github/workflows/ci.yml` با project جدای compose (`-p project-ak-staging`) تا هرگز container یا volume یک stack dev را شریک نشود؛ `.env.staging` در `.gitignore`.
@@ -42,3 +42,4 @@ python scripts/smoke.py login --base-url http://127.0.0.1:8000 --mobile +9891200
 
 ## Log
 - 2026-10-12: فایل task و plan (batch OPS-08/OPS-09، AUTOPILOT؛ GHCR در ADR-037 تأیید کاربر).
+- 2026-10-12: commit `71534d9`؛ CI run 38304563875 سبز (staging-smoke در 42s: build، migration، seed، smoke login، ارتقا، smoke admin). ruff، format و mypy سبز. COMPLETE.
