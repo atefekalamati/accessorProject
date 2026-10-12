@@ -188,3 +188,50 @@ jobs:
         if: always()
         run: $COMPOSE down -v --remove-orphans
 
+  # CD (OPS-09, ADR-037): after a merge to master with every job green, push the image to
+  # GHCR as <sha> and phase-N. The only job with packages:write.
+  publish-image:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [secret-scan, checks, staging-smoke]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Image name and tags
+        id: tags
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}-api"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "sha=$image:$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          phase="$(python3 scripts/phase_tag.py "$(git log -1 --format=%B)")"
+          if [ -n "$phase" ]; then
+            echo "phase=$image:$phase" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No phase number in the merge commit message; pushing <sha> only."
+          fi
+
+      - name: Build
+        run: |
+          docker build \
+            --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            -t "${{ steps.tags.outputs.sha }}" .
+
+      - name: Push to GHCR
+        env:
+          PHASE_TAG: ${{ steps.tags.outputs.phase }}
+          SHA_TAG: ${{ steps.tags.outputs.sha }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$SHA_TAG"
+          if [ -n "$PHASE_TAG" ]; then
+            docker tag "$SHA_TAG" "$PHASE_TAG"
+            docker push "$PHASE_TAG"
+          fi
+          docker logout ghcr.io

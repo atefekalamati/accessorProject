@@ -114,7 +114,7 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | OPS-08 | Ephemeral staging smoke in CI: compose up from built image, empty DB, `alembic upgrade head`, seed, smoke (health/ready, OTP login via fake SMS, catalog read, one admin write) | COMPLETE | MEDIUM | MEDIUM | 3 | FND-03, FND-07 | PR CI red on any smoke failure |
-| OPS-09 | CD: build image → GHCR, tags `<sha>` + `phase-N`, `packages:write` only in that job | NOT_STARTED | MEDIUM | MEDIUM | 2 | OPS-08 | image pushed on merge to `master` |
+| OPS-09 | CD: build image → GHCR, tags `<sha>` + `phase-N`, `packages:write` only in that job | COMPLETE | MEDIUM | MEDIUM | 2 | OPS-08 | image pushed on merge to `master` |
 
 **Phase 2:** 132h · COMPLETE 18h
 

@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
-- **Current Task:** —. batch INV-08 + INV-09 + PRC-06 COMPLETE (جلسه `/phase`، batch ۱). M2.3 و M2.4 کامل شدند.
+- **Current Task:** دروازه فاز ۲ (ADR-037). همه taskهای فاز ۲ COMPLETE (batch ۲ جلسه `/phase`: OPS-08، OPS-09).
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 68/148 task COMPLETE · وزنی 42.0% (177.5h / 423h) · MVP 63.3%
+- **Progress:** 69/148 task COMPLETE · وزنی 42.4% (179.5h / 423h) · MVP 64.0%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** `/phase`: OPS-08 → OPS-09 → دروازه فاز ۲ (ADR-037) → نیازمندی‌های فاز ۳ (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00؛ یک خلاصه برای تأیید).
+- **Next Action:** دروازه فاز ۲: PR به `master` → CI (با staging-smoke) → merge توسط کاربر → تأیید image در GHCR و git tag `phase-2` → شاخه `feat/phase-3-purchase-flow` → نیازمندی‌های فاز ۳ (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00؛ یک خلاصه برای تأیید).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**42.0%** = 177.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**42.4%** = 179.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 142h | 140h | 98.6% | 2026-12-07 |
+| 2 Core domain | COMPLETE (منتظر merge) | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 245.5h ≈ ۱۷ هفته. MVP باقی‌مانده: 103h ≈ ۸ هفته.
+- باقی‌مانده: 243.5h ≈ ۱۷ هفته. MVP باقی‌مانده: 101h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-12: OPS-09 (CD به GHCR: job publish-image با tag های sha و phase-N، packages:write فقط در همان job).
 - 2026-10-12: OPS-08 (staging موقت در CI: image، دیتابیس خالی، migration، seed و smoke؛ project جدای compose).
 - 2026-10-12: PRC-06 (suite تجمیعی قیمت: نقشه ۳۲ قاعده → تست با guard، خروجی int، ترتیب بی‌اثر، گردکردن فقط اجزای محاسبه‌شده، tamper API).
 - 2026-10-12: INV-09 (تست همزمانی oversell: خریداران موازی، سبدهای متقاطع، ترکیب reserve/commit/release/sweep/اصلاح دستی؛ دفتر movement سازگار).
@@ -193,6 +194,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-12 — OPS-09 COMPLETE (batch ۲ جلسه phase)
+- job `publish-image`؛ تأیید push در GHCR در گام d دروازه فاز ۲. همه taskهای فاز ۲ COMPLETE.
 ### 2026-10-12 — OPS-08 COMPLETE (batch ۲ جلسه phase)
 - job `staging-smoke` در CI سبز (42s).
 ### 2026-10-12 — PRC-06 COMPLETE (batch ۱ جلسه phase)
