@@ -3,13 +3,13 @@
 **Last Updated:** 2026-10-12
 
 ## Current / Next
-- **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
-- **Current Task:** دروازه فاز ۲ (ADR-037). همه taskهای فاز ۲ COMPLETE (batch ۲ جلسه `/phase`: OPS-08، OPS-09).
-- **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
+- **Phase › Milestone:** 3 Purchase flow › نیازمندی‌ها (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00)
+- **Current Task:** خلاصه نیازمندی‌های فاز ۳ برای تأیید کاربر (بدون ویرایش PRD تا تأیید).
+- **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
 - **Progress:** 69/148 task COMPLETE · وزنی 42.4% (179.5h / 423h) · MVP 64.0%
-- **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** دروازه فاز ۲: PR به `master` → CI (با staging-smoke) → merge توسط کاربر → تأیید image در GHCR و git tag `phase-2` → شاخه `feat/phase-3-purchase-flow` → نیازمندی‌های فاز ۳ (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00؛ یک خلاصه برای تأیید).
-- **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
+- **Blockers:** فاز ۳ مانعی ندارد (نیازمندی‌ها منتظر تأیید کاربر). در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
+- **Next Action:** تأیید کاربر روی خلاصه فاز ۳ → همه ویرایش‌های PRD و D30–D34 در یک commit → `/phase` برای فاز ۳ (planهای PAY-* و رزرو برای کاربر متوقف می‌شوند).
+- **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
@@ -21,8 +21,8 @@
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | COMPLETE (منتظر merge) | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
+| 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
@@ -194,6 +194,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-12 — دروازه فاز ۲ کامل شد
+- PR #5 merge شد (`e750ddf`)؛ CI روی `master` سبز؛ image با tagهای `<sha>` و `phase-2` در GHCR (digest یکسان)؛ git tag `phase-2`؛ شاخه `feat/phase-3-purchase-flow`. staging حالا روی tmpfs است (`docker-compose.staging.yml`، درخواست کاربر).
 ### 2026-10-12 — OPS-09 COMPLETE (batch ۲ جلسه phase)
 - job `publish-image`؛ تأیید push در GHCR در گام d دروازه فاز ۲. همه taskهای فاز ۲ COMPLETE.
 ### 2026-10-12 — OPS-08 COMPLETE (batch ۲ جلسه phase)

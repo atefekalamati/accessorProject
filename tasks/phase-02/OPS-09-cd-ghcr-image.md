@@ -20,7 +20,7 @@ ADR-037.
 - [x] job فقط روی push به `master` و بعد از سبز شدن هر سه job اجرا می‌شود؛ `packages:write` فقط در این job.
 - [x] tagهای `<sha>` و `phase-N` (تست منطق استخراج N با پیام‌های نمونه، محلی).
 - [x] YAML معتبر (parse محلی) و CI شاخه سبز (job روی شاخه skip می‌شود).
-- [ ] تأیید نهایی push در GHCR: گام d دروازه فاز ۲ (ثبت در Log). فقط بعد از merge قابل بررسی است؛ COMPLETE با این پیگیری.
+- [x] تأیید نهایی push در GHCR: گام d دروازه فاز ۲ (ثبت در Log). فقط بعد از merge قابل بررسی است؛ COMPLETE با این پیگیری.
 
 ## Implementation Notes
 - job `publish-image` در `.github/workflows/ci.yml` (needs هر سه job، `packages: write` فقط اینجا، token از env و login از stdin، label های OCI source و revision). `scripts/phase_tag.py` شماره فاز را از پیام merge commit درمی‌آورد؛ تست `tests/test_phase_tag.py` (۵ حالت).
@@ -35,3 +35,4 @@ python -c "import yaml,sys; yaml.safe_load(open('.github/workflows/ci.yml'))"
 ## Log
 - 2026-10-12: فایل task و plan (batch OPS-08/OPS-09، AUTOPILOT).
 - 2026-10-12: YAML parse و تست phase_tag سبز؛ pytest کامل، ruff، format و mypy سبز. COMPLETE؛ تأیید push در GHCR در گام d دروازه فاز ۲.
+- 2026-10-12: گام d دروازه: run 38309533589 روی `master` (`e750ddf`) سبز؛ `ghcr.io/atefekalamati/accessorproject-api:e750ddf…` و `:phase-2` با digest یکسان `sha256:ae2c9379…d8f4` push شدند.
