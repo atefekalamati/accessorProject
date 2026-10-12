@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
-- **Current Task:** batch INV-08 + INV-09 + PRC-06 (جلسه `/phase`، batch ۱). INV-08 COMPLETE.
+- **Current Task:** batch INV-08 + INV-09 + PRC-06 (جلسه `/phase`، batch ۱). INV-08 و INV-09 COMPLETE.
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 65/148 task COMPLETE · وزنی 39.8% (168.5h / 423h) · MVP 60.1%
+- **Progress:** 66/148 task COMPLETE · وزنی 40.5% (171.5h / 423h) · MVP 61.1%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** `/phase`: batch INV-08 + INV-09 + PRC-06 → OPS-08 → OPS-09 → دروازه فاز ۲ (ADR-037) → نیازمندی‌های فاز ۳ (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00؛ یک خلاصه برای تأیید).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
@@ -15,13 +15,13 @@
 ---
 
 ## Overall Progress
-**39.8%** = 168.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**40.5%** = 171.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 142h | 131h | 92.3% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 142h | 134h | 94.4% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -29,10 +29,11 @@
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 254.5h ≈ ۱۷ هفته. MVP باقی‌مانده: 112h ≈ ۸ هفته.
+- باقی‌مانده: 251.5h ≈ ۱۷ هفته. MVP باقی‌مانده: 109h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-12: INV-09 (تست همزمانی oversell: خریداران موازی، سبدهای متقاطع، ترکیب reserve/commit/release/sweep/اصلاح دستی؛ دفتر movement سازگار).
 - 2026-10-12: INV-08 (GET/PATCH /admin/inventory، رزروها و تاریخچه؛ موجودی مؤثر در SQL، وضعیت expired مستقل از job، expected_total؛ ADR-038).
 - 2026-10-12: INV-06 (job انقضای رزرو: advisory lock تراکنشی، SKIP LOCKED و lock_timeout، keyset؛ loop در lifespan با `RESERVATION_SWEEP_SECONDS`؛ ADR-036).
 - 2026-10-12: INV-05 (commit/release داخلی و idempotent؛ commit منقضی → `EXPIRED` با آزادسازی و 409 `RESERVATION_EXPIRED`؛ اصلاح رقابت re-reserve/commit؛ ADR-036).
@@ -190,6 +191,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-12 — INV-09 COMPLETE (batch ۱ جلسه phase)
+- suite همزمانی oversell (۴ تست)؛ بدون تغییر کد تولید؛ بازبینی diff با subagent.
 ### 2026-10-12 — INV-08 COMPLETE (batch ۱ جلسه phase)
 - چهار endpoint ادمین موجودی؛ بازبینی plan و diff با subagent؛ pytest 1452 سبز.
 ### 2026-10-12 — INV-06 COMPLETE (batch ۳ جلسه)
