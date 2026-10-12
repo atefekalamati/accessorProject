@@ -110,6 +110,12 @@
 | PRC-05 | Pricing settings (super_admin only) | COMPLETE | MEDIUM | HIGH | 3 | PRC-01, AUTH-10 | others → 403 |
 | PRC-06 | Pricing tests (unit table + tamper API) | NOT_STARTED | HIGH | HIGH | 3 | PRC-02…05 | client amounts ignored |
 
+### M2.5 Delivery pipeline — قبل از دروازه فاز ۲ (ADR-037)
+| ID | Title | Status | Pri | Level | Est | Deps | Done when |
+|---|---|---|---|---|---|---|---|
+| OPS-08 | Ephemeral staging smoke in CI: compose up from built image, empty DB, `alembic upgrade head`, seed, smoke (health/ready, OTP login via fake SMS, catalog read, one admin write) | NOT_STARTED | MEDIUM | MEDIUM | 3 | FND-03, FND-07 | PR CI red on any smoke failure |
+| OPS-09 | CD: build image → GHCR, tags `<sha>` + `phase-N`, `packages:write` only in that job | NOT_STARTED | MEDIUM | MEDIUM | 2 | OPS-08 | image pushed on merge to `master` |
+
 **Phase 2:** 132h · COMPLETE 18h
 
 ---

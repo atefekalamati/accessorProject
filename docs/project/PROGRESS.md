@@ -6,22 +6,22 @@
 - **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
 - **Current Task:** —. INV-06، INV-05 و INF-07 COMPLETE (۳ batch جلسه؛ سقف جلسه پر شد).
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 64/146 task COMPLETE · وزنی 39.4% (164.5h / 418h) · MVP 59.7%
+- **Progress:** 64/148 task COMPLETE · وزنی 38.9% (164.5h / 423h) · MVP 58.6%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** جلسه بعد: INV-08 (admin inventory)، INV-09 (تست همزمانی no-oversell)، PRC-06 (تست‌های قیمت)؛ می‌توانند یک batch باشند (بدون رزرو/commit/release).
+- **Next Action:** `/phase`: batch INV-08 + INV-09 + PRC-06 → OPS-08 → OPS-09 → دروازه فاز ۲ (ADR-037) → نیازمندی‌های فاز ۳ (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00؛ یک خلاصه برای تأیید).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**39.4%** = 164.5h COMPLETE / 418h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**38.9%** = 164.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 137h | 127h | 92.7% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 142h | 127h | 89.4% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -96,6 +96,10 @@
 ---
 
 ## Plan changes
+### 2026-10-12 — Phase mode، دروازه فاز، OPS-08/OPS-09 و ترتیب جدید (تصمیم کاربر)
+- `/phase` و دروازه فاز (ADR-037). سقف جلسه از ۳ به ۴ batch.
+- task جدید در M2.5: OPS-08 (staging موقت و smoke در CI، MEDIUM، 3h) و OPS-09 (CD به GHCR، MEDIUM، 2h). کل: 148 task، 423h؛ فاز ۲: 142h؛ MVP: 280.5h.
+- ترتیب: INV-08 + INV-09 + PRC-06 → OPS-08 → OPS-09 → دروازه فاز ۲ → نیازمندی‌های فاز ۳: پیش‌نویس CART-00، DSC-00، ADDR-00، ORD-00 و PAY-00 با هم، بدون ویرایش PRD؛ یک خلاصه (≤۸۰ خط) برای تأیید کاربر؛ بعد از تأیید همه ویرایش‌های PRD در یک commit، سپس `/phase` برای فاز ۳. planهای PAY-* همچنان برای کاربر متوقف می‌شوند.
 ### 2026-10-12 — task جدید INF-07 (درخواست کاربر)
 - INF-07 (LOW، 1.5h، M2.1): کارایی suite تست با pytest-xdist (dependency تأییدشده)، batch جدا قبل از INV-05. کل: 146 task، 418h؛ فاز ۲: 137h؛ MVP: 275.5h.
 ### 2026-10-12 — D29 و plan رزرو (تصمیم کاربر)

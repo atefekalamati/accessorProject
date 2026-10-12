@@ -20,4 +20,4 @@ Batch mode (rules also in CLAUDE.md section 11, "Batch mode").
    - totals
    - the next batch proposal
    - the CI result (watched with `gh run watch <id> --exit-status` after each push; red = stop and report the failed step)
-6. Speed mode / AUTOPILOT: start right after proposing unless an AUTOPILOT exception applies. HIGH tasks get a REVIEW-CHECKLIST.md check plus an independent reviewer subagent on the plan and the final diff, before commit. If the batch finished with CI green, auto-start the next batch. Max 3 batches per session, then report and say ready for /clear.
+6. Speed mode / AUTOPILOT: start right after proposing unless an AUTOPILOT exception applies. HIGH tasks get a REVIEW-CHECKLIST.md check plus an independent reviewer subagent on the plan and the final diff, before commit. If the batch finished with CI green, auto-start the next batch. Max 4 batches per session, then report and say ready for /clear.

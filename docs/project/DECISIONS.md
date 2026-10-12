@@ -367,6 +367,14 @@
   - INV-06 (خودم، بازبینی subagent): `sweep_expired_reservations` در `app/modules/inventory/jobs.py`. یک اجراکننده با `pg_try_advisory_xact_lock(73012, 1)` روی یک اتصال جدا که تا پایان sweep در تراکنش می‌ماند (lock با پایان تراکنش آزاد می‌شود و به pool نشت نمی‌کند؛ `idle_in_transaction_session_timeout = 0`). انتخاب بدون lock با keyset `(expires_at, id)` و سقف `max_batches`. هر رزرو در تراکنش جدا با `SET LOCAL lock_timeout` (پیش‌فرض 2s) → `ReservationService.expire`: آیتم‌ها `FOR UPDATE` و سپس ردیف رزرو `FOR UPDATE SKIP LOCKED`. رزرو ناموجود، غیر active، هنوز معتبر، قفل‌شده یا timeout → skipped (هرگز exception). خطای یک رزرو log و شمرده (`failed`) می‌شود. audit `reservation.expired` با actor=system، همان شکل commit منقضی. اجرا: loop در lifespan هر `RESERVATION_SWEEP_SECONDS` (پیش‌فرض 60، 0..3600، صفر = خاموش؛ تست‌ها صفر)، cancel قبل از dispose engine؛ دستی `python -m app.modules.inventory.jobs`.
 - پیامدها: INV-04، INV-05، INV-06، INV-02 (اصلاح دستی)، CAT-07، CAT-08، INV-07، ORD-03، ORD-04 (موجودی آزاد مؤثر)، PAY-03، PAY-04.
 
+### ADR-037 — Phase mode، دروازه فاز و تحویل image (تصمیم کاربر)
+- تاریخ: 2026-10-12
+- تصمیم: `/phase` batchها را تا COMPLETE شدن فاز زنجیره می‌کند (سقف جلسه ۴ batch؛ قواعد batch، AUTOPILOT، checklist و بازبین subagent ثابت). دروازه فاز: PR شاخه فاز به `master` → CI با staging موقت (image ساخته‌شده، دیتابیس خالی، `alembic upgrade head`، seed، smoke) → merge فقط توسط کاربر → CD: image در GHCR با tag `<sha>` و `phase-N` و git tag `phase-N` → شاخه فاز بعد از `master`.
+- dependency بیرونی جدید: GitHub Container Registry. مجوز `packages:write` فقط در job مربوط به CD؛ بقیه jobها `contents: read`.
+- staging موقت با `ENVIRONMENT` غیر production و OTP از mock SMS؛ هیچ secret واقعی ندارد.
+- استقرار روی سرور staging یا production فقط در فاز ۵ (D13، OPS-04) با environment تأیید دستی.
+- پیامدها: OPS-08، OPS-09، دروازه فاز ۲، `.claude/commands/phase.md`.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
