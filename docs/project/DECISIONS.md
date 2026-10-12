@@ -35,7 +35,7 @@
 | D26 | قرارداد API عمومی دسته (`GET /categories`، شکل پاسخ، والد غیرفعال) | — | — | resolved (ADR-022) |
 | D27 | دسترسی content_manager به دسته‌ها | — | — | resolved (ADR-023) |
 | D28 | مبنای مالیات، تقسیم تخفیف کد و مرحله گردکردن | — | — | resolved (ADR-031) |
-| D29 | معنای `PATCH /admin/products/{id}/price` برای محصول چندتنوعی | PRC-03 | PRC-03 | open (سؤال از کاربر) |
+| D29 | معنای `PATCH /admin/products/{id}/price` برای محصول چندتنوعی | PRC-03 | — | resolved (ADR-035) |
 
 ## ADR
 
@@ -337,6 +337,16 @@
   - ترتیب lock برای هر نوشتن موجودی: variant (`FOR SHARE`، تا با حذف نرم همزمان CAT-11 سریال شود) → inventory_item (`FOR UPDATE`؛ چند آیتم به ترتیب `variant_id, warehouse_id`، ADR-029). ردیف Product قفل نمی‌شود. INV-04..06 همین ترتیب را رعایت می‌کنند. فقط اصلاح دستی InventoryItem می‌سازد؛ مسیرهای رزرو آیتم ناموجود را «ناموجود» حساب می‌کنند و آیتم نمی‌سازند.
   - audit `inventory.adjusted` روی `inventory_item` با total قبل و بعد، نوع، دلیل و شناسه movement. actor خالی → `actor: system` (برای job انقضا).
 - پیامدها: INV-02، INV-04..06، INV-08.
+
+### ADR-035 — تغییر قیمت و PriceHistory (PRC-03، D29)
+- تاریخ: 2026-10-12
+- تصمیم (کاربر تأیید کرد، D29 گزینه الف): `PATCH /admin/products/{id}/price` فقط برای محصولی که دقیقاً یک تنوع حذف‌نشده دارد (فعال یا غیرفعال) روی همان تنوع اعمال می‌شود؛ وگرنه 422 `multiple_variants`. تغییر دسته‌جمعی قیمت در v1 نیست. تغییر قیمت هر تنوع با `PATCH /admin/product-variants/{id}/price` (مسیر PRD، هم‌خانواده routeهای موجود)؛ همان مجوز `pricing:update`، history و audit.
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی subagent):
+  - `price_history`: هر دو طرف base، sale و بازه sale، `reason` (اختیاری، ۱..۵۰۰)، `changed_by` (SET NULL)؛ قیمت‌ها BIGINT با CHECK بازه؛ `new_base_price` NOT NULL؛ `old_*` برای اولین قیمت NULL است. ایجاد تنوع با قیمت اولیه (CAT-11) هم یک ردیف history می‌نویسد. FK مرکب `(variant_id, product_id)`.
+  - بدنه: فیلدهای فرستاده‌شده تغییر می‌کنند و بقیه می‌مانند. حداقل یک فیلد قیمت لازم است (فقط `reason` → 400). خطاهایی که فقط به بدنه وابسته‌اند (null برای base، نوع غیر strict، sale > base هر دو در بدنه، بازه معکوس، زمان بدون timezone، کلید ناشناخته) → 400. تعارض با مقدار ذخیره‌شده (base جدید کمتر از sale فعلی، بازه بدون sale، sale روی تنوع بدون base) → 422 با `details.type`. حذف `sale_price` بازه را هم پاک می‌کند. فیلدهای سیستمی (`price_version`، `tax_enabled`، …) نادیده گرفته می‌شوند.
+  - lock: Product (`FOR UPDATE`) سپس تنوع (ADR-030)؛ تعداد تنوع‌های endpoint محصول زیر همان lock شمرده می‌شود. بدون تغییر → 200 بدون history، audit و bump. با تغییر: `price_version + 1`، یک ردیف history و audit `product_variant.price_changed` در همان تراکنش. `Cache-Control: no-store`.
+  - تاریخچه: `GET /admin/products/{id}/price-history` با `pricing:update` یا `catalog:manage`، جدیدترین اول بر اساس ستون identity `seq` (ترتیب درج؛ مستقل از دقت ساعت)؛ محصول حذف‌شده هم قابل مشاهده است.
+- پیامدها: PRC-03، CAT-11، PRC-06.
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).

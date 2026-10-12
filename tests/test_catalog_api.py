@@ -209,6 +209,31 @@ COVERAGE: Final[dict[tuple[str, str], dict[int, str]]] = {
         s409="n/a: writes hold the product lock (ADR-030)",
         s422="test_admin_products::test_delete_media",
     ),
+    # --- admin prices (PRC-03; pricing:update) ------------------------------------------
+    ("PATCH", "/admin/product-variants/{variant_id}/price"): {
+        400: "test_price_changes::test_invalid_body_is_400",
+        401: "test_price_changes::test_price_endpoints_need_pricing_update_before_validation",
+        403: "test_price_changes::test_price_endpoints_need_pricing_update_before_validation",
+        404: "test_price_changes::test_missing_or_deleted_targets_are_404",
+        409: "n/a: concurrent changes wait on the product row lock (tested)",
+        422: "test_price_changes::test_conflicts_with_the_stored_price_are_422",
+    },
+    ("PATCH", "/admin/products/{product_id}/price"): {
+        400: "test_price_changes::test_product_price_needs_exactly_one_variant",
+        401: "test_price_changes::test_price_endpoints_need_pricing_update_before_validation",
+        403: "test_price_changes::test_price_endpoints_need_pricing_update_before_validation",
+        404: "test_price_changes::test_missing_or_deleted_targets_are_404",
+        409: "n/a: concurrent changes wait on the product row lock",
+        422: "test_price_changes::test_product_price_needs_exactly_one_variant",
+    },
+    ("GET", "/admin/products/{product_id}/price-history"): {
+        400: "test_price_changes::test_history_lists_changes_newest_first",
+        401: "test_price_changes::test_price_endpoints_need_pricing_update_before_validation",
+        403: "test_price_changes::test_price_endpoints_need_pricing_update_before_validation",
+        404: "test_price_changes::test_history_lists_changes_newest_first",
+        409: READ_ONLY,
+        422: READ_ONLY,
+    },
     ("POST", "/admin/media"): {
         400: "test_media_api::test_invalid_uploads_are_400",
         401: "test_media_api::test_upload_needs_authentication_before_reading_the_body",

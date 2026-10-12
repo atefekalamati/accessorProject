@@ -20,7 +20,7 @@ from app.db.models.inventory import (
     WarehouseStatus,
 )
 from app.db.models.media import Media, ProductMedia
-from app.db.models.pricing import PricingSetting
+from app.db.models.pricing import PriceHistory, PricingSetting
 from app.db.models.rbac import Permission, Role, RolePermission, UserRole
 from app.db.models.settings import AppSetting
 from app.db.models.users import User, UserStatus
@@ -38,6 +38,7 @@ __all__ = [
     "Permission",
     "Media",
     "MovementType",
+    "PriceHistory",
     "PricingSetting",
     "Product",
     "ProductAttribute",

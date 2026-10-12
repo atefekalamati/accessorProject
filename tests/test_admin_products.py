@@ -21,6 +21,7 @@ from app.db.models import (
     InventoryItem,
     InventoryMovement,
     Media,
+    PriceHistory,
     Product,
     ProductAttribute,
     ProductMedia,
@@ -134,6 +135,7 @@ async def created(db_engine: AsyncEngine) -> AsyncIterator[Created]:
             delete(InventoryMovement).where(InventoryMovement.inventory_item_id.in_(items))
         )
         await session.execute(delete(InventoryItem).where(InventoryItem.product_id.in_(products)))
+        await session.execute(delete(PriceHistory).where(PriceHistory.product_id.in_(products)))
         await session.execute(delete(VariantOption).where(VariantOption.variant_id.in_(variants)))
         await session.execute(delete(ProductVariant).where(ProductVariant.product_id.in_(products)))
         await session.execute(

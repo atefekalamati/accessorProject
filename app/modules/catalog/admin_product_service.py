@@ -55,6 +55,7 @@ from app.modules.catalog.admin_product_schemas import (
 )
 from app.modules.catalog.product_repository import ProductFilters, ProductRepository
 from app.modules.inventory.stock import free_quantity, stock_status, variant_level
+from app.modules.pricing.history import record_price_change
 from app.shared.audit import record_audit
 from app.shared.media import process_image_async
 from app.shared.pagination import Page, PageParams
@@ -523,6 +524,9 @@ class AdminProductService:
             )
             self._session.add(variant)
             await self._flush_variant()
+            if variant.base_price is not None:
+                # The first price is a change from "no price" (PRD: every change in history).
+                await record_price_change(self._session, variant, before=None, actor_id=actor.id)
             await self._repository.replace_options(variant.id, options)
             await self._audit(
                 actor,

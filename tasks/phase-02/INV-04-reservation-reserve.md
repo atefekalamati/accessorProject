@@ -1,6 +1,6 @@
 # INV-04 — Reservation models + reserve service
 
-**Status:** NOT_STARTED (plan منتظر تأیید کاربر) · **Priority:** HIGH · **Estimate:** 5h (estimate) · **Deadline:** — · **Dependencies:** INV-02, INV-03, ADR-007 · **Level:** HIGH
+**Status:** NOT_STARTED (plan تأیید شد 2026-10-12 با قیود اضافه) · **Priority:** HIGH · **Estimate:** 5h (estimate) · **Deadline:** — · **Dependencies:** INV-02, INV-03, ADR-007 · **Level:** HIGH
 
 ## Combined plan INV-04 / INV-05 / INV-06 (یک plan، سه batch جدا، هر کدام با بازبین subagent)
 
@@ -41,5 +41,19 @@
 2. اجرای job داخل process برنامه (lifespan loop) به‌جای cron جدا. موافقید؟
 3. audit برای هر چهار رخداد (created، committed، released، expired) علاوه بر movement. موافقید؟
 
+### بازنگری بعد از تأیید کاربر (2026-10-12) — جایگزین بخش‌های متعارض بالا
+قیود اضافه کاربر: حداکثر یک رزرو active برای هر سفارش؛ رزرو دوباره فقط اگر قبلی منقضی شده و سفارش `pending_payment` باشد؛ درستی نباید به job وابسته باشد (availability و commit رزرو با `expires_at ≤ now` را غیرفعال حساب می‌کنند؛ job فقط پاک‌سازی است)؛ job زیر `pg_try_advisory_lock` (یک اجراکننده)؛ audit هر چهار رخداد.
+
+طراحی نهایی:
+- **ترتیب lock یکسان در همه مسیرها:** variant (`FOR SHARE`، فقط reserve) → inventory_items (`FOR UPDATE`، `ORDER BY variant_id, warehouse_id`) → ردیف‌های reservation (`FOR UPDATE`، به ترتیب id). commit، release و job اول آیتم‌های رزرو را می‌خوانند (بدون lock)، آن‌ها را قفل می‌کنند و بعد ردیف رزرو را. پس چرخه lock ممکن نیست.
+- **وضعیت per-item:** `inventory_reservation_items.status` (active، released، committed) و `released_at`. هر تغییر وضعیت یک آیتم رزرو زیر lock همان inventory_item انجام می‌شود، پس دوبار کم‌شدن شمارنده ممکن نیست (به‌علاوه partial unique movement پیشنهادی بازبین: یک release/commit برای هر `(inventory_item, reservation)`).
+- **reserve:** زیر lock آیتم‌ها، آیتم‌های رزرو active روی همین آیتم‌ها که رزروشان `expires_at ≤ now` است released می‌شوند (شمارنده −q، movement `release`). ردیف رزرو قفل نمی‌شود و بقیه آیتم‌هایش بعداً (commit/release/job) آزاد می‌شوند. سپس free = total − reserved بررسی می‌شود (all-or-nothing، 409 `INSUFFICIENT_STOCK`).
+- **همان سفارش:** رزرو active و معتبر → همان برگردانده می‌شود (lineهای متفاوت → 409). رزرو active ولی منقضی → آیتم‌هایش هم در مجموعه lock می‌آیند، ردیفش بعد از آیتم‌ها قفل و expired می‌شود (audit `reservation.expired`)، سپس رزرو تازه ساخته می‌شود. شرط `pending_payment` روی سفارش را ORD-04 قبل از فراخوانی بررسی می‌کند (جدول orders هنوز نیست).
+- **availability بدون وابستگی به job:** موجودی آزاد عمومی (CAT-07، CAT-08، INV-07) = `total − reserved + Σ آیتم‌های رزرو active که رزروشان منقضی است` (یک query گروهی، بدون N+1). شرط `_has_free_stock` لیست هم همین را در SQL حساب می‌کند. تست: رزرو منقضی و پاک‌نشده موجودی را اشغال نمی‌کند.
+- **commit:** وضعیت committed → no-op؛ released/expired، یا `expires_at ≤ now`، یا هر آیتمی که قبلاً released شده → 409 `RESERVATION_EXPIRED` (در حالت منقضی، آزادسازی در همان تراکنش commit و بعد خطا برگردانده می‌شود).
+- **job:** `pg_try_advisory_lock` روی یک اتصال جدا (اگر گرفته نشد، این دور رد می‌شود)؛ رزروهای active منقضی را batch به batch می‌خواند؛ برای هر کدام lock آیتم‌ها → ردیف رزرو `FOR UPDATE SKIP LOCKED` (اگر commit یا release در حال کار است، رد می‌شود) → آیتم‌های باقی‌مانده released، status expired، audit با `actor: system`.
+- تقسیم کار: INV-04 = schema + reserve + محاسبه availability با رزرو منقضی؛ INV-05 = commit/release؛ INV-06 = job.
+
 ## Log
 - 2026-10-11: plan مشترک INV-04..06 نوشته شد؛ منتظر تأیید کاربر.
+- 2026-10-12: کاربر plan را با قیود اضافه تأیید کرد؛ بخش «بازنگری» اضافه شد.
