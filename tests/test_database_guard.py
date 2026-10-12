@@ -10,6 +10,7 @@ from conftest import (
     TEST_DATABASE_GUARD_EXIT_CODE,
     pytest_sessionstart,
     unsafe_test_database_reason,
+    worker_database_url,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -44,6 +45,14 @@ def test_database_name_ending_with_test_is_allowed(value: str) -> None:
 )
 def test_unsafe_database_url_is_rejected(value: str) -> None:
     assert unsafe_test_database_reason(value) is not None
+
+
+def test_worker_database_keeps_the_test_suffix() -> None:
+    base = "postgresql+asyncpg://postgres:test@127.0.0.1:55432/project_ak_test"
+    worker = worker_database_url(base, "gw3")
+    assert worker == "postgresql+asyncpg://postgres:test@127.0.0.1:55432/project_ak_gw3_test"
+    assert unsafe_test_database_reason(worker) is None
+    assert worker_database_url(base, "master") == base
 
 
 def test_sessionstart_exits_on_unsafe_url(monkeypatch: pytest.MonkeyPatch) -> None:

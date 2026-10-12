@@ -33,6 +33,8 @@ dev = [
   "mypy>=1.11,<2.0",
   "pytest>=8.3,<9.0",
   "pytest-asyncio>=0.24,<1.0",
+  # Runs the suite in parallel, one database per worker (tests/conftest.py).
+  "pytest-xdist>=3.6,<4.0",
   "ruff>=0.7,<1.0",
   # Generates and drift-checks requirements*.lock (SEC-06).
   "uv>=0.13,<0.14",
@@ -42,7 +44,7 @@ dev = [
 packages = ["app"]
 
 [tool.pytest.ini_options]
-addopts = "-ra --strict-config --strict-markers"
+addopts = "-ra --strict-config --strict-markers -n auto"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [

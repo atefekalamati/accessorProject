@@ -258,7 +258,8 @@ async def _audits(db_engine: AsyncEngine, entity_id: UUID) -> list[AuditLog]:
 
 # --- authorization -------------------------------------------------------------------
 
-_ID = str(uuid4())
+# Fixed, so every pytest-xdist worker collects the same test ids.
+_ID = "00000000-0000-4000-8000-000000000001"
 ENDPOINTS = [
     ("GET", PRODUCTS_URL),
     ("GET", f"{PRODUCTS_URL}/{_ID}"),

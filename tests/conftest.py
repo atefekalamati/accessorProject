@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from contextlib import contextmanager
@@ -12,7 +13,7 @@ import pytest
 import pytest_asyncio
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import delete, event, select, update
+from sqlalchemy import delete, event, select, text, update
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -106,13 +107,49 @@ async def client(settings: Settings) -> AsyncIterator[AsyncClient]:
             yield test_client
 
 
+def worker_database_url(value: str, worker_id: str) -> str:
+    """The database of one pytest-xdist worker: ``<base>_test`` -> ``<base>_<worker>_test``.
+
+    Without xdist (``worker_id == "master"``) the URL is returned unchanged.
+    """
+    if worker_id == "master":
+        return value
+    url = make_url(value)
+    base = (url.database or "").removesuffix(TEST_DATABASE_SUFFIX)
+    worker_url = url.set(database=f"{base}_{worker_id}{TEST_DATABASE_SUFFIX}")
+    return worker_url.render_as_string(hide_password=False)
+
+
+async def _prepare_worker_database(admin_url: str, database_url: str) -> None:
+    """Create the worker database when missing; ``admin_url`` is the validated base database."""
+    name = make_url(database_url).database
+    assert name is not None and unsafe_test_database_reason(database_url) is None
+    engine = create_async_engine(admin_url, isolation_level="AUTOCOMMIT")
+    try:
+        async with engine.connect() as connection:
+            quoted = connection.dialect.identifier_preparer.quote(name)
+            exists = await connection.scalar(
+                text("SELECT 1 FROM pg_database WHERE datname = :name"), {"name": name}
+            )
+            if not exists:
+                # template0 accepts no connections, so parallel workers cannot block each other.
+                await connection.execute(text(f"CREATE DATABASE {quoted} TEMPLATE template0"))
+            # A disposable database needs no durable commits (no WAL flush per commit).
+            await connection.execute(text(f"ALTER DATABASE {quoted} SET synchronous_commit = off"))
+    finally:
+        await engine.dispose()
+
+
 @pytest.fixture(scope="session")
-def database_url() -> str:
+def database_url(worker_id: str) -> str:
     value = os.getenv("TEST_DATABASE_URL")
     if not value:
         pytest.skip("TEST_DATABASE_URL is required for PostgreSQL integration tests")
     # The database name itself is validated once per session in conftest.pytest_sessionstart.
-    return value
+    worker_url = worker_database_url(value, worker_id)
+    if worker_url != value:
+        asyncio.run(_prepare_worker_database(value, worker_url))
+    return worker_url
 
 
 @pytest.fixture(scope="session")

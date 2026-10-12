@@ -50,6 +50,7 @@
 | SEC-05 | Secret scanning in CI (gitleaks, pinned, allowlist for fake fixtures) | COMPLETE | HIGH | MEDIUM | 2 | FND-07 | CI fails on findings; history scan clean | ✓ |
 | SEC-07 | Pin CI runner (ubuntu-24.04) + bump checkout/setup-python to v7 | COMPLETE | LOW | LOW | 0.5 | FND-07, SEC-05 | CI green on pinned runner | ✓ |
 | SEC-06 | Dependency lock file with hashes; CI + Dockerfile install from it | COMPLETE | MEDIUM | MEDIUM | 2 | FND-07, FND-03 | --require-hashes in CI and Docker; drift check | ✓ |
+| INF-07 | Test-suite performance: pytest-xdist, one DB per worker (`_test` guard) | COMPLETE | MEDIUM | LOW | 1.5 | FND-06, FND-07, SEC-06 | full suite < 4 min local and CI | ✓ |
 | AUTH-01 | Align User model with PRD + migration | COMPLETE | HIGH | HIGH | 2 | FND-04 | new migration; one active account per mobile | ✓ |
 | AUTH-02 | Roles & permissions seed (5 roles) | COMPLETE | HIGH | HIGH | 3 | FND-05, ADR-004 | idempotent seed incl. super_admin | ✓ |
 | AUTH-03 | OtpCode model (hashed, expiring, attempts) | COMPLETE | HIGH | HIGH | 2 | AUTH-01 | no plaintext OTP column | ✓ |

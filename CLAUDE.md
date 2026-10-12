@@ -42,7 +42,7 @@ Python 3.12 · FastAPI · Pydantic v2 + pydantic-settings · SQLAlchemy 2 async 
 python -m pip install --require-hashes --no-deps -r requirements-dev.lock; python -m pip install --no-deps -e .   # نصب (همان نسخه‌های CI)
 python scripts/lock.py                   # بازتولید lockها بعد از تغییر pyproject.toml (--upgrade برای ارتقای همه)
 uvicorn app.main:app --reload            # اجرا (نیاز به .env یا DATABASE_URL و JWT_SECRET)
-python -m pytest                         # تست (بدون TEST_DATABASE_URL، تست‌های integration skip می‌شوند)
+python -m pytest                         # تست موازی (xdist، `-n 0` برای تک‌پروسه؛ بدون TEST_DATABASE_URL، integration skip)
 python -m ruff check .                   # lint
 python -m ruff format --check .          # بررسی format   (اعمال: python -m ruff format .)
 python -m mypy app tests                 # type-check
