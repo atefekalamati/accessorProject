@@ -3,36 +3,37 @@
 **Last Updated:** 2026-10-12
 
 ## Current / Next
-- **Phase › Milestone:** 3 Purchase flow › نیازمندی‌ها (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00)
-- **Current Task:** خلاصه نیازمندی‌های فاز ۳ برای تأیید کاربر (بدون ویرایش PRD تا تأیید).
+- **Phase › Milestone:** 3 Purchase flow › M3.1 Cart
+- **Current Task:** —. نیازمندی‌های فاز ۳ (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00) COMPLETE و PRD در یک commit به‌روز شد.
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 69/148 task COMPLETE · وزنی 42.4% (179.5h / 423h) · MVP 64.0%
-- **Blockers:** فاز ۳ مانعی ندارد (نیازمندی‌ها منتظر تأیید کاربر). در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** تأیید کاربر روی خلاصه فاز ۳ → همه ویرایش‌های PRD و D30–D34 در یک commit → `/phase` برای فاز ۳ (planهای PAY-* و رزرو برای کاربر متوقف می‌شوند).
+- **Progress:** 74/148 task COMPLETE · وزنی 44.8% (189.5h / 423h) · MVP 67.6%
+- **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
+- **Next Action:** `/phase` برای فاز ۳: plan milestone M3.1 (یک‌بار برای کاربر)، سپس batchها به ترتیب M3.1 → M3.2 → M3.3 → M3.4 → M3.5. planهای PAY-* و رزرو/commit/release برای کاربر متوقف می‌شوند.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**42.4%** = 179.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**44.8%** = 189.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 0.5h | 0.5% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 10.5h | 10.3% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 243.5h ≈ ۱۷ هفته. MVP باقی‌مانده: 101h ≈ ۸ هفته.
+- باقی‌مانده: 233.5h ≈ ۱۶ هفته. MVP باقی‌مانده: 91h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-12: CART-00، DSC-00، ADDR-00، ORD-00، PAY-00 (نه بخش قالبی PRD بازنویسی و ✓ شد؛ D30–D34، ADR-039).
 - 2026-10-12: OPS-09 (CD به GHCR: job publish-image با tag های sha و phase-N، packages:write فقط در همان job).
 - 2026-10-12: OPS-08 (staging موقت در CI: image، دیتابیس خالی، migration، seed و smoke؛ project جدای compose).
 - 2026-10-12: PRC-06 (suite تجمیعی قیمت: نقشه ۳۲ قاعده → تست با guard، خروجی int، ترتیب بی‌اثر، گردکردن فقط اجزای محاسبه‌شده، tamper API).
@@ -101,6 +102,8 @@
 ---
 
 ## Plan changes
+### 2026-10-12 — نیازمندی‌های فاز ۳ (تصمیم کاربر)
+- CART-00، DSC-00، ADDR-00، ORD-00، PAY-00 با ۸ تغییر کاربر تأیید شدند (ADR-039). «Done when» این taskها به‌روز شد: CART-01، CART-04، DSC-01، DSC-03، DSC-05، ADDR-02، ORD-02، ORD-03، ORD-04، PAY-03، PAY-04. بدون تغییر برآورد. جمع فاز ۳ در PLAN از 100.5h به 101.5h اصلاح شد (جمع ردیف‌ها؛ PROGRESS از قبل 101.5h بود).
 ### 2026-10-12 — Phase mode، دروازه فاز، OPS-08/OPS-09 و ترتیب جدید (تصمیم کاربر)
 - `/phase` و دروازه فاز (ADR-037). سقف جلسه از ۳ به ۴ batch.
 - task جدید در M2.5: OPS-08 (staging موقت و smoke در CI، MEDIUM، 3h) و OPS-09 (CD به GHCR، MEDIUM، 2h). کل: 148 task، 423h؛ فاز ۲: 142h؛ MVP: 280.5h.
@@ -194,6 +197,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-12 — نیازمندی‌های فاز ۳ COMPLETE
+- خلاصه ≤۸۰ خط، چهار سؤال و ۸ تغییر کاربر؛ PRD، DECISIONS، PLAN در یک commit.
 ### 2026-10-12 — دروازه فاز ۲ کامل شد
 - PR #5 merge شد (`e750ddf`)؛ CI روی `master` سبز؛ image با tagهای `<sha>` و `phase-2` در GHCR (digest یکسان)؛ git tag `phase-2`؛ شاخه `feat/phase-3-purchase-flow`. staging حالا روی tmpfs است (`docker-compose.staging.yml`، درخواست کاربر).
 ### 2026-10-12 — OPS-09 COMPLETE (batch ۲ جلسه phase)
