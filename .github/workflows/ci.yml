@@ -91,8 +91,10 @@ jobs:
       - name: Type check
         run: python -m mypy app tests
 
+      # Serial on purpose: the 2-vCPU runner shares its CPU with PostgreSQL, and xdist
+      # workers measured slower here (2:21 vs 2:01, INF-07). Local runs stay parallel.
       - name: Tests
-        run: python -m pytest -q -rs --junitxml=pytest-report.xml
+        run: python -m pytest -q -rs -n 0 --junitxml=pytest-report.xml
 
       # Integration tests skip silently without a database; in CI every test must run.
       - name: Fail on skipped tests

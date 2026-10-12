@@ -14,7 +14,7 @@
 - [x] هر worker دیتابیس خودش را دارد: `<base>_test` → `<base>_<gwN>_test`. نام با `unsafe_test_database_reason` دوباره چک می‌شود. دیتابیس از `template0` ساخته می‌شود (اگر نباشد) و `synchronous_commit = off` می‌گیرد. guard اصلی (`pytest_sessionstart`، exit 3) بدون تغییر است.
 - [x] شناسه تست‌ها در همه workerها یکسان است: UUID تصادفی در parametrize (`test_admin_products._ID`) ثابت شد.
 - [x] تست واحد برای نام دیتابیس worker (`test_worker_database_keeps_the_test_suffix`).
-- [x] محلی: 5:25 → 2:38 (1339 passed). CI: مرحله Tests 2:01 → نتیجه در Log.
+- [x] محلی: 5:25 → 2:38 (1339 passed). CI (repo خصوصی، runner با ۲ vCPU): xdist کندتر بود (2:01 → 2:21)، پس CI با `-n 0` سریال می‌ماند (~2:01 < 4 min).
 - [x] ruff، format و mypy سبز.
 
 ## Implementation Notes
@@ -29,4 +29,5 @@ python -m pytest -q -n 0 tests/test_x.py   # تک‌پروسه برای debug
 ```
 
 ## Log
+- 2026-10-12: CI اول (`0ef7d43`) سبز، 1340 passed در 141s با ۲ worker در برابر 121s سریال؛ CI به `-n 0` برگشت. کاهش هزینه هر تست (engine و app برای هر تست) refactor بزرگ‌تری است و پیشنهاد جدا می‌شود.
 - 2026-10-12: پیاده‌سازی. baseline سریال 324s (call 222s، setup 68s، teardown 41s). با xdist: 167s، با `synchronous_commit=off`: 156s. ruff و mypy سبز.
