@@ -108,7 +108,7 @@
 | PRC-03 | PriceHistory + admin price change + AuditLog | COMPLETE | HIGH | HIGH | 4 | PRC-01, INF-05, AUTH-10 | every change in history + audit |
 | PRC-04 | GET /products/{id}/pricing | COMPLETE | MEDIUM | HIGH | 2 | PRC-02 | server-computed only; SD rule (test) |
 | PRC-05 | Pricing settings (super_admin only) | COMPLETE | MEDIUM | HIGH | 3 | PRC-01, AUTH-10 | others → 403 |
-| PRC-06 | Pricing tests (unit table + tamper API) | NOT_STARTED | HIGH | HIGH | 3 | PRC-02…05 | client amounts ignored |
+| PRC-06 | Pricing tests (unit table + tamper API) | COMPLETE | HIGH | HIGH | 3 | PRC-02…05 | client amounts ignored |
 
 ### M2.5 Delivery pipeline — قبل از دروازه فاز ۲ (ADR-037)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
