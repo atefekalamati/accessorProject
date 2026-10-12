@@ -1,6 +1,6 @@
 # INV-04 — Reservation models + reserve service
 
-**Status:** NOT_STARTED (plan تأیید شد 2026-10-12 با قیود اضافه) · **Priority:** HIGH · **Estimate:** 5h (estimate) · **Deadline:** — · **Dependencies:** INV-02, INV-03, ADR-007 · **Level:** HIGH
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 5h (estimate) · **Deadline:** — · **Dependencies:** INV-02, INV-03, ADR-007 · **Level:** HIGH
 
 ## Combined plan INV-04 / INV-05 / INV-06 (یک plan، سه batch جدا، هر کدام با بازبین subagent)
 
@@ -54,6 +54,19 @@
 - **job:** `pg_try_advisory_lock` روی یک اتصال جدا (اگر گرفته نشد، این دور رد می‌شود)؛ رزروهای active منقضی را batch به batch می‌خواند؛ برای هر کدام lock آیتم‌ها → ردیف رزرو `FOR UPDATE SKIP LOCKED` (اگر commit یا release در حال کار است، رد می‌شود) → آیتم‌های باقی‌مانده released، status expired، audit با `actor: system`.
 - تقسیم کار: INV-04 = schema + reserve + محاسبه availability با رزرو منقضی؛ INV-05 = commit/release؛ INV-06 = job.
 
+## Acceptance Criteria (INV-04)
+- [x] schema رزرو و آیتم رزرو با CHECKها، partial unique سفارش (active/committed)، partial index آیتم‌های active و backstopهای movement؛ migration `20261012_0016` و تست schema.
+- [x] reserve: all-or-nothing، idempotent برای هر سفارش، 400/409/422 طبق ADR-036، فقط در تراکنش فراخواننده.
+- [x] رزرو منقضی هیچ موجودی‌ای نگه نمی‌دارد: reserve، اصلاح دستی، جزئیات، لیست (in_stock)، availability و نمای admin (تست، بدون job).
+- [x] ۱۰ خریدار همزمان برای آخرین واحد → دقیقاً ۱ موفق؛ سفارش‌های چندتنوعی متقاطع بدون deadlock؛ دو فراخوانی همزمان یک سفارش → یک رزرو؛ رقابت با کاهش دستی بدون oversell؛ invariant بعد از هر تست.
+- [x] pytest، ruff، format و mypy سبز.
+
+## Implementation Notes
+- کد: `app/db/models/inventory.py` (`InventoryReservation`، `InventoryReservationItem`، وضعیت‌ها، partial uniqueهای movement)، migration `20261012_0016`، `app/modules/inventory/{reservation,holds,movements}.py`، `service.py` (آزادسازی تنبل در adjust)، `stock.py` (`variant_level` با holds)، `product_repository.stock_levels_of`، `product_query._has_free_stock(now)`، نمای admin.
+- تست: `tests/test_reservations.py` (۱۸ تابع، ۲۳ مورد).
+- **Rollback:** `alembic downgrade -1` (فقط dev؛ جدول‌های رزرو و دو index movement حذف می‌شوند)؛ `git revert`. هنوز هیچ مسیر API رزرو نمی‌سازد (ORD-04 در فاز ۳).
+
 ## Log
 - 2026-10-11: plan مشترک INV-04..06 نوشته شد؛ منتظر تأیید کاربر.
 - 2026-10-12: کاربر plan را با قیود اضافه تأیید کرد؛ بخش «بازنگری» اضافه شد.
+- 2026-10-12: REVIEW-CHECKLIST (خودم): §1، §3، §5، §6، §8، §9 پاس؛ §2، §4، §7 N/A (سرویس داخلی). بازبینی plan: APPROVE WITH CHANGES (advisory lock per-order، رزرو commit‌شده، آزادسازی تنبل در INV-02، partial unique movement، index، شرط محصول منتشرشده؛ اعمال شد). بازبینی diff: APPROVE WITH CHANGES؛ بدون مسیر oversell، deadlock یا کسر دوباره (نمای admin با holds، بررسی invariant در `_expire`، clamp، دو تست رقابت؛ اعمال شد). pytest، ruff، format و mypy سبز. COMPLETE.

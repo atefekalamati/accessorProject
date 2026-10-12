@@ -33,6 +33,8 @@ from app.db.models import (
     CategoryFilter,
     InventoryItem,
     InventoryMovement,
+    InventoryReservation,
+    InventoryReservationItem,
     Media,
     OtpCode,
     PriceHistory,
@@ -422,6 +424,21 @@ async def catalog(db_engine: AsyncEngine, make_media: MakeMedia) -> AsyncIterato
         )
         await session.execute(delete(ProductMedia).where(ProductMedia.product_id.in_(products)))
         items = select(InventoryItem.id).where(InventoryItem.product_id.in_(products))
+        reservations = list(
+            await session.scalars(
+                select(InventoryReservationItem.reservation_id).where(
+                    InventoryReservationItem.inventory_item_id.in_(items)
+                )
+            )
+        )
+        await session.execute(
+            delete(InventoryReservationItem).where(
+                InventoryReservationItem.reservation_id.in_(reservations)
+            )
+        )
+        await session.execute(
+            delete(InventoryReservation).where(InventoryReservation.id.in_(reservations))
+        )
         await session.execute(
             delete(InventoryMovement).where(InventoryMovement.inventory_item_id.in_(items))
         )

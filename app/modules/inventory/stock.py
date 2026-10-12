@@ -1,15 +1,17 @@
 """Pure free-stock and stock-status rules (INV-03, ADR-005, ADR-007, ADR-029).
 
 No database access: callers load the InventoryItem rows (active warehouses only) and pass
-their counters. ``reserved`` is the active-reservation counter; write paths release expired
-reservations under lock before calling these functions (ADR-029).
+their counters. ``reserved`` is the active-reservation counter. Units of expired
+reservations are not reserved: writers release them under lock first, readers pass them
+as ``expired_holds`` (ADR-029, ADR-036).
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from uuid import UUID
 
 from app.db.models import InventoryItem
 
@@ -45,9 +47,24 @@ class StockLevel:
         )
 
 
-def variant_level(items: Iterable[InventoryItem]) -> StockLevel | None:
-    """Sum a variant's items across warehouses; ``None`` when it has no InventoryItem."""
-    levels = [StockLevel.from_item(item) for item in items]
+def variant_level(
+    items: Iterable[InventoryItem], expired_holds: Mapping[UUID, int] | None = None
+) -> StockLevel | None:
+    """Sum a variant's items across warehouses; ``None`` when it has no InventoryItem.
+
+    ``expired_holds`` (item id → units) are units still recorded for reservations that
+    have expired: they hold nothing, so they do not count as reserved (ADR-036).
+    """
+    holds = expired_holds or {}
+    levels = [
+        StockLevel(
+            total=item.total_quantity,
+            # Clamped: items and holds are two reads, which a writer may run between.
+            reserved=max(0, item.reserved_quantity - holds.get(item.id, 0)),
+            low_stock_threshold=item.low_stock_threshold,
+        )
+        for item in items
+    ]
     if not levels:
         return None
     return StockLevel(

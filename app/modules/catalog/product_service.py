@@ -16,7 +16,6 @@ from app.core.errors import BusinessRuleError, NotFoundError
 from app.core.time import utc_now
 from app.db.models import (
     Category,
-    InventoryItem,
     Media,
     Product,
     ProductMedia,
@@ -47,7 +46,6 @@ from app.modules.inventory.stock import (
     free_quantity,
     product_stock_status,
     stock_status,
-    variant_level,
 )
 from app.modules.pricing.calculator import CURRENCY, UnitPrice, VariantPrice, unit_price
 from app.shared.pagination import Page, PageParams
@@ -181,16 +179,15 @@ class ProductService:
             )
             ids = [product.id for product in listed]
             variants = await self._repository.public_variants_of(ids)
-            inventory = await self._repository.inventory_of(
-                [variant.id for items in variants.values() for variant in items]
+            levels = await self._repository.stock_levels_of(
+                [variant.id for items in variants.values() for variant in items], now
             )
             images = await self._repository.main_image_keys(ids)
 
         cards = [
             card
             for product in listed
-            if (card := self._card(product, variants[product.id], inventory, images, now))
-            is not None
+            if (card := self._card(product, variants[product.id], levels, images, now)) is not None
         ]
         return Page.build(cards, total=total, params=request.params)
 
@@ -225,10 +222,12 @@ class ProductService:
         now = at or utc_now()
         async with self._session.begin():
             variants = await self._public_variants(product_id, variant_id)
-            inventory = await self._repository.inventory_of([variant.id for variant in variants])
+            levels = await self._repository.stock_levels_of(
+                [variant.id for variant in variants], now
+            )
         items: list[VariantAvailability] = []
         for variant in variants:
-            level = variant_level(inventory[variant.id])
+            level = levels[variant.id]
             items.append(
                 VariantAvailability(
                     variant_id=variant.id,
@@ -291,14 +290,13 @@ class ProductService:
         self,
         product: Product,
         variants: list[ProductVariant],
-        inventory: dict[UUID, list[InventoryItem]],
+        levels: dict[UUID, StockLevel | None],
         images: dict[UUID, str],
         now: datetime,
     ) -> ProductCard | None:
         if not variants:  # its last variant went away between the two reads
             return None
         units = [(variant, _unit(variant, now)) for variant in variants]
-        levels = {variant.id: variant_level(inventory[variant.id]) for variant in variants}
         # ``min`` keeps the first of equal prices, i.e. the lowest ``display_order``.
         cheapest = min((unit for _variant, unit in units), key=lambda unit: unit.final)
         finals = [unit.final for _variant, unit in units]
@@ -333,11 +331,11 @@ class ProductService:
             variants = (await self._repository.public_variants_of([product.id]))[product.id]
             ids = [variant.id for variant in variants]
             options = await self._repository.options_of(ids)
-            inventory = await self._repository.inventory_of(ids)
+            levels = await self._repository.stock_levels_of(ids, now)
             media = await self._repository.media_of(product.id)
 
         public_variants = [
-            self._variant(variant, options[variant.id], inventory[variant.id], now)
+            self._variant(variant, options[variant.id], levels[variant.id], now)
             for variant in variants
         ]
         purchasable = [variant for variant in public_variants if variant.purchasable]
@@ -370,11 +368,10 @@ class ProductService:
         self,
         variant: ProductVariant,
         options: dict[str, str],
-        items: list[InventoryItem],
+        level: StockLevel | None,
         now: datetime,
     ) -> PublicVariant:
         unit = _unit(variant, now)
-        level = variant_level(items)
         return PublicVariant(
             id=variant.id,
             sku=variant.sku,

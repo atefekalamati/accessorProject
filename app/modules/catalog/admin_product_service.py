@@ -54,7 +54,7 @@ from app.modules.catalog.admin_product_schemas import (
     UpdateVariantRequest,
 )
 from app.modules.catalog.product_repository import ProductFilters, ProductRepository
-from app.modules.inventory.stock import free_quantity, stock_status, variant_level
+from app.modules.inventory.stock import StockLevel, free_quantity, stock_status
 from app.modules.pricing.history import record_price_change
 from app.shared.audit import record_audit
 from app.shared.media import process_image_async
@@ -242,7 +242,8 @@ class AdminProductService:
         variants = await self._repository.variants_of(product.id)
         variant_ids = [variant.id for variant in variants]
         options = await self._repository.options_of(variant_ids)
-        inventory = await self._repository.inventory_of(variant_ids)
+        # Same stock view as the public pages: expired holds are free (ADR-036).
+        levels = await self._repository.stock_levels_of(variant_ids, utc_now())
         media = await self._repository.media_of(product.id)
         return AdminProductResponse(
             id=product.id,
@@ -255,7 +256,7 @@ class AdminProductService:
             is_featured=product.is_featured,
             attributes=_attribute_items(attributes),
             variants=[
-                self._variant_response(variant, options[variant.id], inventory[variant.id])
+                self._variant_response(variant, options[variant.id], levels[variant.id])
                 for variant in variants
             ],
             media=[self._media_response(item, stored) for item, stored in media],
@@ -267,9 +268,8 @@ class AdminProductService:
         )
 
     def _variant_response(
-        self, variant: ProductVariant, options: dict[str, str], items: Sequence[Any]
+        self, variant: ProductVariant, options: dict[str, str], level: StockLevel | None
     ) -> AdminVariantResponse:
-        level = variant_level(items)
         return AdminVariantResponse(
             id=variant.id,
             product_id=variant.product_id,
@@ -648,8 +648,8 @@ class AdminProductService:
 
     async def _variant_detail(self, variant: ProductVariant) -> AdminVariantResponse:
         options = await self._repository.options_of([variant.id])
-        inventory = await self._repository.inventory_of([variant.id])
-        return self._variant_response(variant, options[variant.id], inventory[variant.id])
+        levels = await self._repository.stock_levels_of([variant.id], utc_now())
+        return self._variant_response(variant, options[variant.id], levels[variant.id])
 
     # --- media -------------------------------------------------------------------------
 

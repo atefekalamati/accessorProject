@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
@@ -21,8 +22,11 @@ from app.core.errors import (
     ErrorCode,
     NotFoundError,
 )
-from app.db.models import InventoryItem, InventoryMovement, MovementType
+from app.core.time import utc_now
+from app.db.models import MovementType
 from app.db.models.inventory import MAX_MOVEMENT_REASON_LENGTH
+from app.modules.inventory.holds import release_expired_holds
+from app.modules.inventory.movements import Counters, record_movement
 from app.modules.inventory.repository import InventoryRepository
 from app.shared.audit import record_audit
 from app.shared.inventory import MAX_STOCK_QUANTITY
@@ -40,16 +44,6 @@ class AdjustmentType(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
-class Counters:
-    total: int
-    reserved: int
-
-    @classmethod
-    def of(cls, item: InventoryItem) -> Counters:
-        return cls(total=item.total_quantity, reserved=item.reserved_quantity)
-
-
-@dataclass(frozen=True, slots=True)
 class AdjustmentResult:
     inventory_item_id: UUID
     variant_id: UUID
@@ -57,36 +51,6 @@ class AdjustmentResult:
     reserved: int
     # None when the request changed nothing (a correction to the current total).
     movement_id: UUID | None
-
-
-async def record_movement(
-    session: AsyncSession,
-    item: InventoryItem,
-    *,
-    movement_type: MovementType,
-    quantity: int,
-    before: Counters,
-    actor_id: UUID | None,
-    reason: str | None = None,
-    reference: tuple[str, UUID] | None = None,
-) -> InventoryMovement:
-    """Add the movement for a change already applied to ``item`` (locked by the caller)."""
-    movement = InventoryMovement(
-        inventory_item_id=item.id,
-        movement_type=movement_type,
-        quantity=quantity,
-        total_before=before.total,
-        total_after=item.total_quantity,
-        reserved_before=before.reserved,
-        reserved_after=item.reserved_quantity,
-        reference_type=None if reference is None else reference[0],
-        reference_id=None if reference is None else reference[1],
-        reason=reason,
-        created_by=actor_id,
-    )
-    session.add(movement)
-    await session.flush()
-    return movement
 
 
 def _invalid(field: str, message: str) -> BadRequestError:
@@ -148,6 +112,7 @@ class InventoryService:
         quantity: int,
         reason: str,
         audit_request: Request | None = None,
+        now: datetime | None = None,
     ) -> AdjustmentResult:
         """Change a variant's total in the default warehouse; checked under the row lock."""
         quantity = _check_quantity(kind, quantity)
@@ -157,6 +122,8 @@ class InventoryService:
             if product_id is None:
                 raise NotFoundError(message="Variant not found")
             item = await self._repository.lock_default_item(variant_id, product_id)
+            # Units of expired reservations are free again, job or not (ADR-036).
+            await release_expired_holds(self._session, [item], now or utc_now())
             before = Counters.of(item)
             total = _new_total(kind, before, quantity)
             if total == before.total:

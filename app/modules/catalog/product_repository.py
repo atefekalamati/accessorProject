@@ -39,6 +39,8 @@ from app.modules.catalog.product_query import (
     ProductSort,
     public_products,
 )
+from app.modules.inventory.holds import expired_holds
+from app.modules.inventory.stock import StockLevel, variant_level
 from app.shared.pagination import PageParams, paginate
 
 
@@ -317,6 +319,15 @@ class ProductRepository:
         for item in rows:
             items[item.variant_id].append(item)
         return items
+
+    async def stock_levels_of(
+        self, variant_ids: Collection[UUID], now: datetime
+    ) -> dict[UUID, StockLevel | None]:
+        """Public stock per variant: active warehouses, expired holds not counted (ADR-036)."""
+        inventory = await self.inventory_of(variant_ids)
+        item_ids = [item.id for items in inventory.values() for item in items]
+        holds = await expired_holds(self._session, item_ids, now)
+        return {variant_id: variant_level(items, holds) for variant_id, items in inventory.items()}
 
     async def variant_summaries(self, product_ids: Collection[UUID]) -> dict[UUID, VariantSummary]:
         """Active-variant count and base-price range per product, in one query."""

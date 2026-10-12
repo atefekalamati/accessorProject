@@ -20,6 +20,8 @@ from app.db.models import (
     Category,
     InventoryItem,
     InventoryMovement,
+    InventoryReservation,
+    InventoryReservationItem,
     Media,
     PriceHistory,
     Product,
@@ -131,6 +133,21 @@ async def created(db_engine: AsyncEngine) -> AsyncIterator[Created]:
         await session.execute(delete(ProductMedia).where(ProductMedia.product_id.in_(products)))
         await session.execute(delete(Media).where(Media.id.in_(media_ids)))
         items = select(InventoryItem.id).where(InventoryItem.product_id.in_(products))
+        reservations = list(
+            await session.scalars(
+                select(InventoryReservationItem.reservation_id).where(
+                    InventoryReservationItem.inventory_item_id.in_(items)
+                )
+            )
+        )
+        await session.execute(
+            delete(InventoryReservationItem).where(
+                InventoryReservationItem.reservation_id.in_(reservations)
+            )
+        )
+        await session.execute(
+            delete(InventoryReservation).where(InventoryReservation.id.in_(reservations))
+        )
         await session.execute(
             delete(InventoryMovement).where(InventoryMovement.inventory_item_id.in_(items))
         )

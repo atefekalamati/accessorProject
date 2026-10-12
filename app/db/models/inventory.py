@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 from typing import Final
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -7,6 +8,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    DateTime,
     ForeignKey,
     ForeignKeyConstraint,
     Index,
@@ -196,6 +198,23 @@ class InventoryMovement(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         ),
         Index("ix_inventory_movements_item_created_at", "inventory_item_id", "created_at", "id"),
         Index("ix_inventory_movements_reference", "reference_type", "reference_id"),
+        # One reserve, and one release or commit, per item and reservation (ADR-036).
+        Index(
+            "uq_inventory_movements_reservation_reserve",
+            "inventory_item_id",
+            "reference_id",
+            unique=True,
+            postgresql_where=text("reference_type = 'reservation' AND movement_type = 'reserve'"),
+        ),
+        Index(
+            "uq_inventory_movements_reservation_close",
+            "inventory_item_id",
+            "reference_id",
+            unique=True,
+            postgresql_where=text(
+                "reference_type = 'reservation' AND movement_type IN ('release', 'commit')"
+            ),
+        ),
     )
 
     inventory_item_id: Mapped[UUID] = mapped_column(
@@ -219,3 +238,121 @@ class InventoryMovement(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
+
+
+class ReservationStatus(StrEnum):
+    """Lifecycle of a reservation (PRD «موجودی و رزرو» ✓). ``active`` past ``expires_at`` is
+    already inactive for every check; the job only cleans it up to ``expired`` (ADR-036)."""
+
+    ACTIVE = "active"
+    RELEASED = "released"
+    COMMITTED = "committed"
+    EXPIRED = "expired"
+
+
+class ReservationItemStatus(StrEnum):
+    """Per-item state: changed only under the item's row lock, so a counter moves once."""
+
+    ACTIVE = "active"
+    RELEASED = "released"
+    COMMITTED = "committed"
+
+
+RESERVATION_STATUSES_SQL: Final = ", ".join(f"'{s.value}'" for s in ReservationStatus)
+RESERVATION_ITEM_STATUSES_SQL: Final = ", ".join(f"'{s.value}'" for s in ReservationItemStatus)
+
+
+class InventoryReservation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Stock held for one order for a limited time (INV-04, ADR-007, ADR-036).
+
+    Valid in ``[created_at, expires_at)``. ``order_id`` gets its foreign key with the orders
+    table (ORD-01).
+    """
+
+    __tablename__ = "inventory_reservations"
+    __table_args__ = (
+        CheckConstraint(f"status IN ({RESERVATION_STATUSES_SQL})", name="valid_status"),
+        CheckConstraint(
+            "(status = 'committed') = (committed_at IS NOT NULL)", name="committed_has_time"
+        ),
+        CheckConstraint(
+            "(status IN ('released', 'expired')) = (released_at IS NOT NULL)",
+            name="released_has_time",
+        ),
+        # At most one live reservation per order: active, or committed for good (ADR-036).
+        Index(
+            "uq_inventory_reservations_live_order",
+            "order_id",
+            unique=True,
+            postgresql_where=text("status IN ('active', 'committed') AND order_id IS NOT NULL"),
+        ),
+        Index("ix_inventory_reservations_status_expires_at", "status", "expires_at"),
+    )
+
+    order_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=True)
+    cart_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    status: Mapped[str] = mapped_column(
+        String(10), nullable=False, default=ReservationStatus.ACTIVE, server_default="active"
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    committed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class InventoryReservationItem(UUIDPrimaryKeyMixin, Base):
+    """Units of one InventoryItem held by a reservation (INV-04, ADR-036)."""
+
+    __tablename__ = "inventory_reservation_items"
+    __table_args__ = (
+        CheckConstraint(f"quantity BETWEEN 1 AND {MAX_STOCK_QUANTITY}", name="quantity_range"),
+        CheckConstraint(f"status IN ({RESERVATION_ITEM_STATUSES_SQL})", name="valid_status"),
+        CheckConstraint(
+            "(status = 'released') = (released_at IS NOT NULL)", name="released_has_time"
+        ),
+        UniqueConstraint("reservation_id", "inventory_item_id"),
+        ForeignKeyConstraint(
+            ["variant_id", "product_id"],
+            ["product_variants.id", "product_variants.product_id"],
+            name="fk_inventory_reservation_items_variant_id_product_variants",
+            ondelete="RESTRICT",
+        ),
+        # Lookups of what is still held on an item (availability, lazy release).
+        Index(
+            "ix_inventory_reservation_items_active_item",
+            "inventory_item_id",
+            postgresql_where=text("status = 'active'"),
+        ),
+        Index("ix_inventory_reservation_items_reservation_id", "reservation_id"),
+    )
+
+    # Explicit names: the convention's would pass PostgreSQL's 63-character limit.
+    reservation_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "inventory_reservations.id",
+            ondelete="RESTRICT",
+            name="fk_inventory_reservation_items_reservation_id",
+        ),
+        nullable=False,
+    )
+    inventory_item_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey(
+            "inventory_items.id",
+            ondelete="RESTRICT",
+            name="fk_inventory_reservation_items_inventory_item_id",
+        ),
+        nullable=False,
+    )
+    product_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
+    variant_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(10), nullable=False, default=ReservationItemStatus.ACTIVE, server_default="active"
+    )
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

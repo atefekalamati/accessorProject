@@ -34,6 +34,7 @@ from app.db.models import (
     WarehouseStatus,
 )
 from app.db.models.common import not_deleted
+from app.modules.inventory.holds import expired_hold_sum
 from app.shared.pagination import AnySelect
 
 _OPTION_KEYS = frozenset(VariantOptionKey)
@@ -80,7 +81,7 @@ def final_price(now: datetime) -> ColumnElement[int]:
     return case((in_window, ProductVariant.sale_price), else_=ProductVariant.base_price)
 
 
-def _has_free_stock() -> ColumnElement[bool]:
+def _has_free_stock(now: datetime) -> ColumnElement[bool]:
     variant = aliased(ProductVariant)
     return exists(
         select(InventoryItem.id)
@@ -89,9 +90,11 @@ def _has_free_stock() -> ColumnElement[bool]:
         .where(
             variant.product_id == Product.id,
             _public_variant(variant),
-            # Only active warehouses count (ADR-029); free = total − reserved.
+            # Only active warehouses count (ADR-029). free = total − reserved, where
+            # units of expired reservations are not reserved any more (ADR-036).
             Warehouse.status == WarehouseStatus.ACTIVE,
-            InventoryItem.total_quantity > InventoryItem.reserved_quantity,
+            InventoryItem.total_quantity
+            > InventoryItem.reserved_quantity - expired_hold_sum(InventoryItem.id, now),
         )
         .correlate(Product)
     )
@@ -148,7 +151,7 @@ def public_products(filters: ListingFilters, sort: ProductSort, now: datetime) -
     if filters.category_id is not None:
         criteria.append(Product.category_id == filters.category_id)
     if filters.in_stock:
-        criteria.append(_has_free_stock())
+        criteria.append(_has_free_stock(now))
     for key, values in sorted(filters.values.items()):
         criteria.append(_has_value(key, values))
 

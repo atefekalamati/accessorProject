@@ -254,7 +254,7 @@
 - تاریخ: 2026-10-10
 - تصمیم‌های کم‌اثر (خودم؛ بازبینی subagent):
   - `inventory_items.reserved_quantity` (Entity PRD ✓) شمارنده رزروهای فعال است. invariant: `reserved_quantity == SUM(quantity)` آیتم‌های رزرو با status `active`. INV-04 تا INV-06 آن را فقط زیر `SELECT … FOR UPDATE` تغییر می‌دهند و یک تست invariant دارند.
-  - رزرو منقضی تا آزادسازی هنوز موجودی را اشغال می‌کند (جهت محافظه‌کارانه؛ oversell ممکن نیست). هر مسیر نوشتنی (سبد، `POST /checkout/validate`، `POST /orders`) قبل از محاسبه free، رزروهای منقضی همان آیتم‌ها را زیر همان lock آزاد می‌کند (PRD: «در اولین بررسی آزاد شود»)، به‌علاوه sweep دوره‌ای (INV-06). نمایش فقط‌خواندنی ممکن است کمی کهنه باشد، فقط در جهت کمتر.
+  - (جایگزین‌شده با ADR-036: رزرو منقضی هیچ موجودی‌ای نگه نمی‌دارد.) رزرو منقضی تا آزادسازی هنوز موجودی را اشغال می‌کند (جهت محافظه‌کارانه؛ oversell ممکن نیست). هر مسیر نوشتنی (سبد، `POST /checkout/validate`، `POST /orders`) قبل از محاسبه free، رزروهای منقضی همان آیتم‌ها را زیر همان lock آزاد می‌کند (PRD: «در اولین بررسی آزاد شود»)، به‌علاوه sweep دوره‌ای (INV-06). نمایش فقط‌خواندنی ممکن است کمی کهنه باشد، فقط در جهت کمتر.
   - ترتیب lock: سفارش چندتنوعی ردیف‌های `inventory_items` را با `ORDER BY variant_id, warehouse_id … FOR UPDATE` قفل می‌کند تا deadlock رخ ندهد.
   - CHECKهای `0 ≤ reserved ≤ total ≤ MAX_STOCK_QUANTITY (10^6)` فقط backstop هستند. سرویس‌ها (INV-02، INV-05، INV-08) شرط را زیر lock بررسی می‌کنند و 409 (موجودی کافی نیست) یا 422 برمی‌گردانند، نه 500. commit رزرو `total` و `reserved` را در یک UPDATE کم می‌کند.
   - وضعیت: `free = total − reserved`؛ `free == 0` → `out_of_stock`؛ `free ≤ low_stock_threshold` → `low_stock`؛ وگرنه `in_stock`. پیش‌فرض threshold صفر است، یعنی `low_stock` تا تنظیم ادمین نمایش داده نمی‌شود. تنوع بدون InventoryItem → `out_of_stock`. داده ناسازگار (منفی یا reserved > total) → `ValueError`.
@@ -347,6 +347,23 @@
   - lock: Product (`FOR UPDATE`) سپس تنوع (ADR-030)؛ تعداد تنوع‌های endpoint محصول زیر همان lock شمرده می‌شود. بدون تغییر → 200 بدون history، audit و bump. با تغییر: `price_version + 1`، یک ردیف history و audit `product_variant.price_changed` در همان تراکنش. `Cache-Control: no-store`.
   - تاریخچه: `GET /admin/products/{id}/price-history` با `pricing:update` یا `catalog:manage`، جدیدترین اول بر اساس ستون identity `seq` (ترتیب درج؛ مستقل از دقت ساعت)؛ محصول حذف‌شده هم قابل مشاهده است.
 - پیامدها: PRC-03، CAT-11، PRC-06.
+
+### ADR-036 — رزرو موجودی: schema، reserve و انقضای مستقل از job (INV-04..06)
+- تاریخ: 2026-10-12
+- تصمیم (کاربر تأیید کرد): رزرو در `POST /orders` با TTL ۱۵ دقیقه (ADR-007). حداکثر یک رزرو active برای هر سفارش. رزرو دوباره فقط وقتی قبلی منقضی شده باشد (شرط `pending_payment` سفارش را ORD-04 بررسی می‌کند). درستی به job وابسته نیست: رزروی که `expires_at ≤ now` است در availability، reserve، commit و اصلاح دستی هیچ موجودی‌ای نگه نمی‌دارد و job فقط پاک‌سازی می‌کند. job زیر `pg_try_advisory_lock` (یک اجراکننده). audit برای هر چهار رخداد (created، committed، released، expired).
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی subagent):
+  - رزرو در بازه نیمه‌باز `[created, expires_at)` معتبر است.
+  - schema: `inventory_reservations` (`order_id` بدون FK تا ORD-01، `status`، `expires_at`، `committed_at`، `released_at`) با partial unique `(order_id) WHERE status IN ('active','committed')`. یعنی سفارشِ commit‌شده هم رزرو دوم نمی‌گیرد (409 `RESERVATION_ALREADY_CONSUMED`). `inventory_reservation_items` با وضعیت per-item (active، released، committed)، FK مرکب به variant و partial index روی آیتم‌های active.
+  - ترتیب lock در همه مسیرها: advisory lock تراکنشی per-order (فقط reserve؛ اول از همه) → variantها `FOR SHARE` (محصول باید published و حذف‌نشده باشد) → inventory_items `FOR UPDATE` با `ORDER BY variant_id, warehouse_id` → ردیف‌های reservation `FOR UPDATE`. advisory lock دو فراخوانی یک سفارش را سریال می‌کند، پس تراکنش فراخواننده هیچ‌وقت با خطای unique مسموم نمی‌شود.
+  - هر تغییر وضعیت یک آیتم رزرو زیر lock همان inventory_item انجام می‌شود. «آزادسازی تنبل»: نویسنده‌ها (reserve، اصلاح دستی INV-02 و بعداً commit) آیتم‌های رزروهای منقضی روی آیتم‌های قفل‌شده خود را released می‌کنند (movement `release` با reason `expired`، بدون audit؛ movement سند آن است). ردیف رزرو را commit، release یا job می‌بندند. خواننده‌ها (CAT-07، CAT-08، INV-07) موجودی آزاد را `total − reserved + Σ آیتم‌های active رزروهای منقضی` حساب می‌کنند (یک query گروهی؛ در لیست داخل SQL).
+  - backstop در `inventory_movements`: یک `reserve` و یک `release`/`commit` برای هر `(inventory_item, reservation)` (partial unique).
+  - reserve در تراکنش فراخواننده اجرا می‌شود و commit نمی‌کند. فقط از انبار پیش‌فرض؛ InventoryItem ناموجود = ناموجود (409) و ساخته نمی‌شود. lineها بر اساس variant ادغام می‌شوند؛ ورودی نامعتبر (خالی، غیر int، bool، بیش از سقف، جمع بیش از سقف) → 400؛ variant ناموجود، غیرفعال، غیرقابل‌خرید، بی‌قیمت یا محصول غیرمنتشر → 422؛ موجودی ناکافی → 409 `INSUFFICIENT_STOCK` با variant‌ها (all-or-nothing). همان سفارش با رزرو active معتبر: lineهای یکسان → همان رزرو (idempotent)، متفاوت → 409 `CONFLICT`.
+  - invariant: `inventory_items.reserved_quantity == Σ quantity` آیتم‌های رزرو با وضعیت active؛ رزرو غیر active آیتم active ندارد. این جایگزین تعریف ADR-029 («رزرو منقضی تا آزادسازی موجودی را اشغال می‌کند») است.
+  - CHECK `expires_at > created_at` گذاشته نشد چون `now` قابل تزریق است (تست مرز انقضا).
+  - نمای admin (جزئیات محصول و تنوع) هم موجودی را با کسر نگه‌داشت‌های منقضی نشان می‌دهد، هم‌سو با صفحه عمومی و اصلاح دستی.
+  - ریسک پذیرفته: reserve ردیف Product را قفل نمی‌کند؛ unpublish که همزمان commit شود جلوی reserve در حال اجرا را نمی‌گیرد (همان ADR-034).
+  - برای INV-06: job هر رزرو را در تراکنش جدا می‌بندد (lock آیتم‌ها، سپس ردیف رزرو)، تا هیچ‌وقت lock ردیف یک رزرو را هنگام lock آیتم‌های رزرو دیگر نگه ندارد.
+- پیامدها: INV-04، INV-05، INV-06، INV-02 (اصلاح دستی)، CAT-07، CAT-08، INV-07، ORD-03، ORD-04 (موجودی آزاد مؤثر)، PAY-03، PAY-04.
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
