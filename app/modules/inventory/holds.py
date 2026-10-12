@@ -106,6 +106,7 @@ async def release_item(
     held: InventoryReservationItem,
     now: datetime,
     reason: str,
+    actor_id: UUID | None = None,
 ) -> None:
     """Give one held line back to ``item`` (locked by the caller)."""
     before = Counters.of(item)
@@ -119,7 +120,7 @@ async def release_item(
         movement_type=MovementType.RELEASE,
         quantity=held.quantity,
         before=before,
-        actor_id=None,
+        actor_id=actor_id,
         reason=reason,
         reference=("reservation", held.reservation_id),
     )

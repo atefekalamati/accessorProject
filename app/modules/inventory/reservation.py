@@ -1,5 +1,5 @@
-"""Stock reservations for orders (INV-04; INV-05 and INV-06 add commit, release and the
-cleanup job). PRD «موجودی و رزرو» ✓, ADR-007, ADR-029, ADR-034, ADR-036.
+"""Stock reservations for orders: reserve (INV-04), commit and release (INV-05); INV-06 adds
+the cleanup job. PRD «موجودی و رزرو» ✓, ADR-007, ADR-029, ADR-034, ADR-036.
 
 Rules:
 - A reservation is valid in ``[created, expires_at)``. Once ``expires_at <= now`` it holds
@@ -10,6 +10,10 @@ Rules:
   is moved at most once per item, whoever releases it.
 - ``reserve`` runs in the caller's transaction (ORD-04 creates the order in the same one)
   and never commits; any error rolls the whole reservation back (all-or-nothing).
+- ``commit`` and ``release`` also run in the caller's transaction. Both are idempotent and
+  decide only after taking the locks. An expired ``commit`` frees the stock and *returns*
+  ``EXPIRED`` instead of raising, so the release survives the caller's commit (PAY-03 raises
+  ``RESERVATION_EXPIRED`` afterwards).
 """
 
 from __future__ import annotations
@@ -18,13 +22,20 @@ import logging
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from enum import StrEnum
 from typing import Final
 from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import BadRequestError, BusinessRuleError, ConflictError, ErrorCode
+from app.core.errors import (
+    BadRequestError,
+    BusinessRuleError,
+    ConflictError,
+    ErrorCode,
+    NotFoundError,
+)
 from app.core.time import utc_now
 from app.db.models import (
     InventoryItem,
@@ -38,8 +49,8 @@ from app.db.models import (
     ReservationStatus,
 )
 from app.db.models.common import not_deleted
-from app.db.models.inventory import DEFAULT_WAREHOUSE_ID
-from app.modules.inventory.holds import release_expired_holds
+from app.db.models.inventory import DEFAULT_WAREHOUSE_ID, MAX_MOVEMENT_REASON_LENGTH
+from app.modules.inventory.holds import EXPIRED_REASON, release_expired_holds, release_item
 from app.modules.inventory.movements import Counters, record_movement
 from app.shared.audit import record_audit
 from app.shared.inventory import MAX_STOCK_QUANTITY
@@ -65,6 +76,39 @@ class ReservationResult:
     expires_at: datetime
     # False when an identical active reservation of the order was returned (idempotent).
     created: bool
+
+
+class CommitOutcome(StrEnum):
+    COMMITTED = "committed"
+    # Committed earlier: nothing changed (idempotent).
+    ALREADY_COMMITTED = "already_committed"
+    # Expired or released: never consumed. Any stock it still held is free now.
+    EXPIRED = "expired"
+
+
+@dataclass(frozen=True, slots=True)
+class CommitResult:
+    reservation_id: UUID
+    outcome: CommitOutcome
+
+    def raise_for_expired(self) -> None:
+        """409 ``RESERVATION_EXPIRED``; call it after committing the caller's transaction."""
+        if self.outcome is CommitOutcome.EXPIRED:
+            raise ConflictError(
+                code=ErrorCode.RESERVATION_EXPIRED, message="The reservation has expired"
+            )
+
+
+class ReleaseOutcome(StrEnum):
+    RELEASED = "released"
+    # Released or expired earlier: nothing changed (idempotent).
+    ALREADY_CLOSED = "already_closed"
+
+
+@dataclass(frozen=True, slots=True)
+class ReleaseResult:
+    reservation_id: UUID
+    outcome: ReleaseOutcome
 
 
 def _invalid(message: str) -> BadRequestError:
@@ -133,12 +177,14 @@ class ReservationService:
         await self._session.execute(
             select(func.pg_advisory_xact_lock(ORDER_LOCK_NAMESPACE, _order_key(order_id)))
         )
-        if await self._has_committed(order_id):
+        # One read of the order's live reservation (the unique index allows one): a commit
+        # landing between two separate reads would otherwise let a second one be inserted.
+        existing = await self._live_for_order(order_id)
+        if existing is not None and existing.status == ReservationStatus.COMMITTED:
             raise ConflictError(
                 code=ErrorCode.RESERVATION_ALREADY_CONSUMED,
                 message="The order's reservation was already committed",
             )
-        existing = await self._active_for_order(order_id)
         if existing is not None and now < existing.expires_at:
             return await self._same_or_conflict(existing, wanted)
 
@@ -221,21 +267,190 @@ class ReservationService:
         )
         return ReservationResult(reservation.id, reservation.expires_at, created=True)
 
+    async def commit(
+        self,
+        reservation_id: UUID,
+        *,
+        actor_id: UUID | None = None,
+        now: datetime | None = None,
+    ) -> CommitResult:
+        """Consume the held stock for good (payment succeeded); idempotent (ADR-036).
+
+        An expired reservation is never consumed: what it still holds is released here and
+        ``EXPIRED`` is returned, for the caller to commit and then report as a 409.
+        The caller MUST branch on ``outcome`` (or call ``raise_for_expired``): treating
+        ``EXPIRED`` as success would mark an order paid with no stock taken (PAY-03).
+        """
+        if not self._session.in_transaction():
+            raise RuntimeError("commit() must run inside the caller's transaction")
+        reservation, items, held = await self._lock_reservation(reservation_id)
+        # After the lock wait: a commit that waited must not pass an expiry meanwhile.
+        now = now or utc_now()
+
+        if reservation.status == ReservationStatus.COMMITTED:
+            return CommitResult(reservation.id, CommitOutcome.ALREADY_COMMITTED)
+        if reservation.status != ReservationStatus.ACTIVE:
+            return CommitResult(reservation.id, CommitOutcome.EXPIRED)
+        active = [line for line in held if line.status == ReservationItemStatus.ACTIVE]
+        if now >= reservation.expires_at or len(active) != len(held):
+            # Past expires_at, or a writer already freed part of it lazily (which happens
+            # only once it expired): close it as expired, never consume it.
+            for line in active:
+                await release_item(
+                    self._session, items[line.inventory_item_id], line, now, EXPIRED_REASON
+                )
+            await self._close(reservation, ReservationStatus.EXPIRED, now, actor_id=None)
+            return CommitResult(reservation.id, CommitOutcome.EXPIRED)
+
+        for line in held:
+            item = items[line.inventory_item_id]
+            before = Counters.of(item)
+            # Both counters drop together, in the item's single UPDATE.
+            item.total_quantity -= line.quantity
+            item.reserved_quantity -= line.quantity
+            line.status = ReservationItemStatus.COMMITTED
+            await self._session.flush()
+            await record_movement(
+                self._session,
+                item,
+                movement_type=MovementType.COMMIT,
+                quantity=line.quantity,
+                before=before,
+                actor_id=actor_id,
+                reference=("reservation", reservation.id),
+            )
+        await self._close(reservation, ReservationStatus.COMMITTED, now, actor_id=actor_id)
+        return CommitResult(reservation.id, CommitOutcome.COMMITTED)
+
+    async def release(
+        self,
+        reservation_id: UUID,
+        *,
+        reason: str,
+        actor_id: UUID | None = None,
+        now: datetime | None = None,
+    ) -> ReleaseResult:
+        """Give the held stock back (payment failed, order cancelled); idempotent.
+
+        A committed reservation cannot be released: 409 ``RESERVATION_ALREADY_CONSUMED``.
+        """
+        if not self._session.in_transaction():
+            raise RuntimeError("release() must run inside the caller's transaction")
+        reason = reason.strip() if isinstance(reason, str) else ""
+        if not 1 <= len(reason) <= MAX_MOVEMENT_REASON_LENGTH:
+            raise BadRequestError(
+                message="Request validation failed",
+                details=[
+                    {
+                        "field": "reason",
+                        "message": f"reason must be 1 to {MAX_MOVEMENT_REASON_LENGTH} characters",
+                        "type": "value_error",
+                    }
+                ],
+            )
+        reservation, items, held = await self._lock_reservation(reservation_id)
+        now = now or utc_now()
+
+        if reservation.status == ReservationStatus.COMMITTED:
+            raise ConflictError(
+                code=ErrorCode.RESERVATION_ALREADY_CONSUMED,
+                message="The reservation was already committed",
+            )
+        if reservation.status != ReservationStatus.ACTIVE:
+            return ReleaseResult(reservation.id, ReleaseOutcome.ALREADY_CLOSED)
+        for line in held:
+            if line.status == ReservationItemStatus.ACTIVE:
+                await release_item(
+                    self._session, items[line.inventory_item_id], line, now, reason, actor_id
+                )
+        await self._close(
+            reservation,
+            ReservationStatus.RELEASED,
+            now,
+            actor_id=actor_id,
+            # Released by the caller after it had already expired (reports tell them apart).
+            extra={"reason": reason, "expired": now >= reservation.expires_at},
+        )
+        return ReleaseResult(reservation.id, ReleaseOutcome.RELEASED)
+
     # --- helpers -----------------------------------------------------------------------
 
-    async def _has_committed(self, order_id: UUID) -> bool:
-        statement = select(InventoryReservation.id).where(
-            InventoryReservation.order_id == order_id,
-            InventoryReservation.status == ReservationStatus.COMMITTED,
-        )
-        return (await self._session.scalar(statement.limit(1))) is not None
+    async def _lock_reservation(
+        self, reservation_id: UUID
+    ) -> tuple[InventoryReservation, dict[UUID, InventoryItem], list[InventoryReservationItem]]:
+        """Lock a reservation's inventory items, then its row, in the ADR-036 order.
 
-    async def _active_for_order(self, order_id: UUID) -> InventoryReservation | None:
+        A reservation's set of items never changes, so reading it before the locks is
+        safe; everything else is read again after them.
+        """
+        item_ids = await self._item_ids_of(reservation_id)
+        if not item_ids:
+            # Every reservation has at least one item, so this one does not exist.
+            raise NotFoundError(message="Reservation not found")
+        statement = (
+            select(InventoryItem)
+            .where(InventoryItem.id.in_(item_ids))
+            .order_by(InventoryItem.variant_id, InventoryItem.warehouse_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        items = {item.id: item for item in await self._session.scalars(statement)}
+        reservation = await self._session.scalar(
+            select(InventoryReservation)
+            .where(InventoryReservation.id == reservation_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        if reservation is None:
+            raise NotFoundError(message="Reservation not found")
+        held = list(
+            await self._session.scalars(
+                select(InventoryReservationItem)
+                .where(InventoryReservationItem.reservation_id == reservation_id)
+                .order_by(InventoryReservationItem.variant_id)
+                .execution_options(populate_existing=True)
+            )
+        )
+        return reservation, items, held
+
+    async def _close(
+        self,
+        reservation: InventoryReservation,
+        status: ReservationStatus,
+        now: datetime,
+        *,
+        actor_id: UUID | None,
+        extra: Mapping[str, object] | None = None,
+    ) -> None:
+        """Move a locked, active reservation whose items are settled to its final status."""
+        reservation.status = status
+        if status == ReservationStatus.COMMITTED:
+            reservation.committed_at = now
+        else:
+            reservation.released_at = now
+        await self._session.flush()
+        after: dict[str, object] = {"status": status.value, **(extra or {})}
+        await record_audit(
+            self._session,
+            actor_id=actor_id,
+            action=f"reservation.{status.value}",
+            entity_type="inventory_reservation",
+            entity_id=reservation.id,
+            before={"status": ReservationStatus.ACTIVE.value},
+            after=after,
+            request=None,
+        )
+        logger.info(f"reservation.{status.value}", extra={"reservation_id": str(reservation.id)})
+
+    async def _live_for_order(self, order_id: UUID) -> InventoryReservation | None:
+        """The order's active or committed reservation, if any."""
         statement = (
             select(InventoryReservation)
             .where(
                 InventoryReservation.order_id == order_id,
-                InventoryReservation.status == ReservationStatus.ACTIVE,
+                InventoryReservation.status.in_(
+                    [ReservationStatus.ACTIVE, ReservationStatus.COMMITTED]
+                ),
             )
             .execution_options(populate_existing=True)
         )
@@ -310,6 +525,13 @@ class ReservationService:
             .with_for_update()
             .execution_options(populate_existing=True)
         )
+        if locked is not None and locked.status == ReservationStatus.COMMITTED:
+            # A commit won the item locks after this call saw the reservation as expired
+            # (its ``now`` was later); creating a second one would break the unique index.
+            raise ConflictError(
+                code=ErrorCode.RESERVATION_ALREADY_CONSUMED,
+                message="The order's reservation was already committed",
+            )
         if locked is None or locked.status != ReservationStatus.ACTIVE:
             return
         still_held = await self._session.scalar(

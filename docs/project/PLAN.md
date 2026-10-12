@@ -93,7 +93,7 @@
 | INV-02 | InventoryMovement + manual adjustment with reason + audit | COMPLETE | HIGH | HIGH | 3 | INV-01, INF-05 | every change → movement + AuditLog |
 | INV-03 | Pure free-stock & stock-status functions | COMPLETE | HIGH | HIGH | 2 | INV-01 | free = total − active reservations |
 | INV-04 | Reservation models + reserve service (row lock), used by POST /orders | COMPLETE | HIGH | HIGH | 5 | INV-03, ADR-007 | 15-min; SELECT … FOR UPDATE |
-| INV-05 | Commit / release services (idempotent, internal) | NOT_STARTED | HIGH | HIGH | 3 | INV-04, ADR-008 | expired → 409 RESERVATION_EXPIRED |
+| INV-05 | Commit / release services (idempotent, internal) | COMPLETE | HIGH | HIGH | 3 | INV-04, ADR-008 | expired → 409 RESERVATION_EXPIRED |
 | INV-06 | Expiry release job / lazy release | NOT_STARTED | HIGH | HIGH | 3 | INV-05 | expired reservations free stock |
 | INV-07 | GET /products/{id}/availability | COMPLETE | MEDIUM | HIGH | 2 | INV-03, CAT-08 | in/low/out status; SD rule (test) |
 | INV-08 | Admin inventory endpoints (list, patch, reservations, history) | NOT_STARTED | MEDIUM | HIGH | 4 | INV-02, AUTH-10 | inventory:update enforced |
@@ -164,8 +164,8 @@
 | PAY-00 | Rewrite payment requirements | NOT_STARTED | HIGH | HIGH | 2 | — | PRD section ✓ بازبینی‌شده + approved |
 | PAY-01 | Payment model + PaymentGateway interface + fake | NOT_STARTED | HIGH | HIGH | 4 | PAY-00, ORD-01, ADR-009 | fake usable in tests |
 | PAY-02 | POST /payments/init | NOT_STARTED | HIGH | HIGH | 3 | PAY-01, ORD-04 | amount = grandTotal from DB |
-| PAY-03 | Callback: verify, amount == grandTotal, idempotent, commit reservation | NOT_STARTED | HIGH | HIGH | 5 | PAY-02, INV-05 | duplicate callback changes nothing |
-| PAY-04 | Failure/expiry: release reservation, allow retry | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, INV-06 | expired reservation never consumed |
+| PAY-03 | Callback: verify, amount == grandTotal, idempotent, commit reservation | NOT_STARTED | HIGH | HIGH | 5 | PAY-02, INV-05 | duplicate callback changes nothing; branch on `CommitOutcome` (EXPIRED never marks paid, tested) |
+| PAY-04 | Failure/expiry: release reservation, allow retry | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, INV-06 | expired reservation never consumed; `release()` after commit → 409 handled |
 | PAY-05 | Callback tests (duplicate, amount mismatch, expired) | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, PAY-04 | abuse paths covered |
 | PAY-06 | End-to-end purchase test | NOT_STARTED | HIGH | HIGH | 4 | PAY-05 | cart → OTP → checkout → order → payment → stock committed |
 | HANDOFF-01 | PRD consistency review + export openapi.json | NOT_STARTED | HIGH | HIGH | 3 | PAY-06, all Phase 1–3 `-00` | PRD matches implemented API; `openapi.json` exported for frontend; frontend note: refresh must be single-flight across tabs (ADR-017 reuse detection) |
