@@ -30,6 +30,7 @@ from alembic import command
 from app.core.config import Environment, MediaStorage, Settings
 from app.core.time import utc_now
 from app.db.models import (
+    CartItem,
     Category,
     CategoryFilter,
     InventoryItem,
@@ -481,6 +482,7 @@ async def catalog(db_engine: AsyncEngine, make_media: MakeMedia) -> AsyncIterato
         await session.execute(
             delete(InventoryMovement).where(InventoryMovement.inventory_item_id.in_(items))
         )
+        await session.execute(delete(CartItem).where(CartItem.product_id.in_(products)))
         await session.execute(delete(InventoryItem).where(InventoryItem.product_id.in_(products)))
         await session.execute(delete(PriceHistory).where(PriceHistory.product_id.in_(products)))
         await session.execute(delete(VariantOption).where(VariantOption.variant_id.in_(variants)))

@@ -1,6 +1,7 @@
 from app.db.models.addresses import Address
 from app.db.models.audit import AuditLog
 from app.db.models.auth import OtpCode, UserSession
+from app.db.models.cart import Cart, CartItem, CartStatus
 from app.db.models.catalog import (
     Category,
     CategoryFilter,
@@ -33,6 +34,9 @@ __all__ = [
     "Address",
     "AppSetting",
     "AuditLog",
+    "Cart",
+    "CartItem",
+    "CartStatus",
     "Category",
     "CategoryFilter",
     "CategoryFilterType",

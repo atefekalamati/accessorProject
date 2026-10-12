@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.1 Cart
-- **Current Task:** —. نیازمندی‌های فاز ۳ (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00) COMPLETE و PRD در یک commit به‌روز شد.
+- **Current Task:** batch CART-01 + CART-02 (جلسه `/phase`، batch ۳). CART-01 COMPLETE.
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 74/148 task COMPLETE · وزنی 44.8% (189.5h / 423h) · MVP 67.6%
+- **Progress:** 75/148 task COMPLETE · وزنی 45.7% (193.5h / 423h) · MVP 69.0%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** `/phase` برای فاز ۳: plan milestone M3.1 (یک‌بار برای کاربر)، سپس batchها به ترتیب M3.1 → M3.2 → M3.3 → M3.4 → M3.5. planهای PAY-* و رزرو/commit/release برای کاربر متوقف می‌شوند.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
@@ -15,24 +15,25 @@
 ---
 
 ## Overall Progress
-**44.8%** = 189.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**45.7%** = 193.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 10.5h | 10.3% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 14.5h | 14.3% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 233.5h ≈ ۱۶ هفته. MVP باقی‌مانده: 91h ≈ ۸ هفته.
+- باقی‌مانده: 229.5h ≈ ۱۶ هفته. MVP باقی‌مانده: 87h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-12: CART-01 (carts و cart_items، token مهمان فقط با hash، cookie D30، یک سبد active برای هر کاربر؛ ADR-040).
 - 2026-10-12: CART-00، DSC-00، ADDR-00، ORD-00، PAY-00 (نه بخش قالبی PRD بازنویسی و ✓ شد؛ D30–D34، ADR-039).
 - 2026-10-12: OPS-09 (CD به GHCR: job publish-image با tag های sha و phase-N، packages:write فقط در همان job).
 - 2026-10-12: OPS-08 (staging موقت در CI: image، دیتابیس خالی، migration، seed و smoke؛ project جدای compose).
@@ -197,6 +198,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-12 — CART-01 COMPLETE (batch ۳ جلسه phase)
+- migration `20261012_0017`؛ pytest 1477 سبز.
 ### 2026-10-12 — نیازمندی‌های فاز ۳ COMPLETE
 - خلاصه ≤۸۰ خط، چهار سؤال و ۸ تغییر کاربر؛ PRD، DECISIONS، PLAN در یک commit.
 ### 2026-10-12 — دروازه فاز ۲ کامل شد
