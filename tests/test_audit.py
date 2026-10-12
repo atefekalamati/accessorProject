@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from starlette.requests import Request
 
-from app.core.redaction import REDACTED
+from app.core.redaction import REDACTED, mask_email
 from app.db.models import AuditLog, User
 from app.shared.audit import ACTOR_SYSTEM, ACTOR_USER, build_diff, record_audit
 
@@ -59,12 +59,16 @@ async def _record(session: Any = None, **overrides: Any) -> AuditLog:
 def test_diff_keeps_only_changed_fields() -> None:
     diff = build_diff({"price": 1000, "title": "Ring"}, {"price": 1200, "title": "Ring"})
 
-    assert diff == {"price": {"before": 1000, "after": 1200}}
+    assert diff == {"price": {"before": 1000, "after": 1200, "changed": True}}
 
 
 def test_diff_for_create_and_delete_covers_every_field() -> None:
-    assert build_diff(None, {"price": 1000}) == {"price": {"before": None, "after": 1000}}
-    assert build_diff({"price": 1000}, None) == {"price": {"before": 1000, "after": None}}
+    assert build_diff(None, {"price": 1000}) == {
+        "price": {"before": None, "after": 1000, "changed": True}
+    }
+    assert build_diff({"price": 1000}, None) == {
+        "price": {"before": 1000, "after": None, "changed": True}
+    }
 
 
 def test_diff_serializes_non_json_values() -> None:
@@ -77,10 +81,10 @@ def test_diff_serializes_non_json_values() -> None:
     )
 
     assert diff == {
-        "at": {"before": None, "after": "2026-09-29T12:00:00+00:00"},
-        "id": {"before": None, "after": str(entity_id)},
-        "rate": {"before": None, "after": "0.10"},
-        "status": {"before": None, "after": "active"},
+        "at": {"before": None, "after": "2026-09-29T12:00:00+00:00", "changed": True},
+        "id": {"before": None, "after": str(entity_id), "changed": True},
+        "rate": {"before": None, "after": "0.10", "changed": True},
+        "status": {"before": None, "after": "active", "changed": True},
     }
 
 
@@ -108,7 +112,7 @@ async def test_record_audit_stores_request_context_and_diff() -> None:
     assert audit_log.metadata_ == {
         "actor": ACTOR_USER,
         "request_id": REQUEST_ID,
-        "diff": {"price": {"before": 1000, "after": 1200}},
+        "diff": {"price": {"before": 1000, "after": 1200, "changed": True}},
     }
 
 
@@ -147,11 +151,38 @@ async def test_record_audit_redacts_secrets_and_phones() -> None:
     )
 
     diff = audit_log.metadata_["diff"]
-    assert diff["phone"] == {"before": "+98912***4567", "after": "+98935***4567"}
+    assert diff["phone"] == {"before": "+98912***4567", "after": "+98935***4567", "changed": True}
     for key in ("refresh_token", "code_hash", "otp"):
         assert diff[key] == REDACTED
     for secret in ("tok-", "hash-", "123456", "654321", "1234567"):
         assert secret not in str(audit_log.metadata_)
+
+
+async def test_change_stays_marked_when_masked_values_are_equal() -> None:
+    audit_log = await _record(
+        before={"phone": "+989121234567", "email": "ali@example.com", "name": "Ali"},
+        after={"phone": "+989121114567", "email": "amir.ali@example.com", "name": "Ali"},
+        field_masks={"email": mask_email},
+    )
+
+    diff = audit_log.metadata_["diff"]
+    assert diff == {
+        "email": {"before": "a***i@example.com", "after": "a***i@example.com", "changed": True},
+        "phone": {"before": "+98912***4567", "after": "+98912***4567", "changed": True},
+    }
+    assert "amir" not in str(audit_log.metadata_)
+
+
+async def test_field_masks_skip_missing_fields_and_null_values() -> None:
+    audit_log = await _record(
+        before={"email": None},
+        after={"email": "ali@example.com"},
+        field_masks={"email": mask_email, "absent": mask_email},
+    )
+
+    assert audit_log.metadata_["diff"] == {
+        "email": {"before": None, "after": "a***i@example.com", "changed": True},
+    }
 
 
 @pytest.mark.parametrize(
@@ -179,7 +210,7 @@ async def test_record_audit_persists_in_callers_transaction(db_session: AsyncSes
     assert stored.actor_user_id == user.id
     assert str(stored.ip) == "203.0.113.7"
     assert stored.metadata_["request_id"] == REQUEST_ID
-    assert stored.metadata_["diff"] == {"price": {"before": 1000, "after": 1200}}
+    assert stored.metadata_["diff"] == {"price": {"before": 1000, "after": 1200, "changed": True}}
 
 
 @pytest.mark.integration

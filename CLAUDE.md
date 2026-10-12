@@ -39,9 +39,10 @@ Python 3.12 · FastAPI · Pydantic v2 + pydantic-settings · SQLAlchemy 2 async 
 محیط: Windows، venv در `.venv`. یا venv را فعال کن (`.\.venv\Scripts\Activate.ps1`) یا از `.venv/Scripts/python -m ...` استفاده کن.
 
 ```powershell
-python -m pip install -e ".[dev]"        # نصب
+python -m pip install --require-hashes --no-deps -r requirements-dev.lock; python -m pip install --no-deps -e .   # نصب (همان نسخه‌های CI)
+python scripts/lock.py                   # بازتولید lockها بعد از تغییر pyproject.toml (--upgrade برای ارتقای همه)
 uvicorn app.main:app --reload            # اجرا (نیاز به .env یا DATABASE_URL و JWT_SECRET)
-python -m pytest                         # تست (بدون TEST_DATABASE_URL، تست‌های integration skip می‌شوند)
+python -m pytest                         # تست موازی (xdist، `-n 0` برای تک‌پروسه؛ بدون TEST_DATABASE_URL، integration skip)
 python -m ruff check .                   # lint
 python -m ruff format --check .          # بررسی format   (اعمال: python -m ruff format .)
 python -m mypy app tests                 # type-check
@@ -54,7 +55,7 @@ docker compose up --build                # API + PostgreSQL؛ پورت‌های 
 
 ```powershell
 docker compose --profile test up -d --wait postgres-test
-$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:55432/project_ak_test"  # پورت = TEST_DB_HOST_PORT
+$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@127.0.0.1:55432/project_ak_test"  # پورت = TEST_DB_HOST_PORT؛ 127.0.0.1 نه localhost (روی Windows ~5x کندتر)
 python -m pytest -q
 docker compose --profile test stop postgres-test; docker compose --profile test rm -f postgres-test
 ```
@@ -107,8 +108,8 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 
 - فایل: `sources/Project-AK-PRD.md` (فارسی، ~۸۳۵۰ خط). هرگز کامل نخوان و import نکن.
 - فهرست بخش‌ها: `grep -n "^## \|^### " sources/Project-AK-PRD.md`، سپس فقط همان بخش را با `sed -n 'A,Bp'` بخوان.
-- **مرجع (authoritative)**، شش بخش: «معماری سیستم» و پنج بخش علامت‌دار ✓: «هویت و دسترسی»، «قیمت و مالیات»، «موجودی و رزرو»، «صفحه اصلی»، «دسته‌بندی محصولات».
-- **قالبی (templated)**، ۳۳ بخش دیگر (از «جست‌وجو» به بعد): متن یکسان با تغییر نام صفحه، entity و path (تأییدشده: ۱۵ خط تفاوت از ۲۰۵). endpointهای CRUD عمومی آن‌ها (مثل `DELETE /payments/{id}`) را عیناً پیاده نکن. اول task نیازمندی `<PREFIX>-00` آن milestone انجام و تأیید شود.
+- **مرجع (authoritative)**، هشت بخش: «معماری سیستم» و هفت بخش علامت‌دار ✓: «هویت و دسترسی»، «قیمت و مالیات»، «موجودی و رزرو»، «صفحه اصلی»، «دسته‌بندی محصولات»، «جزئیات محصول»، «محصولات» (پنل مدیریت).
+- **قالبی (templated)**، ۳۱ بخش دیگر (از «جست‌وجو» به بعد): متن یکسان با تغییر نام صفحه، entity و path (تأییدشده: ۱۵ خط تفاوت از ۲۰۵). endpointهای CRUD عمومی آن‌ها (مثل `DELETE /payments/{id}`) را عیناً پیاده نکن. اول task نیازمندی `<PREFIX>-00` آن milestone انجام و تأیید شود.
 - تعارض: بخش مرجع برنده است. اگر هنوز مبهم بود → ثبت در `DECISIONS.md` و پرسیدن از کاربر.
 - `sources/backend-roadmap-fastapi.md` نقشه راه قدیمی است (مرحله ۰ و ۱ آن انجام شده). فقط مرجع جزئیات؛ نقشه راه معتبر `docs/project/ROADMAP.md` است.
 
@@ -116,10 +117,42 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 
 فایل‌های برنامه‌ریزی، مراحل هر task، قواعد تغییر برنامه و نگاشت درخواست‌های رایج («کجاییم؟»، «قدم بعدی؟» و…) در [docs/project/WORKFLOW.md](docs/project/WORKFLOW.md) هستند. بدون validation هرگز COMPLETE نزن و به درخواست‌های وضعیت همیشه از فایل‌ها جواب بده.
 
-- هر task قبل از اجرا plan تأییدشده توسط کاربر لازم دارد.
+- هر task قبل از اجرا plan لازم دارد (تأیید کاربر طبق قواعد AUTOPILOT در Speed mode).
 - هر فایل task یک خط `Level: LOW|MEDIUM|HIGH` دارد.
 - HIGH شامل این موارد است: موجودی/رزرو، پرداخت، OTP/token/auth، ویرایش PRD، تغییر رفتار API، و هر task که مبلغ پولی، موجودی، مصرف کد تخفیف یا وضعیت سفارش/پرداخت را محاسبه یا ذخیره کند. plan این taskها باید ریسک‌ها، مراحل rollback و تست‌های اضافه را هم فهرست کند.
 - بعد از هر `/done`، شاخه فعلی push شود (`git push`، بدون force).
+
+### Batch mode (`/batch`، جزئیات در `.claude/commands/batch.md`)
+
+- پیشنهاد: ۳ تا ۵ task مرتبط و بعدی از milestone جاری، جمعاً حداکثر ~8h (اگر هیچ task HIGH نباشد حداکثر ~12h و کاربر مستقیم با «ok» تأیید می‌کند)، با **یک** plan مشترک. برای هر task با Level HIGH، ریسک‌ها، rollback و تست‌های اضافه جداگانه نوشته شود. تا تأیید صبر کن.
+- بعد از تأیید، برای هر task به ترتیب:
+  1. پیاده‌سازی
+  2. pytest، ruff و mypy
+  3. self-review diff در برابر معیارهای پذیرش و قوانین CLAUDE.md
+  4. به‌روزرسانی فایل task و PROGRESS.md
+  5. commit و push
+
+  سپس بدون صبر برو سراغ task بعدی.
+- **توقف فوری** وقتی یکی از این‌ها پیش بیاید: تستی با علت نامشخص fail شود؛ تصمیم باز یا ابهام در PRD پیدا شود؛ کاری خارج از plan تأییدشده لازم شود؛ تغییر schema یا migration برنامه‌ریزی‌نشده لازم شود.
+- **هرگز batch نشوند:** taskهای `PAY-*` و taskهای رزرو، commit یا release موجودی. هر کدام در یک جلسه جدا انجام می‌شود.
+- پایان batch: یک گزارش واحد شامل یک خط برای هر task (ID، وضعیت، commit، تست‌ها)، جمع کل و پیشنهاد batch بعدی، به‌همراه نتیجه CI.
+
+### Phase mode (`/phase`، جزئیات در `.claude/commands/phase.md`؛ ADR-037)
+
+- batchها را پشت هم اجرا می‌کند تا فاز COMPLETE شود یا یکی از شرط‌های توقف batch پیش بیاید. همه قواعد batch و AUTOPILOT ثابت‌اند.
+- سقف جلسه ۴ batch؛ سپس گزارش و کاربر /clear + /phase می‌زند.
+- دروازه فاز (خودکار وقتی همه taskهای فاز COMPLETE شدند): PR به `master` (tasks، ADRها، تغییرات PRD، migrationها، تعداد تست) → CI با staging موقت و smoke (OPS-08) → merge فقط توسط کاربر → CD: image در GHCR با tag `<sha>` و `phase-N` (OPS-09) و git tag `phase-N` → شاخه فاز بعد از `master`.
+- استقرار روی سرور staging/production فقط در فاز ۵ (D13) با environment تأیید دستی.
+
+### Speed mode
+
+- CI: بعد از هر push، run همان commit را با `gh run watch <id> --exit-status` دنبال کن (`gh` روی PATH نیست: `& "C:\Program Files\GitHub CLI\gh.exe"`). سبز = pass؛ قرمز = توقف و گزارش step شکست‌خورده.
+- **AUTOPILOT (2026-10-10):** plan هیچ batch یا task، حتی HIGH، منتظر تأیید نمی‌ماند، مگر: `PAY-*`، رزرو/commit/release موجودی، تغییر scope در PRD، dependency بیرونی جدید یا ابهام در PRD. در این موارد توقف کن و plan را بفرست.
+- هر task HIGH: plan با [REVIEW-CHECKLIST.md](docs/project/REVIEW-CHECKLIST.md) چک می‌شود. سپس یک subagent بازبین مستقل plan و diff نهایی را در برابر همان فهرست بررسی می‌کند. یافته‌ها قبل از commit رفع می‌شوند و نتیجه بازبینی در Log فایل task ثبت می‌شود.
+- milestone: در شروع هر milestone یک plan واحد (≤۶۰ خط؛ برای هر task: scope، level و ریسک‌های کلیدی) یک‌بار برای کاربر فرستاده می‌شود. بعد از آن همه batchهای آن milestone بدون تأیید دوباره اجرا می‌شوند.
+- زنجیره: اگر batch کامل شد و CI سبز بود، batch بعدی خودکار شروع می‌شود. حداکثر ۴ batch در هر جلسه، سپس گزارش و «آماده برای /clear».
+- مجوزها در `.claude/settings.json` (allow/deny) تعریف شده‌اند.
+- PR فاز ۲ در پایان فاز ساخته می‌شود (PR #4 بسته شد، شاخه حفظ شد).
 
 ## ارتباط با کاربر
 
@@ -130,11 +163,11 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 1. CLAUDE.md خودکار بارگذاری می‌شود؛ دوباره نخوان.
 2. شروع جلسه: فقط بخش «Current / Next» در `docs/project/PROGRESS.md` و فایل task فعلی. ROADMAP و PLAN فقط هنگام تغییر فاز یا درخواست کاربر.
 3. PRD: فقط grep و خواندن همان بخش؛ هرگز کل فایل.
-4. هر جلسه یک task. بعد از اتمام و commit بگو «آماده برای /clear».
+4. هر جلسه یک task (استثنا: `/batch`). بعد از اتمام و commit بگو «آماده برای /clear».
 5. تست و lint با خروجی کم (`pytest -q`)؛ فقط خطاها را نشان بده.
 6. فایل کامل را در پاسخ تکرار نکن؛ فقط خلاصه diff.
 7. اصطلاح جدید فقط بار اول و در یک خط توضیح داده شود.
-8. سؤال‌ها را جمع کن و یک‌جا در آخر بپرس.
+8. سؤال‌ها را جمع کن و یک‌جا در آخر بپرس. سؤال کم‌اثر را نپرس: با پیشنهاد خودت تصمیم بگیر و در `DECISIONS.md` ثبت کن. فقط سؤال‌های امنیت، پول، از دست رفتن داده یا محدوده PRD پرسیده شوند.
 9. هر گزارش با این هدر (متن ساده، بدون emoji) شروع شود و کل گزارش حداکثر ۱۰ خط باشد:
    ```
    موقعیت: فاز › milestone › task — وضعیت

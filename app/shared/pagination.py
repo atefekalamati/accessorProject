@@ -33,6 +33,9 @@ from typing import Annotated, Any
 
 from fastapi import Query, Request
 from pydantic import BaseModel
+from sqlalchemy import ColumnElement, Select, UnaryExpression, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import QueryableAttribute
 
 from app.core.errors import BadRequestError
 
@@ -40,6 +43,8 @@ PUBLIC_DEFAULT_LIMIT = 24
 PUBLIC_MAX_LIMIT = 48
 ADMIN_DEFAULT_LIMIT = 20
 ADMIN_MAX_LIMIT = 100
+# Any SELECT, whatever its row shape (SQLAlchemy 2.1 types ``Select`` by its columns).
+AnySelect = Select[*tuple[Any, ...]]
 # Deep OFFSETs are expensive; the PRD requires page to be bounded as well as limit.
 MAX_PAGE = 1000
 
@@ -137,3 +142,30 @@ def allowed_query_params(*names: str) -> Callable[[Request], Any]:
             raise _not_allowed(*((f"query.{name}", "Unknown parameter") for name in unknown))
 
     return dependency
+
+
+async def paginate(
+    session: AsyncSession,
+    statement: AnySelect,
+    order_by: Sequence[UnaryExpression[Any] | ColumnElement[Any]],
+    *,
+    tie_breaker: ColumnElement[Any] | QueryableAttribute[Any],
+    params: PageParams,
+) -> tuple[list[Any], int]:
+    """Run one page of ``statement`` and the total count of its rows (two queries).
+
+    ``tie_breaker`` (a unique column, e.g. ``Product.id``) is appended to ``order_by`` so
+    rows that tie on the sort key keep one order on every page: no row repeats or goes
+    missing between pages as long as the data does not change.
+    """
+    total = await session.scalar(
+        select(func.count()).select_from(statement.order_by(None).subquery())
+    )
+    page = statement.order_by(*order_by, tie_breaker).offset(params.offset).limit(params.limit)
+    rows = (await session.execute(page)).all()
+    return list(rows), int(total or 0)
+
+
+def escape_like(value: str) -> str:
+    """Escape LIKE wildcards so user search text matches literally (use ``escape="\\"``)."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")

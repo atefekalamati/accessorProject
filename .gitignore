@@ -13,3 +13,5 @@ build/
 .idea/
 .vscode/
 
+var/
+.env.staging

@@ -82,3 +82,91 @@ def test_asyncpg_database_driver_is_required() -> None:
         Settings(
             **{**BASE_SETTINGS, "database_url": "postgresql://localhost/project_ak"},
         )
+
+
+PRODUCTION_SETTINGS: dict[str, Any] = {
+    **BASE_SETTINGS,
+    "environment": "production",
+    "cors_origins": "https://shop.example.com",
+    "otp_mock_enabled": False,
+    # Production requires https media on an allowed host (ADR-028).
+    "media_public_base_url": "https://cdn.example.com/media",
+    "media_allowed_hosts": "cdn.example.com",
+}
+OTP_HASH_SECRET = "test-otp-hash-secret-at-least-32-characters"
+
+
+def test_otp_hash_secret_is_accepted_in_production() -> None:
+    settings = Settings(**PRODUCTION_SETTINGS, otp_hash_secret=OTP_HASH_SECRET)
+
+    assert settings.otp_hash_secret is not None
+    assert settings.otp_hash_secret.get_secret_value() == OTP_HASH_SECRET
+
+
+def test_missing_otp_hash_secret_fails_production_startup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("OTP_HASH_SECRET", raising=False)
+    monkeypatch.setenv("DATABASE_URL", BASE_SETTINGS["database_url"])
+    monkeypatch.setenv("JWT_SECRET", BASE_SETTINGS["jwt_secret"])
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("CORS_ORIGINS", "https://shop.example.com")
+    monkeypatch.setenv("OTP_MOCK_ENABLED", "false")
+
+    with pytest.raises(ValidationError, match="OTP_HASH_SECRET is required in production"):
+        Settings(_env_file=None)
+
+
+@pytest.mark.parametrize("environment", ["production", "development"])
+def test_short_otp_hash_secret_is_rejected(environment: str) -> None:
+    with pytest.raises(ValidationError, match=r"otp_hash_secret\n.*at least 32"):
+        Settings(
+            **{**PRODUCTION_SETTINGS, "environment": environment},
+            otp_hash_secret="too-short",
+        )
+
+
+def test_otp_hash_secret_is_optional_outside_production(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("OTP_HASH_SECRET", raising=False)
+
+    settings = Settings(**BASE_SETTINGS, environment="development", _env_file=None)
+
+    assert settings.otp_hash_secret is None
+
+
+def test_mock_otp_fails_production_startup(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", BASE_SETTINGS["database_url"])
+    monkeypatch.setenv("JWT_SECRET", BASE_SETTINGS["jwt_secret"])
+    monkeypatch.setenv("OTP_HASH_SECRET", OTP_HASH_SECRET)
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("CORS_ORIGINS", "https://shop.example.com")
+    monkeypatch.setenv("OTP_MOCK_ENABLED", "true")
+
+    with pytest.raises(ValidationError, match="Mock OTP must be disabled in production"):
+        Settings(_env_file=None)
+
+
+def _production_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", BASE_SETTINGS["database_url"])
+    monkeypatch.setenv("OTP_HASH_SECRET", OTP_HASH_SECRET)
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("CORS_ORIGINS", "https://shop.example.com")
+    monkeypatch.setenv("OTP_MOCK_ENABLED", "false")
+
+
+def test_missing_jwt_secret_fails_production_startup(monkeypatch: pytest.MonkeyPatch) -> None:
+    _production_env(monkeypatch)
+    monkeypatch.delenv("JWT_SECRET", raising=False)
+
+    with pytest.raises(ValidationError, match=r"jwt_secret\n.*Field required"):
+        Settings(_env_file=None)
+
+
+def test_short_jwt_secret_fails_production_startup(monkeypatch: pytest.MonkeyPatch) -> None:
+    _production_env(monkeypatch)
+    monkeypatch.setenv("JWT_SECRET", "x" * 31)
+
+    with pytest.raises(ValidationError, match=r"jwt_secret\n.*at least 32"):
+        Settings(_env_file=None)

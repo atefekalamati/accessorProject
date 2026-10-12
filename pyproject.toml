@@ -12,11 +12,17 @@ dependencies = [
   "alembic>=1.13,<2.0",
   "asyncpg>=0.29,<1.0",
   "bcrypt>=4.0,<5.0",
+  # Profile email syntax validation (AUTH-09); deliverability/DNS checks stay off.
+  "email-validator>=2.3,<3.0",
   "fastapi>=0.115,<1.0",
   "passlib[bcrypt]>=1.7.4,<2.0",
+  # Image validation, dimension checks and re-encoding that strips EXIF (CAT-05, ADR-024).
+  "pillow>=12.3,<13.0",
   "pydantic>=2.9,<3.0",
   "pydantic-settings>=2.5,<3.0",
   "PyJWT>=2.9,<3.0",
+  # multipart/form-data parsing for media uploads (CAT-05, ADR-028); 0.0.x moves fast.
+  "python-multipart>=0.0.32,<0.1",
   "sqlalchemy[asyncio]>=2.0.35,<3.0",
   "uvicorn[standard]>=0.30,<1.0",
 ]
@@ -27,14 +33,18 @@ dev = [
   "mypy>=1.11,<2.0",
   "pytest>=8.3,<9.0",
   "pytest-asyncio>=0.24,<1.0",
+  # Runs the suite in parallel, one database per worker (tests/conftest.py).
+  "pytest-xdist>=3.6,<4.0",
   "ruff>=0.7,<1.0",
+  # Generates and drift-checks requirements*.lock (SEC-06).
+  "uv>=0.13,<0.14",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
 
 [tool.pytest.ini_options]
-addopts = "-ra --strict-config --strict-markers"
+addopts = "-ra --strict-config --strict-markers -n auto"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [

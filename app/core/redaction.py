@@ -63,6 +63,18 @@ def mask_phone(text: str) -> str:
     return _PHONE.sub(lambda m: f"{m['prefix']}{m['head']}{REDACTED}{m['tail']}", text)
 
 
+def mask_email(email: str) -> str:
+    """Keep the first and last character of the local part: ``ali.r@x.com`` -> ``a***r@x.com``.
+
+    Not applied by ``redact``; callers that store an email (e.g. audit diffs) mask it.
+    """
+    local, at, domain = email.rpartition("@")
+    if not at or not local:
+        return REDACTED
+    tail = local[-1] if len(local) >= 3 else ""
+    return f"{local[0]}{REDACTED}{tail}@{domain}"
+
+
 def mask_text(text: str) -> str:
     """Mask secrets and phone numbers found by value inside free text."""
     text = _BEARER.sub(f"Bearer {REDACTED}", text)

@@ -60,13 +60,23 @@ Migration اولیه جدول‌های پایه، constraintها و seed نقش�
 
 ```powershell
 docker compose --profile test up -d --wait postgres-test
-$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:55432/project_ak_test"  # پورت = TEST_DB_HOST_PORT
+$env:TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@127.0.0.1:55432/project_ak_test"  # پورت = TEST_DB_HOST_PORT؛ 127.0.0.1 نه localhost (روی Windows ~5x کندتر)
 pytest
 docker compose --profile test stop postgres-test
 docker compose --profile test rm -f postgres-test
 ```
 
 این تست‌ها چرخه `upgrade -> downgrade -> upgrade` را اجرا می‌کنند. اگر نام دیتابیس در `TEST_DATABASE_URL` با `_test` تمام نشود، کل session تست قبل از اجرای هر تستی متوقف می‌شود (exit code 3). هرگز `TEST_DATABASE_URL` را به دیتابیس shared یا production متصل نکنید.
+
+## Secret scanning
+
+در CI، job `secret-scan` با gitleaks نسخه pin‌شده `8.30.1` (همراه با بررسی sha256) کل تاریخچه git را اسکن می‌کند. هر finding باعث fail شدن CI می‌شود. قوانین و allowlist در [`.gitleaks.toml`](.gitleaks.toml) هستند. هر مورد allowlist باید به یک fixture ساختگی مشخص محدود باشد و دلیل مکتوب داشته باشد.
+
+اجرای محلی (اختیاری، با Docker و همان نسخه):
+
+```powershell
+docker run --rm -v "${PWD}:/repo" -w /repo ghcr.io/gitleaks/gitleaks:v8.30.1 git --config .gitleaks.toml --redact --exit-code 1 -v .
+```
 
 ## مستندات API
 
