@@ -116,3 +116,75 @@ jobs:
               sys.exit(1)
           print("No skipped tests.")
           EOF
+
+  # Ephemeral staging (OPS-08, ADR-037): the built image on an empty database, migrated
+  # and seeded, then a smoke test. Throwaway secrets, generated here and never committed.
+  staging-smoke:
+    if: >-
+      github.event_name == 'pull_request'
+      || github.ref == 'refs/heads/master'
+      || startsWith(github.ref, 'refs/heads/feat/phase-')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    env:
+      APP_ENV_FILE: .env.staging
+      # Own project name: never shares containers or volumes with a dev stack.
+      COMPOSE: docker compose -p project-ak-staging --env-file .env.staging
+      SMOKE_MOBILE: "+989120000001"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Write the throwaway staging environment
+        run: |
+          umask 077
+          cat > .env.staging <<ENV
+          ENVIRONMENT=staging
+          JWT_SECRET=$(openssl rand -hex 32)
+          OTP_HASH_SECRET=$(openssl rand -hex 32)
+          OTP_MOCK_ENABLED=true
+          OTP_MOCK_CODE=123456
+          CORS_ORIGINS=http://localhost:3000
+          MEDIA_STORAGE=memory
+          MEDIA_PUBLIC_BASE_URL=http://localhost:8000/media
+          MEDIA_ALLOWED_HOSTS=localhost
+          RESERVATION_SWEEP_SECONDS=0
+          POSTGRES_DB=project_ak_staging
+          POSTGRES_USER=project_ak
+          POSTGRES_PASSWORD=$(openssl rand -hex 16)
+          DB_HOST_PORT=5432
+          API_HOST_PORT=8000
+          LOG_LEVEL=INFO
+          ENV
+
+      - name: Build the image and start the stack on an empty database
+        run: $COMPOSE up -d --build --wait
+
+      - name: Migrate and seed
+        run: |
+          $COMPOSE exec -T api alembic upgrade head
+          $COMPOSE exec -T api python -m app.db.seed
+
+      - name: Smoke - health, readiness, OTP login, catalog read
+        run: python3 scripts/smoke.py login --mobile "$SMOKE_MOBILE" --token-file "$RUNNER_TEMP/smoke-token"
+
+      - name: Promote the smoke user to super_admin
+        run: |
+          $COMPOSE exec -T -e SMOKE_MOBILE postgres             sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v mobile="$SMOKE_MOBILE"' <<'SQL'
+          INSERT INTO user_roles (user_id, role_id)
+          SELECT u.id, r.id FROM users u JOIN roles r ON r.name = 'super_admin'
+          WHERE u.phone = :'mobile';
+          SQL
+
+      - name: Smoke - admin write
+        run: python3 scripts/smoke.py admin --token-file "$RUNNER_TEMP/smoke-token"
+
+      - name: API logs on failure
+        if: failure()
+        run: $COMPOSE logs --no-color api
+
+      - name: Tear down the throwaway stack
+        if: always()
+        run: $COMPOSE down -v --remove-orphans
+
