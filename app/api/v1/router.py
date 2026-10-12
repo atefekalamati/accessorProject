@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.modules.admin.router import router as admin_users_router
 from app.modules.auth.router import router as auth_router
 from app.modules.auth.router import users_router
+from app.modules.cart.router import router as cart_router
 from app.modules.catalog.admin_product_router import router as admin_products_router
 from app.modules.catalog.admin_router import router as admin_categories_router
 from app.modules.catalog.router import products_router
@@ -28,3 +29,4 @@ api_router.include_router(admin_media_router)
 api_router.include_router(admin_pricing_router)
 api_router.include_router(admin_prices_router)
 api_router.include_router(admin_inventory_router)
+api_router.include_router(cart_router)

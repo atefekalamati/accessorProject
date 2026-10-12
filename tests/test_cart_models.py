@@ -210,3 +210,19 @@ async def test_guest_cart_lookup_ignores_expired_and_closed_carts(
         later = now + GUEST_CART_TTL + timedelta(seconds=1)
         assert await repository.find_guest_cart(hash_cart_token(old), later) is None
         assert await repository.find_guest_cart(hash_cart_token(merged), now) is None
+
+
+@pytest.mark.integration
+async def test_user_cart_upsert_survives_generic_plans(
+    db_engine: AsyncEngine, make_account: MakeAccount
+) -> None:
+    """asyncpg switches to a generic plan after five runs of one statement; the
+    ON CONFLICT predicate must still match the partial index (literal, not a parameter)."""
+    account = await make_account("customer")
+    # One connection for the whole loop: asyncpg caches prepared statements per connection.
+    async with db_engine.connect() as connection, AsyncSession(bind=connection) as session:
+        ids = set()
+        for _ in range(8):
+            async with session.begin():
+                ids.add((await CartRepository(session).lock_user_cart(account.id)).id)
+    assert len(ids) == 1

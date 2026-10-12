@@ -3,7 +3,11 @@
 Every write to a cart runs under ``FOR UPDATE`` on its ``carts`` row, so two requests on
 one cart (two tabs, a double click) never interleave. Lock order for cart writes:
 cart → variant (read only) → nothing else; stock is read, never locked (adding to a cart
-reserves nothing, ADR-007).
+reserves nothing, ADR-007). The login merge (CART-04) locks the user cart, then the guest
+cart, always in that order.
+
+Accepted race: two concurrent cookie-less guest POSTs create two guest carts; the browser
+keeps the last cookie and the other cart is orphaned until it expires.
 """
 
 from __future__ import annotations
@@ -11,7 +15,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,7 +38,9 @@ class CartRepository:
             .values(user_id=user_id, status=CartStatus.ACTIVE)
             .on_conflict_do_nothing(
                 index_elements=["user_id"],
-                index_where=(Cart.status == CartStatus.ACTIVE) & Cart.user_id.is_not(None),
+                # A literal predicate: a bound parameter here stops PostgreSQL from matching
+                # the partial index once asyncpg switches to a generic plan.
+                index_where=text("status = 'active' AND user_id IS NOT NULL"),
             )
         )
         statement = (
@@ -45,8 +51,10 @@ class CartRepository:
         )
         return (await self._session.scalars(statement)).one()
 
-    async def find_user_cart(self, user_id: UUID) -> Cart | None:
+    async def find_user_cart(self, user_id: UUID, *, lock: bool = False) -> Cart | None:
         statement = select(Cart).where(Cart.user_id == user_id, Cart.status == CartStatus.ACTIVE)
+        if lock:
+            statement = statement.with_for_update().execution_options(populate_existing=True)
         return (await self._session.scalars(statement)).one_or_none()
 
     async def find_guest_cart(
@@ -77,6 +85,12 @@ class CartRepository:
 
     async def item(self, cart_id: UUID, item_id: UUID) -> CartItem | None:
         statement = select(CartItem).where(CartItem.id == item_id, CartItem.cart_id == cart_id)
+        return (await self._session.scalars(statement)).one_or_none()
+
+    async def item_for_variant(self, cart_id: UUID, variant_id: UUID) -> CartItem | None:
+        statement = select(CartItem).where(
+            CartItem.cart_id == cart_id, CartItem.variant_id == variant_id
+        )
         return (await self._session.scalars(statement)).one_or_none()
 
     async def line_count(self, cart_id: UUID) -> int:

@@ -2,7 +2,7 @@ from collections.abc import Awaitable, Callable
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -69,6 +69,18 @@ async def get_current_user(
             message="Authentication required", headers={"WWW-Authenticate": "Bearer"}
         )
     return await service.authenticate(credentials.credentials)
+
+
+async def get_optional_user(
+    request: Request,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+    service: Annotated[AccessService, Depends(get_access_service)],
+) -> CurrentUser | None:
+    """None for an anonymous request; any Authorization header must authenticate (401
+    otherwise), so a bad token never falls back to acting as a guest."""
+    if "authorization" not in request.headers:
+        return None
+    return await get_current_user(credentials, service)
 
 
 def require_permission(key: str) -> Callable[[CurrentUser], Awaitable[CurrentUser]]:

@@ -404,10 +404,17 @@
 ### ADR-040 — سبد خرید: schema و API (CART-01، CART-02)
 - تاریخ: 2026-10-12
 - تصمیم‌های کم‌اثر (خودم؛ بازبینی subagent برای CART-02):
-  - `carts`: دقیقاً یکی از `user_id` و `token_hash` (CHECK)؛ `expires_at` فقط برای سبد مهمان (۳۰ روز از ایجاد)؛ status `active`، `merged`، `expired`؛ یک سبد active برای هر کاربر (partial unique)؛ `user_id` با CASCADE (سبد داده شخصی است). `cart_items`: FK مرکب variant+product با RESTRICT (variant فقط حذف نرم می‌شود)، qty `1..MAX_STOCK_QUANTITY`، یک خط برای هر variant.
+  - `carts`: دقیقاً یکی از `user_id` و `token_hash` (CHECK)؛ `expires_at` فقط برای سبد مهمان، لغزنده: هر نوشتن موفق آن را `now + 30 روز` می‌کند و cookie دوباره set می‌شود؛ status `active`، `merged`، `expired`؛ یک سبد active برای هر کاربر (partial unique)؛ `user_id` با CASCADE (سبد داده شخصی است). `cart_items`: FK مرکب variant+product با RESTRICT (variant فقط حذف نرم می‌شود)، qty `1..MAX_STOCK_QUANTITY`، یک خط برای هر variant.
   - cookie `cart_token` فقط وقتی شکل token ما را دارد خوانده می‌شود؛ مقدار دیگر نادیده گرفته می‌شود (سبد جدید). با Bearer معتبر، سبد کاربر استفاده می‌شود و cookie نادیده گرفته می‌شود (ادغام در CART-04).
   - هر نوشتن روی سبد زیر `FOR UPDATE` ردیف cart؛ موجودی فقط خوانده می‌شود (رزرو نمی‌کند). موجودی آزاد مؤثر = همان قاعده CAT-07/INV-07 (انبار فعال، کسر نگه‌داشت منقضی).
   - خطاها: variant ناموجود، حذف‌شده، غیرفعال، بی‌قیمت یا محصول غیرمنتشر/حذف‌شده → 404 (مثل read عمومی)؛ `is_purchasable = false` → 422؛ تعداد بیش از موجودی آزاد → 409 `INSUFFICIENT_STOCK`؛ خط پنجاه‌ویکم → 422؛ خط سبد دیگری → 404. افزودن variant موجود در سبد تعداد را جمع می‌کند.
+  - این نگاشت عمداً با reserve (ADR-036، همه 422) فرق دارد: سبد مثل read عمومی رفتار می‌کند؛ ORD-03/ORD-04 از ADR-036 پیروی می‌کنند.
+  - `POST` با variant موجود همان خط را جمع می‌کند و 201 می‌دهد. سقف ۵۰ خط بعد از lock سبد شمرده می‌شود و فقط برای خط جدید اعمال می‌شود. 409 هیچ عددی از موجودی ندارد (نه در details، نه در message).
+  - `PATCH`: کاهش همیشه مجاز است (بدون بررسی موجودی یا وضعیت variant)؛ افزایش variant قابل‌فروش و موجودی کافی می‌خواهد؛ خطی که variantش دیگر عمومی نیست هنگام افزایش 422 با `details.type = variant_unavailable` می‌گیرد. `DELETE` همیشه کار می‌کند.
+  - هویت: هر header `Authorization` (حتی غیر Bearer یا خالی) باید معتبر باشد وگرنه 401؛ هرگز به مهمان برنمی‌گردد. کاربر مسدود 403. Bearer معتبر + cookie: سبد کاربر، بدون Set-Cookie. PATCH/DELETE مهمان یا کاربر بدون سبد → 404 بدون ساخت سبد. cookie سبد بسته یا منقضی → سبد و token جدید (هرگز hash قدیمی دوباره درج نمی‌شود).
+  - CSRF: درخواست cross-site با content type ساده (فرم) به endpoint نمی‌رسد (400، بدون سبد و cookie)؛ JSON cross-site را CORS با allowlist می‌بندد.
+  - ترتیب lock ادغام (CART-04): سبد کاربر → سبد مهمان. race پذیرفته: دو POST همزمان مهمان بدون cookie دو سبد می‌سازند و یکی تا انقضا یتیم می‌ماند.
+  - `ON CONFLICT` روی partial unique با predicate متنی (نه پارامتر): asyncpg بعد از پنج اجرا به generic plan می‌رود و predicate پارامتری دیگر با index تطبیق نمی‌خورد (تست regression).
 - پیامدها: CART-02..05، ORD-03، ORD-04.
 
 ### تصمیم‌های deferred
