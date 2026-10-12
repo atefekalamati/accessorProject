@@ -375,6 +375,16 @@
 - استقرار روی سرور staging یا production فقط در فاز ۵ (D13، OPS-04) با environment تأیید دستی.
 - پیامدها: OPS-08، OPS-09، دروازه فاز ۲، `.claude/commands/phase.md`.
 
+### ADR-038 — endpointهای ادمین موجودی (INV-08)
+- تاریخ: 2026-10-12
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی subagent):
+  - مجوز: `GET`ها با `inventory:read` یا `inventory:update` (PRD فقط `inventory:update` را نام می‌برد؛ `inventory:read` از seed AUTH-02 موجود بود و فقط admin و super_admin هر دو را دارند)؛ `PATCH` فقط `inventory:update`. اول authorization، بعد validation. همه پاسخ‌ها `no-store`.
+  - `GET /admin/inventory`: یک ردیف برای هر تنوع حذف‌نشده از محصول حذف‌نشده (هر وضعیت انتشار). موجودی در SQL با همان قواعد `stock.py`: فقط انبار فعال (داخل subquery گروهی که LEFT JOIN می‌شود)، reserved هر آیتم `GREATEST(0, reserved − نگه‌داشت منقضی)`، threshold جمع می‌شود، تنوع بدون آیتم → صفر و `out_of_stock`. فیلترها `q` (SKU یا عنوان؛ wildcardها escape)، `product_id`، `stock_status`؛ sort `sku` (پیش‌فرض)، `free_asc`، `free_desc`، `updated` (NULLS LAST)؛ tie-break `variant_id`.
+  - `PATCH /admin/inventory/{variant_id}`: بدنه `adjustment_type` + `quantity` (با هم)، `low_stock_threshold`، `reason` (همیشه اجباری)، `expected_total` اختیاری. همه int strict در `0..MAX` (bool، float، رشته → 400). فیلدهای سیستمی ردیف لیست (`total`، `reserved`، `free`، `stock_status`، …) حذف و نادیده گرفته می‌شوند. `expected_total` محافظ ارسال دوباره است (افزوده نسبت به PRD): نابرابر با total زیر lock → 409 `CONFLICT` با `details.type = stale_total`، بدون movement و audit. threshold فقط audit `inventory.threshold_updated` دارد (شمارنده نیست، movement ندارد). همه در یک تراکنش با ترتیب lock ADR-034؛ پاسخ زیر همان lock خوانده می‌شود. threshold روی تنوع بی‌آیتم آیتم با total صفر می‌سازد (حتی وقتی چیزی تغییر نکند، مثل correction no-op در ADR-034). `expected_total` با total انبار پیش‌فرض مقایسه می‌شود که در v1 همان total ردیف است؛ چندانباره باید آن را بازبینی کند. بدنه JSON خراب بدون token → 400 (FastAPI بدنه را قبل از dependencyها parse می‌کند؛ مثل بقیه PATCHهای ادمین).
+  - `GET /admin/inventory/reservations`: فیلتر `status`، `order_id`، `variant_id` (EXISTS). وضعیت نمایشی مستقل از job: active با `expires_at ≤ now` → `expired`؛ آیتم active همان رزرو هم `expired` نمایش داده می‌شود. آیتم‌ها با یک query دوم (بدون N+1).
+  - `GET /admin/inventory/{variant_id}/history`: movementهای همه انبارها، `created_at desc, id desc`. variant حذف‌شده دیده می‌شود (مثل ADR-030)؛ تنوع بی‌آیتم → 200 خالی؛ ناموجود → 404. ریسک پذیرفته: دو movement یک تراکنش (آزادسازی تنبل و سپس اصلاح) ممکن است `created_at` برابر داشته باشند و ترتیب نسبی‌شان با `id` تصادفی است؛ ستون `seq` به migration نیاز دارد و به بعد موکول شد.
+- پیامدها: INV-08، INV-09، ADM-* (پنل).
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 

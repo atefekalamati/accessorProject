@@ -23,7 +23,7 @@ from app.core.errors import (
     NotFoundError,
 )
 from app.core.time import utc_now
-from app.db.models import MovementType
+from app.db.models import InventoryItem, MovementType
 from app.db.models.inventory import MAX_MOVEMENT_REASON_LENGTH
 from app.modules.inventory.holds import release_expired_holds
 from app.modules.inventory.movements import Counters, record_movement
@@ -60,12 +60,12 @@ def _invalid(field: str, message: str) -> BadRequestError:
     )
 
 
-def _check_quantity(kind: AdjustmentType, quantity: object) -> int:
+def _check_quantity(kind: AdjustmentType, quantity: object, field: str = "quantity") -> int:
     minimum = 0 if kind is AdjustmentType.CORRECTION else 1
     if isinstance(quantity, bool) or not isinstance(quantity, int):
-        raise _invalid("quantity", "Must be an integer")
+        raise _invalid(field, "Must be an integer")
     if not minimum <= quantity <= MAX_STOCK_QUANTITY:
-        raise _invalid("quantity", f"Must be between {minimum} and {MAX_STOCK_QUANTITY}")
+        raise _invalid(field, f"Must be between {minimum} and {MAX_STOCK_QUANTITY}")
     return quantity
 
 
@@ -118,46 +118,117 @@ class InventoryService:
         quantity = _check_quantity(kind, quantity)
         reason = _check_reason(reason)
         async with self._session.begin():
-            product_id = await self._repository.variant_product_id(variant_id)
-            if product_id is None:
-                raise NotFoundError(message="Variant not found")
-            item = await self._repository.lock_default_item(variant_id, product_id)
-            # Units of expired reservations are free again, job or not (ADR-036).
-            await release_expired_holds(self._session, [item], now or utc_now())
-            before = Counters.of(item)
-            total = _new_total(kind, before, quantity)
-            if total == before.total:
-                # Only a correction to the current count gets here: nothing to record.
-                return AdjustmentResult(item.id, variant_id, before.total, before.reserved, None)
-            item.total_quantity = total
-            await self._session.flush()
-            movement = await record_movement(
-                self._session,
-                item,
-                movement_type=MovementType(kind.value),
-                quantity=abs(total - before.total),
-                before=before,
-                actor_id=actor_id,
-                reason=reason,
+            item = await self._lock_item(variant_id, now)
+            result = await self._adjust_locked(
+                item, actor_id, kind, quantity, reason, audit_request
             )
+        if result.movement_id is not None:
+            logger.info(
+                "inventory.adjusted",
+                extra={"variant_id": str(variant_id), "type": kind.value, "total": result.total},
+            )
+        return result
+
+    async def apply_update(
+        self,
+        *,
+        actor_id: UUID | None,
+        variant_id: UUID,
+        adjustment: tuple[AdjustmentType, int] | None,
+        low_stock_threshold: int | None,
+        reason: str,
+        expected_total: int | None = None,
+        audit_request: Request | None = None,
+        now: datetime | None = None,
+    ) -> AdjustmentResult:
+        """The admin PATCH (INV-08): an adjustment and/or a new threshold.
+
+        Runs in the caller's transaction, so the caller can read the result back under the
+        same row lock. ``expected_total`` is compared under the lock, before any change, with
+        the default-warehouse total (the only warehouse in v1, ADR-005).
+        """
+        reason = _check_reason(reason)
+        if adjustment is not None:
+            adjustment = (adjustment[0], _check_quantity(*adjustment))
+        if low_stock_threshold is not None:
+            low_stock_threshold = _check_quantity(
+                AdjustmentType.CORRECTION, low_stock_threshold, "low_stock_threshold"
+            )
+        item = await self._lock_item(variant_id, now)
+        if expected_total is not None and item.total_quantity != expected_total:
+            raise ConflictError(
+                message="Stock changed since it was read",
+                details=[{"field": "expected_total", "type": "stale_total"}],
+            )
+        if low_stock_threshold is not None and low_stock_threshold != item.low_stock_threshold:
+            before_threshold = item.low_stock_threshold
+            item.low_stock_threshold = low_stock_threshold
+            await self._session.flush()
             await record_audit(
                 self._session,
                 actor_id=actor_id,
-                action="inventory.adjusted",
+                action="inventory.threshold_updated",
                 entity_type="inventory_item",
                 entity_id=item.id,
-                before={"total_quantity": before.total},
-                after={
-                    "total_quantity": total,
-                    "adjustment_type": kind.value,
-                    "reason": reason,
-                    "movement_id": movement.id,
-                },
+                before={"low_stock_threshold": before_threshold},
+                after={"low_stock_threshold": low_stock_threshold, "reason": reason},
                 request=audit_request,
             )
-            result = AdjustmentResult(item.id, variant_id, total, before.reserved, movement.id)
-        logger.info(
-            "inventory.adjusted",
-            extra={"variant_id": str(variant_id), "type": kind.value, "total": total},
+        if adjustment is None:
+            counters = Counters.of(item)
+            return AdjustmentResult(item.id, variant_id, counters.total, counters.reserved, None)
+        return await self._adjust_locked(
+            item, actor_id, adjustment[0], adjustment[1], reason, audit_request
         )
-        return result
+
+    async def _lock_item(self, variant_id: UUID, now: datetime | None) -> InventoryItem:
+        """Lock order of every stock write: variant (SHARE) → item (UPDATE) (ADR-034)."""
+        product_id = await self._repository.variant_product_id(variant_id)
+        if product_id is None:
+            raise NotFoundError(message="Variant not found")
+        item = await self._repository.lock_default_item(variant_id, product_id)
+        # Units of expired reservations are free again, job or not (ADR-036).
+        await release_expired_holds(self._session, [item], now or utc_now())
+        return item
+
+    async def _adjust_locked(
+        self,
+        item: InventoryItem,
+        actor_id: UUID | None,
+        kind: AdjustmentType,
+        quantity: int,
+        reason: str,
+        audit_request: Request | None,
+    ) -> AdjustmentResult:
+        before = Counters.of(item)
+        total = _new_total(kind, before, quantity)
+        if total == before.total:
+            # Only a correction to the current count gets here: nothing to record.
+            return AdjustmentResult(item.id, item.variant_id, before.total, before.reserved, None)
+        item.total_quantity = total
+        await self._session.flush()
+        movement = await record_movement(
+            self._session,
+            item,
+            movement_type=MovementType(kind.value),
+            quantity=abs(total - before.total),
+            before=before,
+            actor_id=actor_id,
+            reason=reason,
+        )
+        await record_audit(
+            self._session,
+            actor_id=actor_id,
+            action="inventory.adjusted",
+            entity_type="inventory_item",
+            entity_id=item.id,
+            before={"total_quantity": before.total},
+            after={
+                "total_quantity": total,
+                "adjustment_type": kind.value,
+                "reason": reason,
+                "movement_id": movement.id,
+            },
+            request=audit_request,
+        )
+        return AdjustmentResult(item.id, item.variant_id, total, before.reserved, movement.id)

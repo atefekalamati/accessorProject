@@ -41,7 +41,7 @@ from app.modules.catalog.product_query import (
 )
 from app.modules.inventory.holds import expired_holds
 from app.modules.inventory.stock import StockLevel, variant_level
-from app.shared.pagination import PageParams, paginate
+from app.shared.pagination import PageParams, escape_like, paginate
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,10 +58,6 @@ class VariantSummary:
     max_price: int | None
 
 
-def _escape_like(value: str) -> str:
-    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-
-
 def _list_criteria(filters: ProductFilters) -> list[ColumnElement[bool]]:
     criteria: list[ColumnElement[bool]] = [not_deleted(Product)]
     if filters.status is not None:
@@ -69,7 +65,7 @@ def _list_criteria(filters: ProductFilters) -> list[ColumnElement[bool]]:
     if filters.category_id is not None:
         criteria.append(Product.category_id == filters.category_id)
     if filters.q is not None:
-        pattern = f"%{_escape_like(filters.q)}%"
+        pattern = f"%{escape_like(filters.q)}%"
         sku_match = (
             select(ProductVariant.id)
             .where(

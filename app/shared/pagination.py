@@ -164,3 +164,8 @@ async def paginate(
     page = statement.order_by(*order_by, tie_breaker).offset(params.offset).limit(params.limit)
     rows = (await session.execute(page)).all()
     return list(rows), int(total or 0)
+
+
+def escape_like(value: str) -> str:
+    """Escape LIKE wildcards so user search text matches literally (use ``escape="\\"``)."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")

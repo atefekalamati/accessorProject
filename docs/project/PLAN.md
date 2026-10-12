@@ -96,7 +96,7 @@
 | INV-05 | Commit / release services (idempotent, internal) | COMPLETE | HIGH | HIGH | 3 | INV-04, ADR-008 | expired → 409 RESERVATION_EXPIRED |
 | INV-06 | Expiry release job / lazy release | COMPLETE | HIGH | HIGH | 3 | INV-05 | expired reservations free stock |
 | INV-07 | GET /products/{id}/availability | COMPLETE | MEDIUM | HIGH | 2 | INV-03, CAT-08 | in/low/out status; SD rule (test) |
-| INV-08 | Admin inventory endpoints (list, patch, reservations, history) | NOT_STARTED | MEDIUM | HIGH | 4 | INV-02, AUTH-10 | inventory:update enforced |
+| INV-08 | Admin inventory endpoints (list, patch, reservations, history) | COMPLETE | MEDIUM | HIGH | 4 | INV-02, AUTH-10 | inventory:update enforced |
 | INV-09 | Concurrency test: no oversell | NOT_STARTED | HIGH | HIGH | 3 | INV-04 | parallel buyers never go negative |
 
 ### M2.4 Pricing & tax — PRD «قیمت و مالیات» ✓
