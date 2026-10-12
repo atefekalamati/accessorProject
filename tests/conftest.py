@@ -95,6 +95,8 @@ def settings() -> Settings:
         media_storage=MediaStorage.MEMORY,
         media_public_base_url="https://cdn.example.com/media",
         media_allowed_hosts=["cdn.example.com"],
+        # Tests sweep explicitly (tests/test_reservation_jobs.py).
+        reservation_sweep_seconds=0,
     )
 
 

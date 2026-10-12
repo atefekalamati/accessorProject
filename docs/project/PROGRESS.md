@@ -4,24 +4,24 @@
 
 ## Current / Next
 - **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
-- **Current Task:** INV-06 (batch ۳ جلسه). INV-05 COMPLETE (batch ۲)؛ INF-07 COMPLETE (batch ۱).
+- **Current Task:** —. INV-06، INV-05 و INF-07 COMPLETE (۳ batch جلسه؛ سقف جلسه پر شد).
 - **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 63/146 task COMPLETE · وزنی 38.6% (161.5h / 418h) · MVP 58.6%
+- **Progress:** 64/146 task COMPLETE · وزنی 39.4% (164.5h / 418h) · MVP 59.7%
 - **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** INV-06 (job انقضا)، batch جدا با بازبین (plan در `INV-04-reservation-reserve.md`). سپس INV-08، INV-09، PRC-06.
+- **Next Action:** جلسه بعد: INV-08 (admin inventory)، INV-09 (تست همزمانی no-oversell)، PRC-06 (تست‌های قیمت)؛ می‌توانند یک batch باشند (بدون رزرو/commit/release).
 - **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**38.6%** = 161.5h COMPLETE / 418h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**39.4%** = 164.5h COMPLETE / 418h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | IN_PROGRESS | 137h | 124h | 90.5% | 2026-12-07 |
+| 2 Core domain | IN_PROGRESS | 137h | 127h | 92.7% | 2026-12-07 |
 | 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
@@ -33,6 +33,7 @@
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-12: INV-06 (job انقضای رزرو: advisory lock تراکنشی، SKIP LOCKED و lock_timeout، keyset؛ loop در lifespan با `RESERVATION_SWEEP_SECONDS`؛ ADR-036).
 - 2026-10-12: INV-05 (commit/release داخلی و idempotent؛ commit منقضی → `EXPIRED` با آزادسازی و 409 `RESERVATION_EXPIRED`؛ اصلاح رقابت re-reserve/commit؛ ADR-036).
 - 2026-10-12: INF-07 (pytest-xdist با `-n auto`، یک دیتابیس `<base>_<gwN>_test` برای هر worker؛ suite محلی 5:25 → 2:38).
 - 2026-10-12: INV-04 (رزرو: schema، reserve همزمان‌امن و idempotent، انقضای مستقل از job در همه نماها؛ ADR-036).
@@ -184,6 +185,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-12 — INV-06 COMPLETE (batch ۳ جلسه)
+- job انقضا؛ ۱۹ تست شامل رقابت با commit، release و sweep همزمان. بازبینی plan و diff: APPROVE WITH CHANGES، اعمال شد. CI INV-05 سبز (86s).
+
 ### 2026-10-12 — INV-05 COMPLETE (batch ۲ جلسه)
 - commit/release با ترتیب lock یکسان؛ ۲۲ تست جدید شامل ۶ رقابت. بازبینی plan: APPROVE WITH CHANGES (اعمال شد، یک race در reserve INV-04 هم بسته شد)؛ diff: APPROVE. CI INF-07 سبز (98s).
 

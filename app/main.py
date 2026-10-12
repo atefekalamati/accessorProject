@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +16,7 @@ from app.core.errors import ErrorResponse, register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
 from app.db.session import create_database_engine, create_session_factory
+from app.modules.inventory.jobs import run_sweeper
 from app.shared.database.router import dev_router, readiness_router
 from app.shared.health.router import router as health_router
 from app.shared.storage import create_file_storage
@@ -38,8 +40,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         engine = create_database_engine(app_settings)
         app.state.db_engine = engine
         app.state.session_factory = create_session_factory(engine)
-        yield
-        await engine.dispose()
+        sweeper: asyncio.Task[None] | None = None
+        if app_settings.reservation_sweep_seconds > 0:
+            sweeper = asyncio.create_task(
+                run_sweeper(engine, app_settings.reservation_sweep_seconds),
+                name="reservation-sweeper",
+            )
+        app.state.reservation_sweeper = sweeper
+        try:
+            yield
+        finally:
+            if sweeper is not None:
+                sweeper.cancel()
+                with suppress(asyncio.CancelledError):
+                    await sweeper
+            await engine.dispose()
 
     application = FastAPI(
         title=app_settings.app_name,

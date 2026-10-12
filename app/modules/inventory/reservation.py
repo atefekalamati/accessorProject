@@ -1,5 +1,6 @@
-"""Stock reservations for orders: reserve (INV-04), commit and release (INV-05); INV-06 adds
-the cleanup job. PRD «موجودی و رزرو» ✓, ADR-007, ADR-029, ADR-034, ADR-036.
+"""Stock reservations for orders: reserve (INV-04), commit and release (INV-05), and
+``expire`` for the cleanup job (INV-06, ``jobs.py``).
+PRD «موجودی و رزرو» ✓, ADR-007, ADR-029, ADR-034, ADR-036.
 
 Rules:
 - A reservation is valid in ``[created, expires_at)``. Once ``expires_at <= now`` it holds
@@ -283,7 +284,7 @@ class ReservationService:
         """
         if not self._session.in_transaction():
             raise RuntimeError("commit() must run inside the caller's transaction")
-        reservation, items, held = await self._lock_reservation(reservation_id)
+        reservation, items, held = await self._locked(reservation_id)
         # After the lock wait: a commit that waited must not pass an expiry meanwhile.
         now = now or utc_now()
 
@@ -348,7 +349,7 @@ class ReservationService:
                     }
                 ],
             )
-        reservation, items, held = await self._lock_reservation(reservation_id)
+        reservation, items, held = await self._locked(reservation_id)
         now = now or utc_now()
 
         if reservation.status == ReservationStatus.COMMITTED:
@@ -373,15 +374,47 @@ class ReservationService:
         )
         return ReleaseResult(reservation.id, ReleaseOutcome.RELEASED)
 
+    async def expire(self, reservation_id: UUID, *, now: datetime | None = None) -> bool:
+        """Close one expired reservation for the cleanup job (INV-06); True if closed.
+
+        Never raises for a state it finds; it skips (False) a reservation that is gone,
+        no longer active or not yet expired, and one whose row another transaction holds.
+        Item locks are waited for (the job bounds that wait with ``lock_timeout``).
+        Correctness never depends on this running (ADR-036).
+        """
+        if not self._session.in_transaction():
+            raise RuntimeError("expire() must run inside the caller's transaction")
+        try:
+            locked = await self._lock_reservation(reservation_id, skip_locked=True)
+        except NotFoundError:
+            return False
+        if locked is None:
+            return False
+        reservation, items, held = locked
+        now = now or utc_now()
+        if reservation.status != ReservationStatus.ACTIVE or now < reservation.expires_at:
+            return False
+        for line in held:
+            if line.status == ReservationItemStatus.ACTIVE:
+                await release_item(
+                    self._session, items[line.inventory_item_id], line, now, EXPIRED_REASON
+                )
+        await self._close(reservation, ReservationStatus.EXPIRED, now, actor_id=None)
+        return True
+
     # --- helpers -----------------------------------------------------------------------
 
     async def _lock_reservation(
-        self, reservation_id: UUID
-    ) -> tuple[InventoryReservation, dict[UUID, InventoryItem], list[InventoryReservationItem]]:
+        self, reservation_id: UUID, *, skip_locked: bool = False
+    ) -> (
+        tuple[InventoryReservation, dict[UUID, InventoryItem], list[InventoryReservationItem]]
+        | None
+    ):
         """Lock a reservation's inventory items, then its row, in the ADR-036 order.
 
         A reservation's set of items never changes, so reading it before the locks is
-        safe; everything else is read again after them.
+        safe; everything else is read again after them. With ``skip_locked`` (the cleanup
+        job) a reservation row another transaction holds is skipped: ``None``.
         """
         item_ids = await self._item_ids_of(reservation_id)
         if not item_ids:
@@ -398,10 +431,12 @@ class ReservationService:
         reservation = await self._session.scalar(
             select(InventoryReservation)
             .where(InventoryReservation.id == reservation_id)
-            .with_for_update()
+            .with_for_update(skip_locked=skip_locked)
             .execution_options(populate_existing=True)
         )
         if reservation is None:
+            if skip_locked:
+                return None
             raise NotFoundError(message="Reservation not found")
         held = list(
             await self._session.scalars(
@@ -412,6 +447,13 @@ class ReservationService:
             )
         )
         return reservation, items, held
+
+    async def _locked(
+        self, reservation_id: UUID
+    ) -> tuple[InventoryReservation, dict[UUID, InventoryItem], list[InventoryReservationItem]]:
+        locked = await self._lock_reservation(reservation_id)
+        assert locked is not None  # only skip_locked returns None
+        return locked
 
     async def _close(
         self,

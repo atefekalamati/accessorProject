@@ -94,7 +94,7 @@
 | INV-03 | Pure free-stock & stock-status functions | COMPLETE | HIGH | HIGH | 2 | INV-01 | free = total − active reservations |
 | INV-04 | Reservation models + reserve service (row lock), used by POST /orders | COMPLETE | HIGH | HIGH | 5 | INV-03, ADR-007 | 15-min; SELECT … FOR UPDATE |
 | INV-05 | Commit / release services (idempotent, internal) | COMPLETE | HIGH | HIGH | 3 | INV-04, ADR-008 | expired → 409 RESERVATION_EXPIRED |
-| INV-06 | Expiry release job / lazy release | NOT_STARTED | HIGH | HIGH | 3 | INV-05 | expired reservations free stock |
+| INV-06 | Expiry release job / lazy release | COMPLETE | HIGH | HIGH | 3 | INV-05 | expired reservations free stock |
 | INV-07 | GET /products/{id}/availability | COMPLETE | MEDIUM | HIGH | 2 | INV-03, CAT-08 | in/low/out status; SD rule (test) |
 | INV-08 | Admin inventory endpoints (list, patch, reservations, history) | NOT_STARTED | MEDIUM | HIGH | 4 | INV-02, AUTH-10 | inventory:update enforced |
 | INV-09 | Concurrency test: no oversell | NOT_STARTED | HIGH | HIGH | 3 | INV-04 | parallel buyers never go negative |

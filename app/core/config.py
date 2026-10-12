@@ -77,6 +77,8 @@ class Settings(BaseSettings):
     media_root: Path = Path("var/media")
     media_public_base_url: str = "http://localhost:8000/media"
     media_allowed_hosts: HostList = Field(default_factory=lambda: ["localhost"])
+    # Cleanup of expired reservations (INV-06): seconds between sweeps; 0 turns it off.
+    reservation_sweep_seconds: int = Field(default=60, ge=0, le=3600)
 
     @field_validator("database_url")
     @classmethod
