@@ -129,8 +129,11 @@ jobs:
 
     env:
       APP_ENV_FILE: .env.staging
-      # Own project name: never shares containers or volumes with a dev stack.
-      COMPOSE: docker compose -p project-ak-staging --env-file .env.staging
+      # Own project name and an in-memory database (docker-compose.staging.yml): never shares
+      # containers or volumes with a dev stack.
+      COMPOSE: >-
+        docker compose -p project-ak-staging -f docker-compose.yml -f docker-compose.staging.yml
+        --env-file .env.staging
       SMOKE_MOBILE: "+989120000001"
 
     steps:

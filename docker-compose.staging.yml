@@ -1,0 +1,8 @@
+# Ephemeral staging (OPS-08): the database lives in memory only. Used with
+#   docker compose -p project-ak-staging -f docker-compose.yml -f docker-compose.staging.yml
+# so it never creates a named volume and never touches a dev stack's data.
+services:
+  postgres:
+    volumes: !reset []
+    tmpfs:
+      - /var/lib/postgresql/data
