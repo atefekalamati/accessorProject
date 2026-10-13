@@ -149,6 +149,8 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 - CI: بعد از هر push، run همان commit را با `gh run watch <id> --exit-status` دنبال کن (`gh` روی PATH نیست: `& "C:\Program Files\GitHub CLI\gh.exe"`). سبز = pass؛ قرمز = توقف و گزارش step شکست‌خورده.
 - **AUTOPILOT (2026-10-10):** plan هیچ batch یا task، حتی HIGH، منتظر تأیید نمی‌ماند، مگر: `PAY-*`، رزرو/commit/release موجودی، تغییر scope در PRD، dependency بیرونی جدید یا ابهام در PRD. در این موارد توقف کن و plan را بفرست.
 - هر task HIGH: plan با [REVIEW-CHECKLIST.md](docs/project/REVIEW-CHECKLIST.md) چک می‌شود. سپس یک subagent بازبین مستقل plan و diff نهایی را در برابر همان فهرست بررسی می‌کند. یافته‌ها قبل از commit رفع می‌شوند و نتیجه بازبینی در Log فایل task ثبت می‌شود.
+- مدل بازبین: subagentهای بازبین پیش‌فرض با model `sonnet` اجرا می‌شوند؛ `opus` فقط برای taskهایی که پول، رزرو موجودی، پرداخت یا auth را لمس می‌کنند.
+- اگر بازبین به rate limit خورد، صبر کن و دوباره اجرا کن؛ بازبینی هرگز حذف نمی‌شود.
 - milestone: در شروع هر milestone یک plan واحد (≤۶۰ خط؛ برای هر task: scope، level و ریسک‌های کلیدی) یک‌بار برای کاربر فرستاده می‌شود. بعد از آن همه batchهای آن milestone بدون تأیید دوباره اجرا می‌شوند.
 - زنجیره: اگر batch کامل شد و CI سبز بود، batch بعدی خودکار شروع می‌شود. حداکثر ۴ batch در هر جلسه، سپس گزارش و «آماده برای /clear».
 - مجوزها در `.claude/settings.json` (allow/deny) تعریف شده‌اند.
