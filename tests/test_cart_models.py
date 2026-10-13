@@ -151,7 +151,8 @@ async def test_cart_item_checks(
 
     def line(**values: Any) -> CartItem:
         base = {"cart_id": cart.id, "product_id": product.id, "variant_id": variant.id}
-        return CartItem(**(base | {"quantity": 1} | values))
+        defaults = {"quantity": 1, "seen_unit_price": 100_000, "seen_price_version": 0}
+        return CartItem(**(base | defaults | values))
 
     for quantity in (0, MAX_STOCK_QUANTITY + 1):
         with pytest.raises(IntegrityError, match="ck_cart_items_quantity_range"):

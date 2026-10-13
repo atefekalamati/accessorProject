@@ -8,6 +8,7 @@ from typing import Final
 from uuid import UUID
 
 from sqlalchemy import (
+    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -24,6 +25,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.models.common import TimestampMixin, UUIDPrimaryKeyMixin
 from app.shared.inventory import MAX_STOCK_QUANTITY
+from app.shared.money import MAX_PRICE_TOMAN
 
 # A cart holds at most this many lines (one per variant; ADR-039).
 MAX_CART_LINES: Final = 50
@@ -84,6 +86,10 @@ class CartItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "cart_items"
     __table_args__ = (
         CheckConstraint(f"quantity BETWEEN 1 AND {MAX_STOCK_QUANTITY}", name="quantity_range"),
+        CheckConstraint(
+            f"seen_unit_price BETWEEN 0 AND {MAX_PRICE_TOMAN}", name="seen_unit_price_range"
+        ),
+        CheckConstraint("seen_price_version >= 0", name="seen_price_version_non_negative"),
         # The variant must belong to the stored product.
         ForeignKeyConstraint(
             ["variant_id", "product_id"],
@@ -103,3 +109,8 @@ class CartItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     product_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
     variant_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    # The final unit price and price version the shopper last saw for this line (ADR-041):
+    # set by every write to the line and by POST /cart/acknowledge-prices. GET /cart flags
+    # a change against it; it is UX only, orders are protected by the quote fingerprint.
+    seen_unit_price: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    seen_price_version: Mapped[int] = mapped_column(Integer, nullable=False)
