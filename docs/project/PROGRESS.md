@@ -4,35 +4,36 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.1 Cart
-- **Current Task:** batch CART-03 + CART-04 (جلسه `/phase`). CART-03 COMPLETE.
+- **Current Task:** —. batch CART-03 + CART-04 COMPLETE (جلسه `/phase`، batch ۴؛ سقف جلسه پر شد).
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 77/148 task COMPLETE · وزنی 47.4% (200.5h / 423h) · MVP 71.5%
+- **Progress:** 78/148 task COMPLETE · وزنی 48.1% (203.5h / 423h) · MVP 72.5%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** `/phase` برای فاز ۳: plan milestone M3.1 (یک‌بار برای کاربر)، سپس batchها به ترتیب M3.1 → M3.2 → M3.3 → M3.4 → M3.5. planهای PAY-* و رزرو/commit/release برای کاربر متوقف می‌شوند.
+- **Next Action:** `/phase`: CART-05 (تست‌های سبد) و شروع M3.2 (DSC-01..05). plan milestone M3.2 یک‌بار برای کاربر.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**47.4%** = 200.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**48.1%** = 203.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 21.5h | 21.2% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 24.5h | 24.1% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 222.5h ≈ ۱۵ هفته. MVP باقی‌مانده: 80h ≈ ۸ هفته.
+- باقی‌مانده: 219.5h ≈ ۱۵ هفته. MVP باقی‌مانده: 77h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-12: CART-04 (ادغام سبد مهمان در verify-otp، پاک‌شدن cookie، idempotent و امن در همزمانی؛ ADR-040).
 - 2026-10-12: CART-03 (GET /cart با قیمت سرور، flag تغییر قیمت per-line با مبنای `seen_*`، POST /cart/acknowledge-prices، flag موجودی بدون عدد؛ migration `0018`؛ ADR-041).
 - 2026-10-12: CART-02 (POST/PATCH/DELETE /cart/items برای مهمان و کاربر، موجودی آزاد مؤثر بدون رزرو، 409 بدون عدد موجودی؛ رفع باگ ON CONFLICT با generic plan؛ ADR-040).
 - 2026-10-12: CART-01 (carts و cart_items، token مهمان فقط با hash، cookie D30، یک سبد active برای هر کاربر؛ ADR-040).
@@ -200,6 +201,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-12 — CART-04 COMPLETE (batch ۴ جلسه phase)
+- pytest 1522 سبز.
 ### 2026-10-12 — CART-03 COMPLETE
 - volume `project-ak-staging_postgres_data` وجود ندارد (کاربر و `docker volume ls` تأیید کردند)؛ مورد بسته شد. قاعده مدل بازبین (sonnet پیش‌فرض، opus برای پول/رزرو/پرداخت/auth، retry بدون حذف بازبینی) به CLAUDE.md افزوده شد. pytest 1513 سبز.
 ### 2026-10-12 — CART-02 COMPLETE (batch ۳ جلسه phase)

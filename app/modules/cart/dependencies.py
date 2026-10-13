@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db_session
 from app.modules.auth.dependencies import get_optional_user
 from app.modules.auth.service import CurrentUser
+from app.modules.cart.merge import CartMerger
 from app.modules.cart.service import CartOwner, CartService
 from app.modules.cart.tokens import CART_COOKIE_NAME, parse_cart_token
 from app.modules.cart.view import CartView
@@ -17,6 +18,12 @@ def get_cart_service(
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> CartService:
     return CartService(session)
+
+
+def get_cart_merger(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> CartMerger:
+    return CartMerger(session)
 
 
 def get_cart_view(

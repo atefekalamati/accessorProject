@@ -130,7 +130,7 @@
 | CART-01 | Cart & CartItem models + secure guest cart token | COMPLETE | HIGH | MEDIUM | 4 | CART-00, CAT-03 | guest and user carts; `cart_token` HttpOnly cookie, hash stored (D30); max 50 lines; guest cart expires after 30 days |
 | CART-02 | Add/update/remove items with free-stock check (no reservation) | COMPLETE | HIGH | HIGH | 4 | CART-01, INV-03 | qty ≤ free stock; add ≠ reserve; SD rule (test) |
 | CART-03 | GET /cart computed server-side with price/stock change flags | COMPLETE | HIGH | HIGH | 3 | CART-02, PRC-02 | changes reported; pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
-| CART-04 | Guest → user cart merge on login | NOT_STARTED | HIGH | MEDIUM | 3 | CART-01, AUTH-06 | deterministic merge at verify-otp (sum, cap at free stock); guest `cart_token` cookie cleared (D30) |
+| CART-04 | Guest → user cart merge on login | COMPLETE | HIGH | MEDIUM | 3 | CART-01, AUTH-06 | deterministic merge at verify-otp (sum, cap at free stock); guest `cart_token` cookie cleared (D30) |
 | CART-05 | Cart tests | NOT_STARTED | HIGH | MEDIUM | 3 | CART-02…04 | ownership 403/404 covered |
 
 ### M3.2 Discount codes — PRD «کد تخفیف»، «تخفیف‌ها» (قالبی)
@@ -176,7 +176,7 @@
 | PAY-06 | End-to-end purchase test | NOT_STARTED | HIGH | HIGH | 4 | PAY-05 | cart → OTP → checkout → order → payment → stock committed |
 | HANDOFF-01 | PRD consistency review + export openapi.json | NOT_STARTED | HIGH | HIGH | 3 | PAY-06, all Phase 1–3 `-00` | PRD matches implemented API; `openapi.json` exported for frontend; frontend note: refresh must be single-flight across tabs (ADR-017 reuse detection) |
 
-**Phase 3:** 101.5h · COMPLETE 21.5h
+**Phase 3:** 101.5h · COMPLETE 24.5h
 
 ---
 

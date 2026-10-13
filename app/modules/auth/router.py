@@ -1,4 +1,6 @@
+import logging
 from typing import Annotated, Final
+from uuid import UUID
 
 from fastapi import APIRouter, Cookie, Depends, Request, Response, status
 
@@ -26,7 +28,12 @@ from app.modules.auth.service import (
     OtpService,
     ProfileService,
 )
+from app.modules.cart.dependencies import get_cart_merger
+from app.modules.cart.merge import CartMerger
+from app.modules.cart.tokens import CART_COOKIE_NAME, clear_cart_cookie, parse_cart_token
 from app.shared.audit import client_ip
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 users_router = APIRouter(prefix="/users", tags=["users"])
@@ -81,9 +88,31 @@ async def verify_otp(
     request: Request,
     response: Response,
     service: Annotated[AuthService, Depends(get_auth_service)],
+    merger: Annotated[CartMerger, Depends(get_cart_merger)],
+    cart_token: Annotated[str | None, Cookie(alias=CART_COOKIE_NAME)] = None,
 ) -> TokenResponse:
     tokens = await service.verify_otp(payload.mobile, payload.code, _client_info(request), request)
+    if cart_token is not None:
+        await _merge_guest_cart(response, merger, tokens.user_id, cart_token)
     return _token_response(response, tokens)
+
+
+async def _merge_guest_cart(
+    response: Response, merger: CartMerger, user_id: UUID, raw_token: str
+) -> None:
+    """Move the guest cart into the user's cart, then drop the guest cookie (D30).
+
+    The login is already committed: a merge failure is logged and never fails the login;
+    the cookie is then kept so the next login can try again.
+    """
+    token = parse_cart_token(raw_token)
+    if token is not None:
+        try:
+            await merger.merge(user_id, token)
+        except Exception:
+            logger.exception("cart.merge_failed", extra={"user_id": str(user_id)})
+            return
+    clear_cart_cookie(response)
 
 
 @router.post(
