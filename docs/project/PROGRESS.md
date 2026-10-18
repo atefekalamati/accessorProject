@@ -6,7 +6,7 @@
 - **Phase › Milestone:** 3 Purchase flow › M3.2 Discount codes
 - **Current Task:** —. batch DSC-02 + DSC-03 COMPLETE (جلسه `/phase`، batch ۲).
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 82/148 task COMPLETE · وزنی 51.1% (216.5h / 423h) · MVP 77.2%
+- **Progress:** 82/148 task COMPLETE · وزنی 51.2% (216.5h / 423h) · MVP 77.2%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** `/phase`: DSC-04 + DSC-05، سپس M3.3 (ADDR-01..04). بازبین‌های DSC-* با opus. یادداشت: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف است (ADR-043).
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
@@ -15,7 +15,7 @@
 ---
 
 ## Overall Progress
-**51.1%** = 216.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**51.2%** = 216.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
