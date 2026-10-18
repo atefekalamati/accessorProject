@@ -98,6 +98,9 @@ class CartMerger:
                 self._session.add(line)
                 existing[line.variant_id] = line
                 moved += 1
+            # The guest's code comes along only when the user has none (ADR-043).
+            if user_cart.discount_code_id is None and guest_cart.discount_code_id is not None:
+                user_cart.discount_code_id = guest_cart.discount_code_id
             guest_cart.status = CartStatus.MERGED
             user_cart.updated_at = now
             cart_id = user_cart.id  # read before commit expires the instance

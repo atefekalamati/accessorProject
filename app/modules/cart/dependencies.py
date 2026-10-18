@@ -5,9 +5,11 @@ from typing import Annotated
 from fastapi import Cookie, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import Settings, get_app_settings
 from app.db.session import get_db_session
 from app.modules.auth.dependencies import get_optional_user
 from app.modules.auth.service import CurrentUser
+from app.modules.cart.discount import CartDiscountService
 from app.modules.cart.merge import CartMerger
 from app.modules.cart.service import CartOwner, CartService
 from app.modules.cart.tokens import CART_COOKIE_NAME, parse_cart_token
@@ -24,6 +26,13 @@ def get_cart_merger(
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> CartMerger:
     return CartMerger(session)
+
+
+def get_cart_discount_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    settings: Annotated[Settings, Depends(get_app_settings)],
+) -> CartDiscountService:
+    return CartDiscountService(session, settings)
 
 
 def get_cart_view(

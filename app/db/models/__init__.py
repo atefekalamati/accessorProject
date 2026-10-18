@@ -14,6 +14,7 @@ from app.db.models.catalog import (
     VariantOptionKey,
 )
 from app.db.models.discounts import (
+    DiscountAttempt,
     DiscountCode,
     DiscountRedemption,
     DiscountType,
@@ -46,6 +47,7 @@ __all__ = [
     "Category",
     "CategoryFilter",
     "CategoryFilterType",
+    "DiscountAttempt",
     "DiscountCode",
     "DiscountRedemption",
     "DiscountType",

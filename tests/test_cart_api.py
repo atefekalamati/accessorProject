@@ -28,6 +28,7 @@ API = "/api/v1"
 STATUSES: Final = (400, 401, 403, 404, 409, 422)
 ITEMS = "test_cart_items"
 VIEW = "test_cart_view"
+DISCOUNT = "test_cart_discount"
 SELF = "test_cart_api"
 READ_ONLY = "n/a: read-only, no state to conflict with"
 NO_RULE = "n/a: no business rule beyond the request"
@@ -50,6 +51,22 @@ COVERAGE: Final[dict[tuple[str, str], dict[int, str]]] = {
         404: EMPTY,
         409: "n/a: moving baselines has no conflicting state",
         422: NO_RULE,
+    },
+    ("POST", "/cart/discount"): {
+        400: f"{DISCOUNT}::test_request_errors",
+        401: f"{DISCOUNT}::test_request_errors",
+        403: f"{DISCOUNT}::test_request_errors",
+        404: f"{DISCOUNT}::test_request_errors",
+        409: "n/a: applying a code only writes the cart's own code",
+        422: f"{DISCOUNT}::test_rejections_are_422_and_counted",
+    },
+    ("DELETE", "/cart/discount"): {
+        400: NO_BODY,
+        401: f"{DISCOUNT}::test_request_errors",
+        403: f"{DISCOUNT}::test_request_errors",
+        404: EMPTY,
+        409: "n/a: removing the code never conflicts",
+        422: "n/a: removing the code is always allowed",
     },
     ("POST", "/cart/items"): {
         400: f"{ITEMS}::test_invalid_bodies_are_400_and_amounts_are_ignored",

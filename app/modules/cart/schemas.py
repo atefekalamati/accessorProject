@@ -88,6 +88,23 @@ class CartLineResponse(BaseModel):
     previous_unit_price: int | None
 
 
+class ApplyCodeRequest(BaseModel):
+    """Only the code text; its shape is checked after the rate limit, in the service, so a
+    malformed code is a counted failed attempt like any wrong code (ADR-043)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: Annotated[str, Field(min_length=1, max_length=64)]
+
+
+class CartDiscount(BaseModel):
+    code: str
+    # Re-checked on every read; true is not a guarantee: ORD-04 counts under a lock (D31).
+    applied: bool
+    # Why it does not apply now (rules.Rejection), else null.
+    reason: str | None
+
+
 class CartResponse(BaseModel):
     items: list[CartLineResponse]
     subtotal: int
@@ -99,5 +116,7 @@ class CartResponse(BaseModel):
     grand_total: int
     currency: str
     calculated_at: datetime
-    # Any line changed price, became unavailable or is short of stock.
+    discount: CartDiscount | None = None
+    # Any line changed price, became unavailable or is short of stock, or the code no
+    # longer applies.
     has_changes: bool

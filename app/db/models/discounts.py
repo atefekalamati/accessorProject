@@ -18,12 +18,18 @@ from sqlalchemy import (
     String,
     text,
 )
+from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.phone import MOBILE_E164_PATTERN
 from app.db.base import Base
-from app.db.models.common import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.models.common import (
+    CreatedAtMixin,
+    SoftDeleteMixin,
+    TimestampMixin,
+    UUIDPrimaryKeyMixin,
+)
 from app.shared.money import MAX_PRICE_TOMAN
 
 MAX_CODE_LENGTH: Final = 32
@@ -179,3 +185,28 @@ class DiscountRedemption(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class DiscountAttempt(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
+    """One failed POST /cart/discount, counted by the rate limit (DSC-03, D34, ADR-043).
+
+    Successful attempts are not stored and never reset the count. Rows older than the
+    window are deleted when a new failure is recorded.
+    """
+
+    __tablename__ = "discount_attempts"
+    __table_args__ = (
+        CheckConstraint("cart_id IS NOT NULL OR user_id IS NOT NULL", name="has_owner"),
+        Index("ix_discount_attempts_cart_id_created_at", "cart_id", "created_at"),
+        Index("ix_discount_attempts_user_id_created_at", "user_id", "created_at"),
+        Index("ix_discount_attempts_ip_created_at", "ip", "created_at"),
+    )
+
+    # The guest's cart, or the signed-in user (whose budget follows the account).
+    cart_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("carts.id", ondelete="CASCADE"), nullable=True
+    )
+    user_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True
+    )
+    ip: Mapped[str | None] = mapped_column(INET, nullable=True)

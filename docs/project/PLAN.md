@@ -138,8 +138,8 @@
 |---|---|---|---|---|---|---|---|
 | DSC-00 | Rewrite discount requirements | COMPLETE | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
 | DSC-01 | DiscountCode & redemption models | COMPLETE | HIGH | HIGH | 3 | DSC-00 | limits modeled; DiscountRedemption pending/confirmed/released (D31); per-user usage limit keyed by normalized phone, not user_id (ADR-017) |
-| DSC-02 | Pure discount validation/calculation | NOT_STARTED | HIGH | HIGH | 4 | DSC-01, PRC-02 | expired/used/ineligible → 422 |
-| DSC-03 | Apply/remove code on cart | NOT_STARTED | HIGH | HIGH | 3 | DSC-02, CART-03 | recalculated server-side; failed attempts rate-limited per user/cart and per IP → 429 (D34) |
+| DSC-02 | Pure discount validation/calculation | COMPLETE | HIGH | HIGH | 4 | DSC-01, PRC-02 | expired/used/ineligible → 422 |
+| DSC-03 | Apply/remove code on cart | COMPLETE | HIGH | HIGH | 3 | DSC-02, CART-03 | recalculated server-side; failed attempts rate-limited per user/cart and per IP → 429 (D34) |
 | DSC-04 | Admin discount CRUD + AuditLog | NOT_STARTED | MEDIUM | HIGH | 3 | DSC-01, AUTH-10, INF-05 | audited |
 | DSC-05 | Concurrent usage-cap test | NOT_STARTED | HIGH | HIGH | 2 | DSC-03 | cap never exceeded; POST /orders locks the DiscountCode row FOR UPDATE before counting (D31) |
 
@@ -176,7 +176,7 @@
 | PAY-06 | End-to-end purchase test | NOT_STARTED | HIGH | HIGH | 4 | PAY-05 | cart → OTP → checkout → order → payment → stock committed |
 | HANDOFF-01 | PRD consistency review + export openapi.json | NOT_STARTED | HIGH | HIGH | 3 | PAY-06, all Phase 1–3 `-00` | PRD matches implemented API; `openapi.json` exported for frontend; frontend note: refresh must be single-flight across tabs (ADR-017 reuse detection) |
 
-**Phase 3:** 101.5h · COMPLETE 30.5h
+**Phase 3:** 101.5h · COMPLETE 37.5h
 
 ---
 

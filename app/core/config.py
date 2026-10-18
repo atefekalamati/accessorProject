@@ -79,6 +79,14 @@ class Settings(BaseSettings):
     media_allowed_hosts: HostList = Field(default_factory=lambda: ["localhost"])
     # Cleanup of expired reservations (INV-06): seconds between sweeps; 0 turns it off.
     reservation_sweep_seconds: int = Field(default=60, ge=0, le=3600)
+    # Failed discount-code attempts (DSC-03, D34): counted over a rolling window per owner
+    # (user, or guest cart), per client IP and store-wide; reaching a cap gives 429.
+    # Behind a reverse proxy the IP cap needs the trusted-proxy setup of OPS-04 (ADR-043).
+    discount_attempt_window_seconds: int = Field(default=900, ge=60, le=86_400)
+    discount_max_failed_per_owner: int = Field(default=10, ge=1)
+    discount_max_failed_per_ip: int = Field(default=30, ge=1)
+    # Store-wide switch against a distributed flood; high, since reaching it blocks everyone.
+    discount_max_failed_global: int = Field(default=10_000, ge=1)
 
     @field_validator("database_url")
     @classmethod
