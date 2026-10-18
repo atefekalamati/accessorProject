@@ -455,6 +455,15 @@
   - ادغام ورود: کد سبد مهمان فقط وقتی سبد کاربر کد ندارد منتقل می‌شود.
 - پیامدها: DSC-02، DSC-03، DSC-05، ORD-03، ORD-04، OPS-04.
 
+### ADR-044 — مدیریت کد تخفیف و redemption سفارش (DSC-04، DSC-05)
+- تاریخ: 2026-10-18
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی opus):
+  - ادمین (`/admin/discounts`، مجوز `discounts:manage`): درصد در API هم basis point است (هم‌واحد DB و calculator). قواعد شکل بدنه 400؛ در PATCH فقط تعارض با مقدار ذخیره‌شده 422 (بازه، per_user ≤ total، max_amount روی fixed، درصد بیش از ۱۰۰٪ برای کد درصدی). `code` و `type` بعد از ساخت تغییر نمی‌کنند (برابر مقدار فعلی no-op، متفاوت 400). کاهش سقف زیر شمارش فعلی مجاز است و فقط استفاده‌های بعدی را می‌بندد. کد تکراری بین کدهای زنده 409 (پیش‌بررسی و IntegrityError با نام index)؛ ساخت دوباره متن یک کد حذف‌شده با id جدید و شمارش صفر. حذف نرم؛ DELETE دوم 404. هر نوشتن زیر `FOR UPDATE` ردیف کد؛ audit `discount.created/updated/deleted` (فقط فیلدهای تغییرکرده؛ no-op بدون audit). لیست: `q` با escape، `state` (`active`، `scheduled`، `expired`، `inactive`، با یک `now`)، sort `newest`/`code`، شمارش pending/confirmed/released در یک query گروهی.
+  - تغییر یا حذف کد به redemptionهای قبلی دست نمی‌زند؛ سفارش pending همچنان confirm می‌شود.
+  - `RedemptionService` (داخلی، در تراکنش فراخواننده): ترتیب سراسری lock در جریان خرید: سبد → advisory سفارش → variant/inventory → ردیف کد → redemption. `redeem` ردیف کد را قفل می‌کند و فقط زیر آن می‌شمارد؛ قواعدی را می‌گیرد که سفارش با آن قیمت‌گذاری شده (`priced_rules`) و اگر قواعد قفل‌شده فرق کنند 409 `PRICE_CHANGED` (ORD-04 می‌تواند با `lock_code` اول قفل و سپس قیمت‌گذاری کند). هر سفارش حداکثر یک redemption: retry با همان کد، مبلغ و موبایل همان را برمی‌گرداند، هر حالت دیگر (حتی redemption آزادشده) 409. ورودی‌ها: amount و subtotal int در `0..MAX`، amount ≤ subtotal، موبایل E.164؛ ORD-04 وقتی `code_applied=false` است redeem نمی‌کند.
+  - `confirm`/`release` فقط ردیف redemption را قفل می‌کنند (release فقط شمارش را کم می‌کند؛ بدون چرخه با job انقضا که inventory را اول قفل می‌کند) و هرگز raise نمی‌کنند: outcome (`CONFIRMED`، `ALREADY_CONFIRMED`، `RELEASED`، `NONE` / `RELEASED`، `ALREADY_RELEASED`، `NONE`). PAY-03 وقتی commit رزرو `EXPIRED` است `release` صدا می‌زند نه `confirm` (D32). بازپرداخت redemption تأییدشده را released می‌کند و `confirmed_at` می‌ماند؛ `released_at ≥ confirmed_at`.
+- پیامدها: DSC-04، DSC-05، ORD-04، PAY-03، PAY-04، INV-06 (لغو در انقضا).
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
