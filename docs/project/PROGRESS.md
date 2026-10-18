@@ -4,7 +4,7 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.5 Payment
-- **Current Task:** —. ORD-06 COMPLETE؛ M3.4 کامل شد.
+- **Current Task:** —. ORD-06 COMPLETE؛ M3.4 کامل شد. plan مشترک PAY-01..06 ([M3.5-PLAN.md](M3.5-PLAN.md)، بازبینی opus) منتظر تأیید کاربر و پاسخ ۴ سؤال پول است.
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
 - **Progress:** 95/148 task COMPLETE · وزنی 60.4% (255.5h / 423h) · MVP 91.1%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
