@@ -487,6 +487,15 @@
   - Idempotency-Key (ORD-02): جدول `idempotency_keys` (کاربر، scope، key؛ CASCADE با حذف کاربر). `IdempotencyService` در تراکنش فراخواننده و اول از همه lockها: `pg_advisory_xact_lock(hashtextextended('idem:<scope>:<user>:<key>', 0))`؛ برخورد hash فقط انتظار اضافه است. hash = sha256 روی JSON canonical از پارامترهای مسیر و بدنه parse‌شده (`mode="json"`). همان hash → replay وضعیت و بدنه ذخیره‌شده (فقط این دو؛ هدرهای دیگر مثل `Location` replay نمی‌شوند؛ ترتیب کلیدهای JSONB ممکن است فرق کند) با `Cache-Control: no-store`؛ hash متفاوت → 422 `IDEMPOTENCY_KEY_REUSED`؛ منقضی (`expires_at ≤ now`، ۲۴ ساعت) → حذف و اجرای تازه. فقط پاسخ 2xx ذخیره می‌شود تا retry بعد از خطا ممکن باشد. header نبود/نامعتبر (۱..۲۵۵ ASCII قابل چاپ بدون فاصله) → 400، بعد از احراز هویت. `purge_expired_idempotency_keys` هنوز به job وصل نیست (بدنه‌های ذخیره‌شده تا purge می‌مانند)؛ در OPS/INV-06 وصل شود.
 - پیامدها: ORD-02..06، PAY-*، ACC-01، ADM-01، CAT-17.
 
+### ADR-047 — checkout validate، state machine سفارش و فروش موفق (ORD-03، ORD-05، CAT-17)
+- تاریخ: 2026-10-18
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی opus):
+  - `POST /checkout/validate`: فقط کاربر واردشده؛ سبد خالی 422 (`cart_empty`)؛ آدرس دیگران یا ناموجود 404 (قاعده مالکیت)؛ روش ارسال غیرقابل‌انتخاب 422؛ خط غیرقابل‌فروش 422 (`line_unavailable`، SD rule)؛ موجودی آزاد مؤثر ناکافی 409 `INSUFFICIENT_STOCK`؛ کد اعمال‌شده‌ای که دیگر اعمال نمی‌شود 422 `DISCOUNT_NOT_APPLICABLE` با reason (quote بدون کد برگردانده نمی‌شود؛ کاربر باید کد را بردارد). fingerprint quote = sha256 روی fingerprint calculator + تعداد هر خط + `grand_total` + کد (id، مبلغ، type، value، max_amount) + روش (id، هزینه، سقف، مبلغ ارسال). `build_quote` بدون تراکنش و lock، با کد از پیش قفل‌شده اختیاری و امکان رد بررسی موجودی (ORD-04 بعد از reserve).
+  - state machine: order `pending_payment → confirmed | cancelled`، `confirmed → completed`؛ payment `unpaid → pending`، `pending → paid | failed | refund_required`، `failed → pending | paid | refund_required`؛ shipment `not_shipped → preparing → shipped → delivered`. guardها: order→confirmed فقط با paid؛ order→completed فقط با delivered؛ order→cancelled فقط اگر paid نیست؛ payment→pending/paid فقط با order pending_payment؛ payment→refund_required فقط با order cancelled (PAY-03 اول سفارش را لغو می‌کند)؛ shipment→preparing فقط با order confirmed. همان وضعیت 422. هر انتقال: ردیف history و audit `order.status_changed` در همان تراکنش.
+  - ترتیب سراسری lock (ادامه ADR-044/046): idempotency → سبد → advisory سفارش → **ردیف سفارش** → inventory → کد → redemption. job انقضای رزرو (ADR-036) وقتی سفارش را لغو می‌کند باید اول ردیف سفارش را با `FOR UPDATE SKIP LOCKED` (و `lock_timeout`) قفل کند و بعد `expire`؛ تغییر `app/modules/inventory/jobs.py` در ORD-06.
+  - «فروش موفق» (CAT-17 و گزارش‌ها): `orders.payment_status = 'paid'` (یک helper)؛ سفارش لغو یا refund_required شمرده نمی‌شود.
+- پیامدها: ORD-04، ORD-06، PAY-02..04، INV-06، CAT-17، ADM.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 

@@ -35,6 +35,7 @@ from app.db.models import (
 )
 from app.db.models.common import not_deleted
 from app.modules.inventory.holds import expired_hold_sum
+from app.modules.orders.sales import units_sold_by_product
 from app.shared.pagination import AnySelect
 
 _OPTION_KEYS = frozenset(VariantOptionKey)
@@ -45,9 +46,10 @@ class ProductSort(StrEnum):
     PRICE_ASC = "price_asc"
     PRICE_DESC = "price_desc"
     DISCOUNT_DESC = "discount_desc"
+    # Units in paid orders (CAT-17, ADR-047); ties by id.
+    BEST_SELLING = "best_selling"
 
 
-# ``best_selling`` needs OrderItem; CAT-17 adds it after ORD-01.
 PRODUCT_SORTS: Mapping[str, ProductSort] = {sort.value: sort for sort in ProductSort}
 
 
@@ -177,6 +179,13 @@ def public_products(filters: ListingFilters, sort: ProductSort, now: datetime) -
     if having:
         statement = statement.having(*having)
 
+    units_sold: ColumnElement[Any] | None = None
+    if sort is ProductSort.BEST_SELLING:
+        # One pre-aggregated subquery joined once, not a correlated count per product.
+        sold = units_sold_by_product()
+        statement = statement.outerjoin(sold, sold.c.product_id == Product.id)
+        units_sold = func.coalesce(func.max(sold.c.units), 0)
+
     newest = Product.published_at.desc()
     order_by: dict[ProductSort, list[ColumnElement[Any]]] = {
         ProductSort.NEWEST: [newest],
@@ -184,6 +193,8 @@ def public_products(filters: ListingFilters, sort: ProductSort, now: datetime) -
         ProductSort.PRICE_DESC: [min_price.desc()],
         ProductSort.DISCOUNT_DESC: [max_discount_percent.desc(), newest],
     }
+    if units_sold is not None:
+        order_by[ProductSort.BEST_SELLING] = [units_sold.desc()]
     return ListingQuery(statement=statement, order_by=order_by[sort])
 
 
