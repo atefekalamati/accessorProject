@@ -157,7 +157,7 @@
 |---|---|---|---|---|---|---|---|
 | ORD-00 | Rewrite checkout & order requirements | COMPLETE | HIGH | HIGH | 2 | ADR-006, ADR-007 | PRD sections ✓ بازبینی‌شده + approved |
 | ORD-01 | Order, OrderItem snapshot, OrderPriceSnapshot, address snapshot | COMPLETE | HIGH | HIGH | 5 | ORD-00, PRC-01 | past orders immune to product changes; order number format cannot resemble a mobile number (e.g. `ORD-YYYY-NNNNNN`) |
-| ORD-02 | Idempotency-Key infrastructure | NOT_STARTED | HIGH | HIGH | 3 | INF-01 | per-user keys, 24h TTL; same key + same body → original response; different body → 422 (D34) |
+| ORD-02 | Idempotency-Key infrastructure | COMPLETE | HIGH | HIGH | 3 | INF-01 | per-user keys, 24h TTL; same key + same body → original response; different body → 422 (D34) |
 | ORD-03 | POST /checkout/validate | NOT_STARTED | HIGH | HIGH | 3 | CART-03, DSC-03, ADDR-02 | price/stock/discount/shipping re-checked; fingerprint covers discount and shipping (D34); SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
 | ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | NOT_STARTED | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional; DiscountCode FOR UPDATE + pending redemption (D31); cart not cleared (D34); SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
 | ORD-05 | Order state machine (order/payment/shipment) | NOT_STARTED | HIGH | HIGH | 4 | ORD-01 | invalid transitions → 422 |

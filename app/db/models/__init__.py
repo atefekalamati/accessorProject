@@ -20,6 +20,7 @@ from app.db.models.discounts import (
     DiscountType,
     RedemptionStatus,
 )
+from app.db.models.idempotency import IdempotencyKey
 from app.db.models.inventory import (
     InventoryItem,
     InventoryMovement,
@@ -65,6 +66,7 @@ __all__ = [
     "DiscountCode",
     "DiscountRedemption",
     "DiscountType",
+    "IdempotencyKey",
     "InventoryItem",
     "InventoryMovement",
     "InventoryReservation",

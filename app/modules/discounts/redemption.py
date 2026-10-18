@@ -6,7 +6,8 @@ cancel, reservation expiry or a refund. Everything runs in the caller's transact
 never commits; ``confirm`` and ``release`` return an outcome and never raise, so a caller
 can record related changes (refund_required, cancellation, audit) in the same transaction.
 
-Global lock order for the purchase flow (ADR-044): cart → order advisory lock →
+Global lock order for the purchase flow (ADR-044, ADR-046): idempotency key → cart →
+order advisory lock →
 variants / inventory items → DiscountCode row → redemption row. ``redeem`` locks the code
 row and counts the limits only under that lock, so concurrent orders never exceed them;
 the admin edit and delete (DSC-04) take the same code lock. ``confirm`` and ``release``
