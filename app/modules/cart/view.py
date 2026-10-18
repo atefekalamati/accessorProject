@@ -51,10 +51,11 @@ def price_cart_lines(
     policy: PricingPolicy,
     at: datetime,
     code: CodeDiscount | None = None,
+    shipping: int = 0,
 ) -> OrderPricing:
     """Price lines in their stable order, by line id, whatever order they come in."""
     ordered = sorted(lines, key=lambda line: str(line.key))
-    return price_order(ordered, policy, at=at, code=code)
+    return price_order(ordered, policy, at=at, code=code, shipping=shipping)
 
 
 def price_with_code(

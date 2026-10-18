@@ -9,6 +9,7 @@ from app.modules.catalog.admin_product_router import router as admin_products_ro
 from app.modules.catalog.admin_router import router as admin_categories_router
 from app.modules.catalog.router import products_router
 from app.modules.catalog.router import router as categories_router
+from app.modules.checkout.router import router as checkout_router
 from app.modules.discounts.admin_router import router as admin_discounts_router
 from app.modules.inventory.admin_router import router as admin_inventory_router
 from app.modules.media.router import router as admin_media_router
@@ -38,3 +39,4 @@ api_router.include_router(admin_discounts_router)
 api_router.include_router(addresses_router)
 api_router.include_router(shipping_router)
 api_router.include_router(admin_shipping_router)
+api_router.include_router(checkout_router)
