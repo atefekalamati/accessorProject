@@ -151,6 +151,8 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 - هر task HIGH: plan با [REVIEW-CHECKLIST.md](docs/project/REVIEW-CHECKLIST.md) چک می‌شود. سپس یک subagent بازبین مستقل plan و diff نهایی را در برابر همان فهرست بررسی می‌کند. یافته‌ها قبل از commit رفع می‌شوند و نتیجه بازبینی در Log فایل task ثبت می‌شود.
 - مدل بازبین: subagentهای بازبین پیش‌فرض با model `sonnet` اجرا می‌شوند؛ `opus` فقط برای taskهایی که پول، رزرو موجودی، پرداخت یا auth را لمس می‌کنند.
 - اگر بازبین به rate limit خورد، صبر کن و دوباره اجرا کن؛ بازبینی هرگز حذف نمی‌شود.
+- subagentهای بازبین read-only هستند و تست اجرا نمی‌کنند؛ اگر بازبین ناچار به اجرای تست شد، از نام پایه دیتابیس جداگانه خودش با پسوند `_test` استفاده می‌کند.
+- فقط agent اصلی کل suite تست را اجرا می‌کند.
 - milestone: در شروع هر milestone یک plan واحد (≤۶۰ خط؛ برای هر task: scope، level و ریسک‌های کلیدی) یک‌بار برای کاربر فرستاده می‌شود. بعد از آن همه batchهای آن milestone بدون تأیید دوباره اجرا می‌شوند.
 - زنجیره: اگر batch کامل شد و CI سبز بود، batch بعدی خودکار شروع می‌شود. حداکثر ۴ batch در هر جلسه، سپس گزارش و «آماده برای /clear».
 - مجوزها در `.claude/settings.json` (allow/deny) تعریف شده‌اند.

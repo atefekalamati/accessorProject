@@ -238,7 +238,7 @@
 | OPS-01 | Metrics + error-tracking adapter | NOT_STARTED | MEDIUM | MEDIUM | 4 | — | metrics endpoint |
 | OPS-02 | Monitoring & alerts | NOT_STARTED | MEDIUM | MEDIUM | 3 | OPS-01 | alerts defined |
 | OPS-03 | Backup/restore runbook | NOT_STARTED | HIGH | HIGH | 3 | — | restore rehearsed |
-| OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | BLOCKED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies |
+| OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | BLOCKED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies; if `ENVIRONMENT=production`, `TRUSTED_PROXIES` must be explicitly set (empty value = explicit "none"), unset → startup fails |
 | OPS-05 | Real SMS provider adapter | BLOCKED | HIGH | HIGH | 3 | AUTH-04, D9 | works behind interface |
 | OPS-06 | OpenAPI export & versioning | NOT_STARTED | MEDIUM | LOW | 2 | HANDOFF-01 | versioned file |
 | OPS-07 | Real file storage adapter | BLOCKED | HIGH | MEDIUM | 3 | CAT-05, D10 | works behind interface |

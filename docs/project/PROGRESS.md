@@ -8,7 +8,7 @@
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
 - **Progress:** 86/148 task COMPLETE · وزنی 53.8% (227.5h / 423h) · MVP 81.1%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** `/phase`: ADDR-03 + ADDR-04 (M3.3)، سپس M3.4 (ORD-01..06، CAT-17)؛ سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
+- **Next Action:** `/phase`: ADDR-03 + ADDR-04 (M3.3)، سپس M3.4 (ORD-01..06، CAT-17)؛ سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود). plan ORD-04 (ایجاد سفارش) هم برای تأیید کاربر متوقف می‌شود (دستور کاربر 2026-10-18). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
