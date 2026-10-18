@@ -244,3 +244,69 @@ async def test_concurrent_defaults_leave_exactly_one(
     assert [response.status_code for response in responses] == [201, 201, 201]
     listing = (await auth_client.get(URL, headers=customer.headers)).json()
     assert sum(item["is_default"] for item in listing) == 1
+
+
+# --- ownership and validation gaps (ADDR-04) -----------------------------------------
+
+
+async def test_a_forged_owner_is_ignored_on_update(
+    auth_client: AsyncClient, make_account: MakeAccount
+) -> None:
+    owner, other = await make_account("customer"), await make_account("customer")
+    created = await _create(auth_client, owner.headers)
+    url = f"{URL}/{created['id']}"
+
+    response = await auth_client.patch(
+        url, json={"city": "Qom", "user_id": str(other.id)}, headers=owner.headers
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["city"] == "Qom"
+    assert (await auth_client.get(url, headers=owner.headers)).status_code == 200
+    _error(await auth_client.get(url, headers=other.headers), 404, "NOT_FOUND")
+    assert (await auth_client.get(URL, headers=other.headers)).json() == []
+
+
+async def test_staff_roles_get_no_access_to_customer_addresses(
+    auth_client: AsyncClient, make_account: MakeAccount
+) -> None:
+    customer = await make_account("customer")
+    created = await _create(auth_client, customer.headers)
+    url = f"{URL}/{created['id']}"
+    for role in ("admin", "super_admin", "support"):
+        staff = await make_account(role)
+        _error(await auth_client.get(url, headers=staff.headers), 404, "NOT_FOUND")
+        _error(
+            await auth_client.patch(url, json={"city": "X"}, headers=staff.headers),
+            404,
+            "NOT_FOUND",
+        )
+        _error(await auth_client.delete(url, headers=staff.headers), 404, "NOT_FOUND")
+    assert (await auth_client.get(url, headers=customer.headers)).json()["city"] == "Tehran"
+
+
+async def test_missing_addresses_are_404(
+    auth_client: AsyncClient, make_account: MakeAccount
+) -> None:
+    customer = await make_account("customer")
+    url = f"{URL}/{uuid4()}"
+    _error(await auth_client.get(url, headers=customer.headers), 404, "NOT_FOUND")
+    _error(
+        await auth_client.patch(url, json={"city": "X"}, headers=customer.headers),
+        404,
+        "NOT_FOUND",
+    )
+    _error(await auth_client.delete(url, headers=customer.headers), 404, "NOT_FOUND")
+
+
+async def test_the_cap_is_a_business_rule(
+    auth_client: AsyncClient, make_account: MakeAccount
+) -> None:
+    customer = await make_account("customer")
+    for _ in range(MAX_ADDRESSES):
+        await _create(auth_client, customer.headers)
+
+    response = await auth_client.post(URL, json=BODY, headers=customer.headers)
+
+    _error(response, 422, "BUSINESS_RULE_VIOLATION")
+    assert response.json()["request_id"]

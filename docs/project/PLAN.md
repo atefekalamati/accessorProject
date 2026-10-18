@@ -149,8 +149,8 @@
 | ADDR-00 | Rewrite address & shipping requirements | COMPLETE | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
 | ADDR-01 | Address CRUD with ownership (table exists) | COMPLETE | HIGH | MEDIUM | 3 | ADDR-00, AUTH-10 | own addresses only; one default |
 | ADDR-02 | ShippingMethod + shipping calculator interface | COMPLETE | HIGH | HIGH | 3 | ADDR-00, INF-02 | cost from backend; flat cost + optional free threshold on subtotal after all discounts, before tax (D33, D34) |
-| ADDR-03 | Admin shipping methods | NOT_STARTED | MEDIUM | HIGH | 2 | ADDR-02, AUTH-10 | audited |
-| ADDR-04 | Address & shipping tests | NOT_STARTED | HIGH | MEDIUM | 2 | ADDR-01…03 | ownership + validation |
+| ADDR-03 | Admin shipping methods | COMPLETE | MEDIUM | HIGH | 2 | ADDR-02, AUTH-10 | audited |
+| ADDR-04 | Address & shipping tests | COMPLETE | HIGH | MEDIUM | 2 | ADDR-01…03 | ownership + validation |
 
 ### M3.4 Checkout & orders — PRD «نتیجه سفارش»، «مدیریت سفارش» (قالبی) + «معماری سیستم» ✓
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
