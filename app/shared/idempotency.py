@@ -1,7 +1,8 @@
 """The ``Idempotency-Key`` header for retry-safe writes (ORD-02, D34, ADR-046).
 
 Use inside the caller's transaction, before any other lock of the request (global lock
-order, ADR-044: idempotency → cart → order advisory → inventory → code → redemption)::
+order, ADR-048: idempotency → cart → code → order advisory → order row → inventory →
+redemption)::
 
     hash_ = request_hash(path={"...": ...}, body=payload.model_dump(mode="json"))
     async with session.begin():

@@ -1,6 +1,6 @@
 # ORD-04 — POST /orders (verified mobile, reserve 15 min, snapshot)
 
-**Status:** IN_PROGRESS (plan منتظر تأیید کاربر) · **Priority:** HIGH · **Estimate:** 5h (estimate) · **Deadline:** — · **Dependencies:** ORD-01, ORD-02, ORD-03, INV-04, DSC-05 · **Level:** HIGH
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 5h (estimate) · **Deadline:** — · **Dependencies:** ORD-01, ORD-02, ORD-03, INV-04, DSC-05 · **Level:** HIGH
 
 ## Objective
 ثبت سفارش از سبد کاربر در یک تراکنش: quote دوباره و مقایسه fingerprint، رزرو ۱۵ دقیقه‌ای، redemption pending کد، snapshot کامل؛ idempotent با `Idempotency-Key`. سبد خالی نمی‌شود.
@@ -55,11 +55,17 @@
 - ADR-031: ترتیب ورودی خطوط به‌هم‌ریخته → خروجی یکسان (ترتیب درج آیتم‌های سبد متفاوت، position و مبالغ یکسان).
 
 ## Acceptance Criteria
-- [ ] idempotent؛ transactional؛ DiscountCode FOR UPDATE + pending redemption (D31)؛ cart not cleared (D34).
-- [ ] SD rule (test)؛ pricing lines in stable order (by line id) + shuffled input → identical output (ADR-031).
-- [ ] تست‌های همزمانی و rollback بالا.
-- [ ] pytest، ruff، format و mypy سبز.
+- [x] idempotent؛ transactional؛ DiscountCode FOR UPDATE + pending redemption (D31)؛ cart not cleared (D34).
+- [x] SD rule (test)؛ pricing lines in stable order (by line id) + shuffled input → identical output (ADR-031).
+- [x] تست‌های همزمانی و rollback بالا.
+- [x] pytest، ruff، format و mypy سبز.
+
+## Implementation Notes
+- کد: `app/modules/orders/{schemas,service,router}.py`، `ErrorCode.ORDER_PENDING` (409)، ADR-048 (ترتیب سراسری lock). تست: `tests/test_orders_create.py` (18 تست).
+- افزوده‌های کاربر: (۱) یک سفارش pending_payment زنده برای هر کاربر → 409 `ORDER_PENDING` با شماره سفارش (تعبیر «زنده» = رزرو active منقضی‌نشده؛ تا ORD-06 سفارش منقضی لغو نمی‌شود)؛ (۲) بررسی ترتیب lock همه مسیرهای موجود + تست همزمانی هر مسیر (اصلاح موجودی، ویرایش کد، job انقضا + لغو + release، نوشتن سبد، کد مشترک، آخرین استفاده، آخرین واحد، متقاطع)؛ مسیر پرداخت و لغو هنوز وجود ندارند و قاعده برای آن‌ها در ADR-048 الزام شد؛ (۳) شماره از sequence؛ (۴) 4xx کلید را ذخیره نمی‌کند (تست retry همان کلید بعد از 409).
+- **Rollback:** `git revert` (بدون migration).
 
 ## Log
 - 2026-10-18: plan (batch ۴ جلسه phase؛ تنها، به دستور کاربر برای تأیید متوقف می‌شود؛ بازبین opus).
 - 2026-10-18: بازبینی plan (opus): APPROVE WITH CHANGES؛ اعمال شد: قفل کد قبل از درج سفارش (deadlock KEY SHARE/FOR UPDATE) و ترتیب سراسری جدید lock، no-store روی 409، `now` بعد از lockها، flush سفارش قبل از reserve، معنای replay، تست‌های اضافه. منتظر تأیید کاربر.
+- 2026-10-18: کاربر plan را با ۴ افزوده تأیید کرد. پیاده‌سازی؛ بازبینی diff (opus): PASS WITH CHANGES؛ اعمال شد (مستندسازی استثنای درج ردیف سفارش جدید قبل از advisory، بررسی موبایل قبل از lock سبد، وابستگی صریح fixture پاک‌سازی به catalog). pytest (1871)، ruff، format و mypy سبز. COMPLETE.

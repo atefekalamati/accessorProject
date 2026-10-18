@@ -4,35 +4,36 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.4 Checkout & orders
-- **Current Task:** —. batch ORD-03 + ORD-05 + CAT-17 COMPLETE (جلسه `/phase`، batch ۳؛ plan milestone در [M3.4-PLAN.md](M3.4-PLAN.md)).
+- **Current Task:** —. ORD-04 COMPLETE (جلسه `/phase`، batch ۴؛ سقف جلسه پر شد؛ plan milestone در [M3.4-PLAN.md](M3.4-PLAN.md)).
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 93/148 task COMPLETE · وزنی 58.5% (247.5h / 423h) · MVP 88.2%
+- **Progress:** 94/148 task COMPLETE · وزنی 59.7% (252.5h / 423h) · MVP 90.0%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** `/phase`: M3.4 — ORD-04 تنها (plan برای تأیید کاربر متوقف می‌شود)، سپس ORD-06 (شامل تغییر job انقضا طبق ADR-047)؛ سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود). plan ORD-04 (ایجاد سفارش) هم برای تأیید کاربر متوقف می‌شود (دستور کاربر 2026-10-18). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
+- **Next Action:** `/phase`: M3.4 — ORD-06 (تست‌های سفارش، `GET /orders` و لغو، تغییر job انقضا برای لغو سفارش طبق ADR-047/048)؛ سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود). plan ORD-04 (ایجاد سفارش) هم برای تأیید کاربر متوقف می‌شود (دستور کاربر 2026-10-18). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**58.5%** = 247.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**59.7%** = 252.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 68.5h | 67.5% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 73.5h | 72.4% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 175.5h ≈ ۱۳ هفته. MVP باقی‌مانده: 33h ≈ ۸ هفته.
+- باقی‌مانده: 170.5h ≈ ۱۳ هفته. MVP باقی‌مانده: 28h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-18: ORD-04 (`POST /orders`: idempotent، یک تراکنش، رزرو ۱۵ دقیقه، redemption pending، snapshot کامل، یک سفارش pending زنده برای هر کاربر؛ ترتیب سراسری lock در ADR-048).
 - 2026-10-18: CAT-17 (sort `best_selling` از واحدهای سفارش‌های paid؛ ADR-047).
 - 2026-10-18: ORD-05 (state machine سه وضعیت با guardهای بین فیلدها، history و audit، قفل ردیف سفارش؛ ADR-047).
 - 2026-10-18: ORD-03 (`POST /checkout/validate`: quote با ارسال و کد، fingerprint کامل، SD rule، موجودی مؤثر؛ ADR-047).
@@ -218,6 +219,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-18 — ORD-04 COMPLETE (batch ۴ جلسه phase)
+- plan با ۴ افزوده کاربر تأیید شد؛ بازبینی plan و diff با opus (یافته deadlock KEY SHARE/FOR UPDATE قبل از پیاده‌سازی رفع شد)؛ pytest 1871 سبز.
 ### 2026-10-18 — ORD-03، ORD-05 و CAT-17 COMPLETE (batch ۳ جلسه phase)
 - بازبینی plan هر سه و diff ORD-03/ORD-05 با opus؛ pytest 1846 سبز.
 ### 2026-10-18 — ORD-01 و ORD-02 COMPLETE (batch ۲ جلسه phase)

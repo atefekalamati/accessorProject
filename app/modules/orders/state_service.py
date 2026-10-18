@@ -1,8 +1,8 @@
 """Apply one status transition to an order (ORD-05, ADR-047).
 
 Runs in the caller's transaction and never commits. The order row is locked ``FOR UPDATE``
-(lock order: idempotency → cart → order advisory → order row → inventory → code →
-redemption), the move is checked against the fresh row, and every change writes one
+(lock order, ADR-048: idempotency → cart → code → order advisory → order row →
+inventory → redemption), the move is checked against the fresh row, and every change writes one
 ``order_status_history`` row and one ``order.status_changed`` audit row.
 
 Two moves in one transaction are two calls (e.g. D32: cancel the order, then
