@@ -464,6 +464,17 @@
   - `confirm`/`release` فقط ردیف redemption را قفل می‌کنند (release فقط شمارش را کم می‌کند؛ بدون چرخه با job انقضا که inventory را اول قفل می‌کند) و هرگز raise نمی‌کنند: outcome (`CONFIRMED`، `ALREADY_CONFIRMED`، `RELEASED`، `NONE` / `RELEASED`، `ALREADY_RELEASED`، `NONE`). PAY-03 وقتی commit رزرو `EXPIRED` است `release` صدا می‌زند نه `confirm` (D32). بازپرداخت redemption تأییدشده را released می‌کند و `confirmed_at` می‌ماند؛ `released_at ≥ confirmed_at`.
 - پیامدها: DSC-04، DSC-05، ORD-04، PAY-03، PAY-04، INV-06 (لغو در انقضا).
 
+### ADR-045 — آدرس مشتری و روش ارسال (ADDR-01، ADDR-02)
+- تاریخ: 2026-10-18
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی opus برای ADDR-02):
+  - آدرس: فقط کاربر واردشده و فقط آدرس‌های خودش (آدرس دیگران 404). حداکثر ۱۰ آدرس (بیشتر → 422). اولین آدرس پیش‌فرض می‌شود؛ پیش‌فرض جدید قبلی را برمی‌دارد؛ PATCH می‌تواند پیش‌فرض را بردارد (بدون پیش‌فرض مجاز است). حذف سخت (سفارش snapshot دارد)؛ حذف پیش‌فرض، جدیدترین آدرس باقی‌مانده را پیش‌فرض می‌کند. هر نوشتن زیر advisory lock هر کاربر (سقف و یک پیش‌فرض در همزمانی؛ partial unique پشتیبان DB). موبایل گیرنده با `normalize_phone` به E.164؛ کد پستی ۱۰ رقم (رقم فارسی/عربی، فاصله و خط تیره پذیرفته و حذف می‌شوند). بدون audit (تغییر حساس طبق CLAUDE.md نیست) و بدون PII در log.
+  - روش ارسال: فقط حذف نرم؛ FK آینده Shipment به آن RESTRICT و سفارش snapshot شناسه، عنوان و مبلغ ارسال را نگه می‌دارد. `cost` در `0..MAX` (صفر = همیشه رایگان؛ صفر با سقف مجاز و بی‌اثر)، `free_shipping_threshold` در `1..MAX`، `description` اختیاری (خارج از مدل PRD، برای نمایش). فهرست عمومی فقط فعال و حذف‌نشده به ترتیب `display_order`، عنوان، id، با فیلدهای `id`، `title`، `description`، `cost`، `free_shipping_threshold`.
+  - محاسبه‌گر پشت `ShippingCalculator` (v1: `FlatRateCalculator`): رایگان وقتی `basis ≥ threshold` («برسد»). `ShippingContext` استان و شهر را برای قیمت منطقه‌ای بعدی (D33) دارد. مبنا (D34): `shipping_basis = subtotal − product_discount_total − discount_code_amount` (بعد از همه تخفیف‌ها، قبل از مالیات، بدون ارسال)؛ با مبنای حداقل کد (ADR-043، قبل از کد) فرق دارد. کد اعمال‌نشده در مبنا نیست.
+  - ترتیب برای ORD-03/ORD-04 (بدون دور: کد و مالیات هرگز ارسال را نمی‌خوانند): قیمت‌گذاری با `shipping=0` (و کد اگر `price_with_code` پذیرفت) → مبنا → quote → `price_order(shipping=quote)`؛ خطوط، مالیات و کد یکسان و `grand_total` دقیقاً به اندازه quote بیشتر. ارسال گرد نمی‌شود و مالیات ندارد (ADR-031). fingerprint quote در ORD-03 باید علاوه بر fingerprint قیمت، شناسه و مبلغ کد و شناسه و مبلغ ارسال را بپوشاند (D34).
+  - طول عنوان و توضیح را نوع ستون (VARCHAR 100/500) تضمین می‌کند؛ CHECK فقط trim و ناتهی‌بودن عنوان. `get_selectable` قفل نمی‌گیرد: روشی که وسط checkout غیرفعال شود همچنان در آن سفارش استفاده می‌شود و سفارش snapshot آن را نگه می‌دارد (پذیرفته؛ ORD-04).
+  - انتخاب روش در checkout: `ShippingRepository.get_selectable` — روش ناموجود، حذف‌شده یا غیرفعال همه یک پاسخ 422 با `details.type = shipping_method_unavailable`.
+- پیامدها: ADDR-01..04، ORD-01، ORD-03، ORD-04.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 

@@ -4,35 +4,37 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.3 Address & shipping
-- **Current Task:** —. batch DSC-04 + DSC-05 COMPLETE (جلسه `/phase`، batch ۳). M3.2 کامل شد.
+- **Current Task:** —. batch ADDR-01 + ADDR-02 COMPLETE (جلسه `/phase`، batch ۴؛ سقف جلسه پر شد).
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 84/148 task COMPLETE · وزنی 52.4% (221.5h / 423h) · MVP 79.0%
+- **Progress:** 86/148 task COMPLETE · وزنی 53.8% (227.5h / 423h) · MVP 81.1%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** `/phase`: M3.3 (ADDR-01..04)، سپس M3.4 (ORD-01..06، CAT-17)؛ سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود). یادداشت: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043). بازبین‌ها هرگز همزمان با اجرای کامل suite روی دیتابیس پایه تست اجرا نشوند.
+- **Next Action:** `/phase`: ADDR-03 + ADDR-04 (M3.3)، سپس M3.4 (ORD-01..06، CAT-17)؛ سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**52.4%** = 221.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**53.8%** = 227.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 42.5h | 41.9% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 48.5h | 47.8% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 201.5h ≈ ۱۴ هفته. MVP باقی‌مانده: 59h ≈ ۸ هفته.
+- باقی‌مانده: 195.5h ≈ ۱۳ هفته. MVP باقی‌مانده: 53h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-18: ADDR-02 (ShippingMethod، محاسبه‌گر هزینه ارسال پشت interface با سقف رایگان روی مبنای بعد از تخفیف‌ها، `GET /shipping-methods`؛ migration `0021`؛ ADR-045).
+- 2026-10-18: ADDR-01 (CRUD آدرس‌های خود کاربر، سقف ۱۰ و یک پیش‌فرض زیر lock هر کاربر؛ ADR-045).
 - 2026-10-18: DSC-05 (سرویس داخلی redeem/confirm/release با قفل ردیف کد و شمارش زیر lock، outcome بدون raise، تست همزمانی سقف کل و هر موبایل؛ ADR-044). M3.2 کامل شد.
 - 2026-10-18: DSC-04 (CRUD ادمین کد تخفیف با `discounts:manage`، audit، شمارش استفاده، فیلتر وضعیت؛ ADR-044).
 - 2026-10-18: DSC-03 (POST/DELETE /cart/discount، بررسی دوباره کد در GET، rate limit تلاش‌های ناموفق per owner/IP/سراسری با 429 و Retry-After، انتقال کد در ادغام؛ migration `0020`؛ ADR-043).
@@ -209,6 +211,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-18 — ADDR-01 و ADDR-02 COMPLETE (batch ۴ جلسه phase)
+- بازبینی plan و diff ADDR-02 با opus؛ pytest 1705 سبز.
 ### 2026-10-18 — DSC-04 و DSC-05 COMPLETE (batch ۳ جلسه phase)
 - بازبینی plan و diff با opus؛ pytest 1659 سبز. یک اجرای کامل کند (۲:۴۱ ساعت، ۱۲ شکست نامرتبط) به‌خاطر اجرای همزمان pytest بازبین‌ها روی دیتابیس پایه تست بود؛ اجرای تنها سبز.
 ### 2026-10-18 — DSC-02 و DSC-03 COMPLETE (batch ۲ جلسه phase)

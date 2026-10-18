@@ -35,6 +35,7 @@ from app.db.models.media import Media, ProductMedia
 from app.db.models.pricing import PriceHistory, PricingSetting
 from app.db.models.rbac import Permission, Role, RolePermission, UserRole
 from app.db.models.settings import AppSetting
+from app.db.models.shipping import ShippingMethod
 from app.db.models.users import User, UserStatus
 
 __all__ = [
@@ -71,6 +72,7 @@ __all__ = [
     "ReservationStatus",
     "Role",
     "RolePermission",
+    "ShippingMethod",
     "User",
     "UserRole",
     "UserSession",
