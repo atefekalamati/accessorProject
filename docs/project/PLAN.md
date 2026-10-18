@@ -162,7 +162,7 @@
 | ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | COMPLETE | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional; DiscountCode FOR UPDATE + pending redemption (D31); cart not cleared (D34); SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
 | ORD-05 | Order state machine (order/payment/shipment) | COMPLETE | HIGH | HIGH | 4 | ORD-01 | invalid transitions → 422 |
 | CAT-17 | `best_selling` sort for product listing (from successful OrderItems) | COMPLETE | MEDIUM | MEDIUM | 1 | CAT-07, ORD-01 | sort allowlisted; ties by `id` |
-| ORD-06 | Order tests (idempotency, price-changed, insufficient stock) | NOT_STARTED | HIGH | HIGH | 3 | ORD-03…05 | duplicate create → one order; SD rule (test) |
+| ORD-06 | Customer cancel + expiry cancels the order (job/lazy) + order tests | IN_PROGRESS | HIGH | HIGH | 3 | ORD-03…05 | duplicate create → one order; SD rule (test) |
 
 ### M3.5 Payment — PRD «پرداخت» (قالبی) + «معماری سیستم» ✓
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -171,7 +171,7 @@
 | PAY-01 | Payment model + PaymentGateway interface + fake | NOT_STARTED | HIGH | HIGH | 4 | PAY-00, ORD-01, ADR-009 | fake usable in tests |
 | PAY-02 | POST /payments/init | NOT_STARTED | HIGH | HIGH | 3 | PAY-01, ORD-04 | amount = grandTotal from DB |
 | PAY-03 | Callback: verify, amount == grandTotal, idempotent, commit reservation | NOT_STARTED | HIGH | HIGH | 5 | PAY-02, INV-05 | duplicate callback changes nothing; success removes only ordered quantities from the cart (D34); late success → refund_required + audit + WARNING log (D32); branch on `CommitOutcome` (EXPIRED never marks paid, tested) |
-| PAY-04 | Failure/expiry: release reservation, allow retry | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, INV-06 | failure keeps reservation + redemption for retry within TTL; reservation expiry (sweep or lazy) cancels the order (reason expired), releases redemption, audit actor=system (D34); expired reservation never consumed; `release()` after commit → 409 handled |
+| PAY-04 | Failure/expiry: release reservation, allow retry | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, INV-06 | failure keeps reservation + redemption for retry within TTL; expired reservation never consumed; `release()` after commit → 409 handled |
 | PAY-05 | Callback tests (duplicate, amount mismatch, expired) | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, PAY-04 | abuse paths covered |
 | PAY-06 | End-to-end purchase test | NOT_STARTED | HIGH | HIGH | 4 | PAY-05 | cart → OTP → checkout → order → payment → stock committed |
 | HANDOFF-01 | PRD consistency review + export openapi.json | NOT_STARTED | HIGH | HIGH | 3 | PAY-06, all Phase 1–3 `-00` | PRD matches implemented API; `openapi.json` exported for frontend; frontend note: refresh must be single-flight across tabs (ADR-017 reuse detection) |

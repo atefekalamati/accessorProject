@@ -4,11 +4,11 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.4 Checkout & orders
-- **Current Task:** —. ORD-04 COMPLETE (جلسه `/phase`، batch ۴؛ سقف جلسه پر شد؛ plan milestone در [M3.4-PLAN.md](M3.4-PLAN.md)).
+- **Current Task:** ORD-06 — plan بازبینی‌شده (opus) منتظر تأیید کاربر ([ORD-06](../../tasks/phase-03/ORD-06-order-cancel-expiry-tests.md)).
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
 - **Progress:** 94/148 task COMPLETE · وزنی 59.7% (252.5h / 423h) · MVP 90.0%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** `/phase`: M3.4 — ORD-06 (تست‌های سفارش، `GET /orders` و لغو، تغییر job انقضا برای لغو سفارش طبق ADR-047/048)؛ سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود). plan ORD-04 (ایجاد سفارش) هم برای تأیید کاربر متوقف می‌شود (دستور کاربر 2026-10-18). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
+- **Next Action:** تأیید plan ORD-06 (لغو مشتری `POST /orders/{id}/cancel`، لغو سفارش در انقضای رزرو با job/lazy، تست‌ها؛ `GET /orders` در ACC-01 می‌ماند)، سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود و الزام‌های ADR-049 را دارد). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 

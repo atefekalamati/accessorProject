@@ -505,6 +505,16 @@
 - تصمیم‌های کم‌اثر (خودم؛ بازبینی opus): «یک سفارش pending» یعنی pending_payment با رزرو active و منقضی‌نشده؛ سفارش منقضی (که تا ORD-06 لغو نمی‌شود) مانع نمی‌شود و موجودی هم نگه نمی‌دارد. بررسی زیر lock سبد انجام می‌شود (درخواست‌های یک کاربر سریال‌اند). `now` بعد از lockها گرفته می‌شود؛ `created_at = updated_at = now`. fingerprint متفاوت → 409 `PRICE_CHANGED` با quote جدید و no-store؛ خطاهای build_quote (سبد، آدرس، روش، خط، کد) قبل از مقایسه fingerprint؛ `INSUFFICIENT_STOCK` فقط از reserve. replay همیشه همان 201 اولیه (حتی بعد از لغو). audit `order.created` بدون PII. سرآیند = Σ خطوط در service assert می‌شود.
 - پیامدها: ORD-06، PAY-02..04، ACC-01، INV-06.
 
+### ADR-049 — الزام‌های همه planهای PAY-* (دستور کاربر)
+- تاریخ: 2026-10-18
+- تصمیم (کاربر): تعبیر «یک سفارش pending زنده» در ADR-048 (رزرو active و منقضی‌نشده) پذیرفته شد و قید سخت‌تری لازم نیست. هر plan از PAY-* باید این موارد را داشته باشد:
+  - interface برای adapter درگاه، به‌همراه gateway fake که فقط در dev و staging مجاز است. اگر در production، fake انتخاب شود، برنامه fail-closed می‌شود و بالا نمی‌آید. تبدیل تومان به ریال فقط داخل adapter انجام می‌شود (ADR-001).
+  - callback ورودی نامطمئن است. پارامترهای آن هرگز مبنای حقیقت نیستند. verify سمت سرور با درگاه انجام می‌شود و مبلغ باید برابر `grand_total` باشد. idempotency با unique روی (gateway، ref) تضمین می‌شود. callback تکراری یا با ترتیب نادرست بی‌خطر است. endpoint آن rate limit دارد و داده کارت هرگز ذخیره نمی‌شود.
+  - مسیر موفق در یک تراکنش و با ترتیب lock ADR-048 اجرا می‌شود: commit رزرو، confirm کد تخفیف، حذف خطوط سفارش‌داده‌شده از سبد، تنظیم وضعیت‌ها و audit. اگر commit نتیجه EXPIRED بدهد، مسیر refund_required اجرا می‌شود (D32).
+  - job تطبیق: پرداخت‌هایی که بیش از N دقیقه pending مانده‌اند (callback گم‌شده) با درگاه verify می‌شوند. این job زیر advisory lock اجرا می‌شود.
+  - تست‌ها: callback دوباره، callback بعد از لغو یا انقضا، مبلغ ناهمخوان، callback جعلی، و همزمانی پرداخت موفق با sweep انقضا.
+- پیامدها: PAY-01..06، PAY-07.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
