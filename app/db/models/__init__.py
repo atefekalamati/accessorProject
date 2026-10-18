@@ -13,6 +13,12 @@ from app.db.models.catalog import (
     VariantOption,
     VariantOptionKey,
 )
+from app.db.models.discounts import (
+    DiscountCode,
+    DiscountRedemption,
+    DiscountType,
+    RedemptionStatus,
+)
 from app.db.models.inventory import (
     InventoryItem,
     InventoryMovement,
@@ -40,6 +46,9 @@ __all__ = [
     "Category",
     "CategoryFilter",
     "CategoryFilterType",
+    "DiscountCode",
+    "DiscountRedemption",
+    "DiscountType",
     "InventoryItem",
     "InventoryMovement",
     "InventoryReservation",
@@ -55,6 +64,7 @@ __all__ = [
     "ProductMedia",
     "ProductStatus",
     "ProductVariant",
+    "RedemptionStatus",
     "ReservationItemStatus",
     "ReservationStatus",
     "Role",

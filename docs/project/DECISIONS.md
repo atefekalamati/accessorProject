@@ -433,6 +433,15 @@
   - migration `20261012_0018`: backfill با قیمت نهایی فعلی در یک UPDATE با `now()` و بازه نیمه‌باز؛ variant بی‌قیمت → 0 (فقط برای variant غیرعمومی ممکن است و در مقایسه شرکت نمی‌کند).
 - پیامدها: CART-03، CART-04، ORD-03.
 
+### ADR-042 — schema کد تخفیف و redemption (DSC-01)
+- تاریخ: 2026-10-18
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی opus):
+  - `discount_codes`: `code` نرمال‌شده (trim، upper، فقط ASCII `[A-Z0-9_-]{3,32}`؛ ورودی غیر ASCII حتی رقم فارسی رد می‌شود تا `upper()` دو ورودی متفاوت را یکی نکند)؛ unique بین کدهای حذف‌نشده (soft delete؛ کد استفاده‌شده با FK RESTRICT پاک نمی‌شود). `type` + `value`: percent به basis point (`1..10000`، هم‌واحد calculator)، fixed به تومان. `max_amount` فقط برای percent. `min_order_amount` در `1..MAX` (NULL = بدون حداقل). بازه `[starts_at, ends_at)` با پایان باز. `usage_limit_per_user ≤ usage_limit_total`. `is_active` پیش‌فرض true.
+  - `discount_redemptions`: `order_id` NOT NULL بدون FK تا ORD-01 (همان‌جا FK رزرو و redemption اضافه می‌شود). یک redemption زنده (`pending`/`confirmed`) برای هر سفارش (partial unique). وضعیت: `released_at` ⟺ released؛ confirmed ⟹ `confirmed_at`؛ pending ⟹ بدون `confirmed_at`؛ released بعد از confirmed مجاز است و `confirmed_at` می‌ماند (لغو یا بازپرداخت بعد از پرداخت، D32). `amount` در `0..MAX` (درصد کوچک ممکن است صفر گرد شود و کد همچنان اعمال‌شده است). `phone` (E.164) کلید سقف هر کاربر و `code` snapshot متن کد هنگام سفارش؛ تغییر بعدی کد روی سفارش‌های قبلی اثر ندارد. indexهای شمارش partial روی وضعیت زنده.
+  - `carts.discount_code_id` (nullable، SET NULL، بدون index: کدها فقط حذف نرم می‌شوند و scan روی carts فقط در حذف سخت پیش می‌آید) در همین migration برای DSC-03. index شمارش: فقط `(discount_code_id, phone)` partial؛ برای شمارش کل هم کافی است. جدول تلاش‌های ناموفق rate limit کد (D34) در DSC-03 ساخته می‌شود.
+  - برای DSC-03/04 و ORD-04: هر `ON CONFLICT` روی partial unique با predicate متنی (ADR-040). حذف نرم و غیرفعال‌کردن کد (DSC-04) همان `FOR UPDATE` ردیف DiscountCode را می‌گیرد که ORD-04 می‌گیرد، و ORD-04 بعد از lock دوباره `deleted_at IS NULL AND is_active` را بررسی می‌کند.
+- پیامدها: DSC-02..05، ORD-01، ORD-04، PAY-03، PAY-04.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 

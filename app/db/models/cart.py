@@ -78,6 +78,12 @@ class Cart(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         String(10), nullable=False, default=CartStatus.ACTIVE, server_default="active"
     )
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # The code applied by POST /cart/discount (DSC-03); re-validated on every read.
+    discount_code_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("discount_codes.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
 
 class CartItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):

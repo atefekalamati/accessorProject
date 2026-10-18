@@ -4,35 +4,36 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.2 Discount codes
-- **Current Task:** batch CART-05 + DSC-01 (جلسه `/phase`، batch ۱). CART-05 COMPLETE؛ M3.1 کامل شد.
+- **Current Task:** —. batch CART-05 + DSC-01 COMPLETE (جلسه `/phase`، batch ۱).
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 79/148 task COMPLETE · وزنی 48.8% (206.5h / 423h) · MVP 73.6%
+- **Progress:** 80/148 task COMPLETE · وزنی 49.5% (209.5h / 423h) · MVP 74.7%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** `/phase`: CART-05 (تست‌های سبد) و شروع M3.2 (DSC-01..05). plan milestone M3.2 یک‌بار برای کاربر.
+- **Next Action:** `/phase`: DSC-02 + DSC-03، سپس DSC-04 + DSC-05، سپس M3.3 (ADDR-01..04). بازبین‌های DSC-* با opus.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**48.8%** = 206.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**49.5%** = 209.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 27.5h | 27.1% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 30.5h | 30.0% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 216.5h ≈ ۱۵ هفته. MVP باقی‌مانده: 74h ≈ ۸ هفته.
+- باقی‌مانده: 213.5h ≈ ۱۵ هفته. MVP باقی‌مانده: 71h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-18: DSC-01 (جدول‌های discount_codes و discount_redemptions با قیدهای سازگاری، `carts.discount_code_id`، `normalize_code` فقط ASCII؛ migration `0019`؛ ADR-042).
 - 2026-10-18: CART-05 (نقشه پوشش خطای ۵ endpoint سبد با guard، تست شکاف‌های 400/401/403، end-to-end مهمان → ورود → سبد). M3.1 کامل شد.
 - 2026-10-12: CART-04 (ادغام سبد مهمان در verify-otp، پاک‌شدن cookie، idempotent و امن در همزمانی؛ ADR-040).
 - 2026-10-12: CART-03 (GET /cart با قیمت سرور، flag تغییر قیمت per-line با مبنای `seen_*`، POST /cart/acknowledge-prices، flag موجودی بدون عدد؛ migration `0018`؛ ADR-041).
@@ -204,6 +205,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-18 — DSC-01 COMPLETE (batch ۱ جلسه phase)
+- بازبینی plan و diff با opus؛ pytest 1573 سبز.
 ### 2026-10-18 — CART-05 COMPLETE (batch ۱ جلسه phase)
 - pytest 1573 سبز.
 ### 2026-10-12 — CART-04 COMPLETE (batch ۴ جلسه phase)
