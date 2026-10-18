@@ -11,7 +11,7 @@ from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
-from conftest import Catalog, MakeAccount, nested_keys
+from conftest import Catalog, MakeAccount, nested_keys, new_order
 from httpx import AsyncClient, Response
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -35,7 +35,7 @@ from app.db.models.cart import MAX_CART_LINES
 from app.modules.cart.tokens import CART_COOKIE_NAME, GUEST_CART_TTL, hash_cart_token
 from app.modules.inventory.reservation import ReservationService, ReserveLine
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("order_factory")]
 
 URL = "/api/v1/cart/items"
 PAST = timedelta(minutes=20)
@@ -332,7 +332,7 @@ async def test_quantity_is_capped_by_effective_free_stock(
     for quantity, now in ((2, None), (3, utc_now() - PAST)):
         async with AsyncSession(db_engine) as session, session.begin():
             await ReservationService(session).reserve(
-                order_id=uuid4(),
+                order_id=await new_order(),
                 lines=[ReserveLine(variant.id, quantity)],
                 user_id=None,
                 now=now,
@@ -362,7 +362,7 @@ async def test_quantity_is_capped_by_effective_free_stock(
     # Lowering a line never needs stock, even when other buyers took the rest.
     async with AsyncSession(db_engine) as session, session.begin():
         await ReservationService(session).reserve(
-            order_id=uuid4(), lines=[ReserveLine(variant.id, 2)], user_id=None
+            order_id=await new_order(), lines=[ReserveLine(variant.id, 2)], user_id=None
         )
     lowered = await auth_client.patch(
         f"{URL}/{ok.json()['id']}", json={"quantity": 1}, headers=headers

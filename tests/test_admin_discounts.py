@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
-from conftest import MakeAccount, count_queries
+from conftest import MakeAccount, count_queries, new_order
 from httpx import AsyncClient, Response
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from app.core.time import utc_now
 from app.db.models import AuditLog, DiscountCode, DiscountRedemption
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("order_factory")]
 
 URL = "/api/v1/admin/discounts"
 
@@ -72,7 +72,7 @@ async def _redeem(engine: AsyncEngine, code_id: str, status: str = "pending") ->
         session.add(
             DiscountRedemption(
                 discount_code_id=code.id,
-                order_id=uuid4(),
+                order_id=await new_order(),
                 phone="+989120000000",
                 code=code.code,
                 amount=1,

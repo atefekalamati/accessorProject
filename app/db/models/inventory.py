@@ -265,8 +265,7 @@ RESERVATION_ITEM_STATUSES_SQL: Final = ", ".join(f"'{s.value}'" for s in Reserva
 class InventoryReservation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """Stock held for one order for a limited time (INV-04, ADR-007, ADR-036).
 
-    Valid in ``[created_at, expires_at)``. ``order_id`` gets its foreign key with the orders
-    table (ORD-01).
+    Valid in ``[created_at, expires_at)``. ``order_id`` references the order (ORD-01).
     """
 
     __tablename__ = "inventory_reservations"
@@ -289,7 +288,11 @@ class InventoryReservation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Index("ix_inventory_reservations_status_expires_at", "status", "expires_at"),
     )
 
-    order_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=True)
+    order_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("orders.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
     cart_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=True)
     user_id: Mapped[UUID | None] = mapped_column(
         PostgreSQLUUID(as_uuid=True),

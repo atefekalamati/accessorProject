@@ -32,6 +32,18 @@ from app.db.models.inventory import (
     WarehouseStatus,
 )
 from app.db.models.media import Media, ProductMedia
+from app.db.models.orders import (
+    CancelReason,
+    Order,
+    OrderAddress,
+    OrderItem,
+    OrderPriceSnapshot,
+    OrderStatus,
+    OrderStatusHistory,
+    PaymentStatus,
+    ShipmentStatus,
+    StatusField,
+)
 from app.db.models.pricing import PriceHistory, PricingSetting
 from app.db.models.rbac import Permission, Role, RolePermission, UserRole
 from app.db.models.settings import AppSetting
@@ -42,6 +54,7 @@ __all__ = [
     "Address",
     "AppSetting",
     "AuditLog",
+    "CancelReason",
     "Cart",
     "CartItem",
     "CartStatus",
@@ -59,6 +72,13 @@ __all__ = [
     "OtpCode",
     "Permission",
     "Media",
+    "Order",
+    "OrderAddress",
+    "OrderItem",
+    "OrderPriceSnapshot",
+    "OrderStatus",
+    "OrderStatusHistory",
+    "PaymentStatus",
     "MovementType",
     "PriceHistory",
     "PricingSetting",
@@ -72,7 +92,9 @@ __all__ = [
     "ReservationStatus",
     "Role",
     "RolePermission",
+    "ShipmentStatus",
     "ShippingMethod",
+    "StatusField",
     "User",
     "UserRole",
     "UserSession",

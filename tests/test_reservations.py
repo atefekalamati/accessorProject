@@ -10,7 +10,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
-from conftest import Catalog
+from conftest import Catalog, new_order
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -41,7 +41,7 @@ from app.modules.inventory.reservation import (
 )
 from app.modules.inventory.service import AdjustmentType, InventoryService
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("order_factory")]
 
 PAST = timedelta(minutes=20)  # long enough for a 15-minute reservation to have expired
 
@@ -55,7 +55,7 @@ async def _reserve(
 ) -> ReservationResult:
     async with AsyncSession(engine, expire_on_commit=False) as session, session.begin():
         return await ReservationService(session).reserve(
-            order_id=order_id or uuid4(),
+            order_id=order_id or await new_order(),
             lines=[ReserveLine(variant_id, quantity) for variant_id, quantity in lines],
             user_id=None,
             now=now,
@@ -120,7 +120,7 @@ async def test_reserve_holds_stock_with_movement_and_audit(
 ) -> None:
     first, second = await _stocked(catalog, 5, 3)
     now = utc_now()
-    order_id = uuid4()
+    order_id = await new_order()
 
     result = await _reserve(
         db_engine, [(second.id, 1), (first.id, 2), (first.id, 1)], order_id=order_id, now=now
@@ -159,7 +159,7 @@ async def test_reserve_holds_stock_with_movement_and_audit(
 
 async def test_reserve_is_idempotent_per_order(catalog: Catalog, db_engine: AsyncEngine) -> None:
     [variant] = await _stocked(catalog, 5)
-    order_id = uuid4()
+    order_id = await new_order()
 
     first = await _reserve(db_engine, [(variant.id, 2)], order_id=order_id)
     again = await _reserve(db_engine, [(variant.id, 1), (variant.id, 1)], order_id=order_id)
@@ -173,7 +173,7 @@ async def test_reserve_is_idempotent_per_order(catalog: Catalog, db_engine: Asyn
 async def test_reserve_is_all_or_nothing(catalog: Catalog, db_engine: AsyncEngine) -> None:
     enough, short = await _stocked(catalog, 5, 1)
     no_item = await catalog.variant(await catalog.product())
-    order_id = uuid4()
+    order_id = await new_order()
 
     error = await _error(
         _reserve(db_engine, [(enough.id, 2), (short.id, 2)], order_id=order_id),
@@ -233,7 +233,7 @@ async def test_reserve_needs_the_callers_transaction(db_engine: AsyncEngine) -> 
     async with AsyncSession(db_engine) as session:
         with pytest.raises(RuntimeError):
             await ReservationService(session).reserve(
-                order_id=uuid4(), lines=[ReserveLine(uuid4(), 1)], user_id=None
+                order_id=await new_order(), lines=[ReserveLine(uuid4(), 1)], user_id=None
             )
 
 
@@ -243,7 +243,7 @@ async def test_callers_rollback_leaves_nothing(catalog: Catalog, db_engine: Asyn
     with pytest.raises(LookupError):
         async with AsyncSession(db_engine) as session, session.begin():
             await ReservationService(session).reserve(
-                order_id=uuid4(), lines=[ReserveLine(variant.id, 2)], user_id=None
+                order_id=await new_order(), lines=[ReserveLine(variant.id, 2)], user_id=None
             )
             raise LookupError  # e.g. the order insert failed after reserving
 
@@ -255,7 +255,7 @@ async def test_committed_order_cannot_reserve_again(
     catalog: Catalog, db_engine: AsyncEngine
 ) -> None:
     [variant] = await _stocked(catalog, 5)
-    order_id = uuid4()
+    order_id = await new_order()
     result = await _reserve(db_engine, [(variant.id, 1)], order_id=order_id)
     await _commit(db_engine, result.reservation_id)
 
@@ -315,7 +315,7 @@ async def test_same_order_after_expiry_gets_a_new_reservation(
     catalog: Catalog, db_engine: AsyncEngine
 ) -> None:
     [variant] = await _stocked(catalog, 2)
-    order_id = uuid4()
+    order_id = await new_order()
     now = utc_now()
     old = await _reserve(db_engine, [(variant.id, 2)], order_id=order_id, now=now - PAST)
 
@@ -436,7 +436,7 @@ async def test_concurrent_calls_for_one_order_make_one_reservation(
     catalog: Catalog, db_engine: AsyncEngine
 ) -> None:
     first, second = await _stocked(catalog, 5, 5)
-    order_id = uuid4()
+    order_id = await new_order()
 
     results = await asyncio.gather(
         _reserve(db_engine, [(first.id, 1)], order_id=order_id),
@@ -461,7 +461,7 @@ async def test_partly_released_expired_reservation_is_closed_on_re_reserve(
     catalog: Catalog, db_engine: AsyncEngine
 ) -> None:
     first, second = await _stocked(catalog, 1, 1)
-    order_id = uuid4()
+    order_id = await new_order()
     now = utc_now()
     old = await _reserve(
         db_engine, [(first.id, 1), (second.id, 1)], order_id=order_id, now=now - PAST
@@ -837,7 +837,7 @@ async def test_re_reserve_racing_commit_of_the_same_order(
 ) -> None:
     for _ in range(3):
         [variant] = await _stocked(catalog, 2)
-        order_id = uuid4()
+        order_id = await new_order()
         held = await _reserve(db_engine, [(variant.id, 1)], order_id=order_id)
         # The re-reserve sees the old reservation as expired; the commit does not.
         later = held.expires_at + timedelta(seconds=1)

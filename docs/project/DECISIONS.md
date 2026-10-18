@@ -476,6 +476,16 @@
   - ادمین روش ارسال (ADDR-03): مجوز جدید `shipping:manage` (admin و super_admin؛ نه support و content_manager)، فقط از seed و بدون migration. عنوان یکتا نیست (بدون 409). فهرست ادمین ترتیب ثابت `display_order`، عنوان، id و فیلتر `q`/`state`، بدون sort. audit: ایجاد snapshot کامل، ویرایش فقط فیلدهای تغییرکرده، حذف snapshot کامل قبل.
 - پیامدها: ADDR-01..04، ORD-01، ORD-03، ORD-04.
 
+### ADR-046 — schema سفارش و Idempotency-Key (ORD-01، ORD-02)
+- تاریخ: 2026-10-18
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی opus):
+  - جدول‌ها: `orders` (سه وضعیت مستقل، `cancel_reason` اجباری فقط برای cancelled، اجزای مبلغ BIGINT با CHECK جمع در numeric، موبایل، کد و روش ارسال snapshot)، `order_items` (snapshot عنوان محصول، SKU، برچسب تنوع، قیمت واحد اصلی و نهایی و اجزای خط طبق نگاشت ADR-031؛ `position` = ترتیب پایدار قیمت‌گذاری)، `order_price_snapshots` (سیاست قیمت، fingerprint quote در ORD-03، هزینه روش قبل از سقف رایگان و سقف)، `order_addresses` (کپی بدون FK)، `order_status_history`. همه FKهای به سفارش، محصول، کد و روش ارسال RESTRICT؛ `inventory_reservations.order_id` و `discount_redemptions.order_id` اکنون FK به orders دارند. migration ردیف یتیم را حذف نمی‌کند و متوقف می‌شود.
+  - جمع سرآیند = Σ خطوط با CHECK ممکن نیست؛ ORD-04 در service assert و تست می‌کند.
+  - شماره سفارش: `ORD-<سال میلادی UTC>-<sequence سراسری، حداقل ۶ رقم>`؛ sequence سالانه reset نمی‌شود و gap مجاز است. CHECK سال شماره = سال UTC `created_at`؛ ORD-04 هر دو را از یک `now` می‌سازد.
+  - Shipment جدا (کد رهگیری) به ADM فاز ۴ موکول شد؛ تا آن موقع وضعیت ارسال، روش و هزینه روی `orders` است.
+  - حذف حساب کاربر (فاز ۴) با `orders.user_id RESTRICT` به ناشناس‌سازی کاربر نیاز دارد، نه حذف.
+- پیامدها: ORD-02..06، PAY-*، ACC-01، ADM-01، CAT-17.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 

@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
+from conftest import new_order
 from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
@@ -20,7 +21,7 @@ from app.modules.discounts.redemption import ConfirmOutcome, RedemptionService, 
 from app.modules.discounts.rules import CodeRules, rules_of
 from app.shared.money import MAX_PRICE_TOMAN
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("order_factory")]
 
 PHONE = "+989121112233"
 
@@ -72,7 +73,7 @@ async def _redeem(
             return await RedemptionService(session).redeem(
                 code_id=code.id,
                 priced_rules=rules or rules_of(code),
-                order_id=order_id or uuid4(),
+                order_id=order_id or await new_order(),
                 user_id=None,
                 phone=phone,
                 amount=amount,
@@ -126,7 +127,7 @@ async def test_release_frees_a_slot_and_racing_release_never_overshoots(
     engine: AsyncEngine, codes: Any
 ) -> None:
     code = await codes(usage_limit_total=1)
-    first_order = uuid4()
+    first_order = await new_order()
     assert _kind(await _redeem(engine, code, order_id=first_order)) == "ok"
     assert _kind(await _redeem(engine, code, phone="+989120000001")) == "exhausted"
 
@@ -143,7 +144,7 @@ async def test_release_frees_a_slot_and_racing_release_never_overshoots(
 
 async def test_release_frees_a_slot_for_the_next_order(engine: AsyncEngine, codes: Any) -> None:
     code = await codes(usage_limit_total=1)
-    first = uuid4()
+    first = await new_order()
     assert _kind(await _redeem(engine, code, order_id=first)) == "ok"
     assert _kind(await _redeem(engine, code, phone="+989120000004")) == "exhausted"
 
@@ -154,7 +155,7 @@ async def test_release_frees_a_slot_for_the_next_order(engine: AsyncEngine, code
 
 async def test_release_never_predates_the_payment(engine: AsyncEngine, codes: Any) -> None:
     code = await codes()
-    order_id = uuid4()
+    order_id = await new_order()
     await _redeem(engine, code, order_id=order_id)
     assert await _call(engine, "confirm", order_id) is ConfirmOutcome.CONFIRMED
     async with AsyncSession(engine) as session, session.begin():
@@ -178,7 +179,7 @@ async def test_redeem_is_idempotent_per_order_and_one_per_order(
     engine: AsyncEngine, codes: Any
 ) -> None:
     code, other = await codes(), await codes()
-    order_id = uuid4()
+    order_id = await new_order()
     first = await _redeem(engine, code, order_id=order_id)
     again = await _redeem(engine, code, order_id=order_id)
 
@@ -219,7 +220,7 @@ async def test_deactivated_or_deleted_code_is_invalid(
     engine: AsyncEngine, codes: Any, db_engine: AsyncEngine, change: dict[str, Any]
 ) -> None:
     code = await codes()
-    pending_order = uuid4()
+    pending_order = await new_order()
     assert _kind(await _redeem(engine, code, order_id=pending_order)) == "ok"
     values = {key: utc_now() if value == "now" else value for key, value in change.items()}
     async with AsyncSession(db_engine) as session, session.begin():
@@ -278,7 +279,7 @@ async def test_redeems_queued_behind_a_deactivation_never_redeem(
 
 async def test_confirm_and_release_outcomes(engine: AsyncEngine, codes: Any) -> None:
     code = await codes()
-    paid, cancelled, plain = uuid4(), uuid4(), uuid4()
+    paid, cancelled, plain = await new_order(), await new_order(), await new_order()
     for order_id in (paid, cancelled):
         await _redeem(engine, code, order_id=order_id, phone=f"+98912{order_id.int % 10**7:07d}")
 
@@ -323,7 +324,7 @@ async def test_methods_need_the_callers_transaction(engine: AsyncEngine, codes: 
             await service.redeem(
                 code_id=code.id,
                 priced_rules=rules_of(code),
-                order_id=uuid4(),
+                order_id=await new_order(),
                 user_id=None,
                 phone=PHONE,
                 amount=1,

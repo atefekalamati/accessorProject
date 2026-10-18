@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
-from conftest import MakeAccount
+from conftest import MakeAccount, new_order
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -121,10 +121,10 @@ async def test_code_is_unique_among_live_codes(db_engine: AsyncEngine, codes: li
     await _insert(db_engine, _code(code="SUMMER"), codes)
 
 
-def _redemption(discount: DiscountCode, **values: Any) -> DiscountRedemption:
+async def _redemption(discount: DiscountCode, **values: Any) -> DiscountRedemption:
     base: dict[str, Any] = {
         "discount_code_id": discount.id,
-        "order_id": uuid4(),
+        "order_id": values.pop("order_id", None) or await new_order(),
         "phone": "+989121234567",
         "code": discount.code,
         "amount": 5_000,
@@ -133,6 +133,7 @@ def _redemption(discount: DiscountCode, **values: Any) -> DiscountRedemption:
 
 
 @pytest.mark.integration
+@pytest.mark.usefixtures("order_factory")
 @pytest.mark.parametrize(
     ("values", "constraint"),
     [
@@ -162,32 +163,36 @@ async def test_redemption_checks(
         for key, value in values.items()
     }
     with pytest.raises(IntegrityError, match=f"ck_discount_redemptions_{constraint}"):
-        await _insert(db_engine, _redemption(code, **values))
+        await _insert(db_engine, await _redemption(code, **values))
 
 
 @pytest.mark.integration
+@pytest.mark.usefixtures("order_factory")
 async def test_zero_amount_and_paid_then_released_are_valid(
     db_engine: AsyncEngine, codes: list[UUID]
 ) -> None:
     code = _code()
     await _insert(db_engine, code, codes)
     now = utc_now()
-    await _insert(db_engine, _redemption(code, amount=0))
+    await _insert(db_engine, await _redemption(code, amount=0))
     await _insert(
         db_engine,
-        _redemption(code, status="released", confirmed_at=now, released_at=now + timedelta(1)),
+        await _redemption(
+            code, status="released", confirmed_at=now, released_at=now + timedelta(1)
+        ),
     )
 
 
 @pytest.mark.integration
+@pytest.mark.usefixtures("order_factory")
 async def test_one_live_redemption_per_order(db_engine: AsyncEngine, codes: list[UUID]) -> None:
     code = _code()
     await _insert(db_engine, code, codes)
-    order_id = uuid4()
-    first = _redemption(code, order_id=order_id)
+    order_id = await new_order()
+    first = await _redemption(code, order_id=order_id)
     await _insert(db_engine, first)
     with pytest.raises(IntegrityError, match="uq_discount_redemptions_live_order"):
-        await _insert(db_engine, _redemption(code, order_id=order_id))
+        await _insert(db_engine, await _redemption(code, order_id=order_id))
 
     async with AsyncSession(db_engine) as session, session.begin():
         stored = await session.get(DiscountRedemption, first.id)
@@ -195,23 +200,25 @@ async def test_one_live_redemption_per_order(db_engine: AsyncEngine, codes: list
         stored.status = RedemptionStatus.RELEASED
         stored.released_at = utc_now()
     # Once released, the order may redeem again (a new attempt after expiry).
-    await _insert(db_engine, _redemption(code, order_id=order_id))
+    await _insert(db_engine, await _redemption(code, order_id=order_id))
 
     # A paid (confirmed) redemption blocks a second one as well.
-    paid_order = uuid4()
+    paid_order = await new_order()
     now = utc_now()
     await _insert(
-        db_engine, _redemption(code, order_id=paid_order, status="confirmed", confirmed_at=now)
+        db_engine,
+        await _redemption(code, order_id=paid_order, status="confirmed", confirmed_at=now),
     )
     with pytest.raises(IntegrityError, match="uq_discount_redemptions_live_order"):
-        await _insert(db_engine, _redemption(code, order_id=paid_order))
+        await _insert(db_engine, await _redemption(code, order_id=paid_order))
 
 
 @pytest.mark.integration
+@pytest.mark.usefixtures("order_factory")
 async def test_used_code_cannot_be_hard_deleted(db_engine: AsyncEngine, codes: list[UUID]) -> None:
     code = _code()
     await _insert(db_engine, code, codes)
-    await _insert(db_engine, _redemption(code))
+    await _insert(db_engine, await _redemption(code))
     with pytest.raises(IntegrityError, match="fk_discount_redemptions_discount_code_id"):
         async with AsyncSession(db_engine) as session, session.begin():
             await session.execute(delete(DiscountCode).where(DiscountCode.id == code.id))

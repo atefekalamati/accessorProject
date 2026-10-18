@@ -170,8 +170,11 @@ class DiscountRedemption(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKey("discount_codes.id", ondelete="RESTRICT"),
         nullable=False,
     )
-    # No FK until orders exist (ORD-01 adds it, like for reservations).
-    order_id: Mapped[UUID] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=False)
+    order_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("orders.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
     user_id: Mapped[UUID | None] = mapped_column(
         PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

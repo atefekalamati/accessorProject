@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
-from conftest import Catalog, MakeAccount
+from conftest import Catalog, MakeAccount, new_order
 from httpx import AsyncClient, Response
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -29,7 +29,7 @@ from app.db.models import (
 )
 from app.modules.cart.tokens import CART_COOKIE_NAME
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("order_factory")]
 
 API = "/api/v1"
 CART = f"{API}/cart"
@@ -100,7 +100,7 @@ async def _redeem(engine: AsyncEngine, code: DiscountCode, phone: str = "+989120
         session.add(
             DiscountRedemption(
                 discount_code_id=code.id,
-                order_id=uuid4(),
+                order_id=await new_order(),
                 phone=phone,
                 code=code.code,
                 amount=1,

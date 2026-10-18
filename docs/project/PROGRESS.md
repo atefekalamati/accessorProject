@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.4 Checkout & orders
-- **Current Task:** —. batch ADDR-03 + ADDR-04 COMPLETE (جلسه `/phase`، batch ۱). M3.3 کامل شد.
+- **Current Task:** ORD-02 (batch ۲: ORD-01 + ORD-02؛ plan milestone در [M3.4-PLAN.md](M3.4-PLAN.md)).
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 88/148 task COMPLETE · وزنی 54.7% (231.5h / 423h) · MVP 82.5%
+- **Progress:** 89/148 task COMPLETE · وزنی 55.9% (236.5h / 423h) · MVP 84.3%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** `/phase`: M3.4 (ORD-01..06، CAT-17)؛ سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود). plan ORD-04 (ایجاد سفارش) هم برای تأیید کاربر متوقف می‌شود (دستور کاربر 2026-10-18). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
@@ -15,24 +15,25 @@
 ---
 
 ## Overall Progress
-**54.7%** = 231.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**55.9%** = 236.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 52.5h | 51.7% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 57.5h | 56.7% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 191.5h ≈ ۱۳ هفته. MVP باقی‌مانده: 49h ≈ ۸ هفته.
+- باقی‌مانده: 186.5h ≈ ۱۳ هفته. MVP باقی‌مانده: 44h ≈ ۸ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-18: ORD-01 (schema سفارش، خطوط snapshot، snapshot قیمت و آدرس، تاریخچه وضعیت، شماره `ORD-YYYY-NNNNNN`؛ FK سفارش در رزرو و redemption؛ migration `0022`؛ ADR-046).
 - 2026-10-18: ADDR-04 (تست‌های مالکیت و validation آدرس، اثر end-to-end ادمین روی فهرست عمومی و انتخاب روش). M3.3 کامل شد.
 - 2026-10-18: ADDR-03 (CRUD ادمین روش ارسال با مجوز جدید `shipping:manage`، audit، قفل ردیف؛ ADR-045).
 - 2026-10-18: ADDR-02 (ShippingMethod، محاسبه‌گر هزینه ارسال پشت interface با سقف رایگان روی مبنای بعد از تخفیف‌ها، `GET /shipping-methods`؛ migration `0021`؛ ADR-045).

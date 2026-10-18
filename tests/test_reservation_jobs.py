@@ -46,7 +46,7 @@ from app.modules.inventory.reservation import (
     ReservationService,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("order_factory")]
 
 
 async def _wait_for_lock_waiter(engine: AsyncEngine) -> None:
