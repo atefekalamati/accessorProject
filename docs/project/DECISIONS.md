@@ -473,6 +473,7 @@
   - ترتیب برای ORD-03/ORD-04 (بدون دور: کد و مالیات هرگز ارسال را نمی‌خوانند): قیمت‌گذاری با `shipping=0` (و کد اگر `price_with_code` پذیرفت) → مبنا → quote → `price_order(shipping=quote)`؛ خطوط، مالیات و کد یکسان و `grand_total` دقیقاً به اندازه quote بیشتر. ارسال گرد نمی‌شود و مالیات ندارد (ADR-031). fingerprint quote در ORD-03 باید علاوه بر fingerprint قیمت، شناسه و مبلغ کد و شناسه و مبلغ ارسال را بپوشاند (D34).
   - طول عنوان و توضیح را نوع ستون (VARCHAR 100/500) تضمین می‌کند؛ CHECK فقط trim و ناتهی‌بودن عنوان. `get_selectable` قفل نمی‌گیرد: روشی که وسط checkout غیرفعال شود همچنان در آن سفارش استفاده می‌شود و سفارش snapshot آن را نگه می‌دارد (پذیرفته؛ ORD-04).
   - انتخاب روش در checkout: `ShippingRepository.get_selectable` — روش ناموجود، حذف‌شده یا غیرفعال همه یک پاسخ 422 با `details.type = shipping_method_unavailable`.
+  - ادمین روش ارسال (ADDR-03): مجوز جدید `shipping:manage` (admin و super_admin؛ نه support و content_manager)، فقط از seed و بدون migration. عنوان یکتا نیست (بدون 409). فهرست ادمین ترتیب ثابت `display_order`، عنوان، id و فیلتر `q`/`state`، بدون sort. audit: ایجاد snapshot کامل، ویرایش فقط فیلدهای تغییرکرده، حذف snapshot کامل قبل.
 - پیامدها: ADDR-01..04، ORD-01، ORD-03، ORD-04.
 
 ### تصمیم‌های deferred
