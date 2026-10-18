@@ -33,7 +33,7 @@ _COLUMNS: Final = {
 }
 
 
-def _invalid(field: StatusField, current: str, new: str, why: str) -> BusinessRuleError:
+def invalid_transition(field: StatusField, current: str, new: str, why: str) -> BusinessRuleError:
     return BusinessRuleError(
         code=ErrorCode.INVALID_STATE_TRANSITION,
         message="This status change is not allowed",
@@ -96,7 +96,7 @@ class OrderStateService:
         current = state_of(order).of(field)
         why = check_transition(state_of(order), field, new_status)
         if why is not None:
-            raise _invalid(field, current, new_status, why)
+            raise invalid_transition(field, current, new_status, why)
 
         setattr(order, _COLUMNS[field], str(new_status))
         if cancelling:

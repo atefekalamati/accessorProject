@@ -25,7 +25,13 @@ from fastapi import Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import BusinessRuleError, ConflictError, ErrorCode, UnauthorizedError
+from app.core.errors import (
+    BusinessRuleError,
+    ConflictError,
+    ErrorCode,
+    NotFoundError,
+    UnauthorizedError,
+)
 from app.core.phone import MOBILE_E164_PATTERN
 from app.core.time import utc_now
 from app.db.models import (
@@ -47,7 +53,8 @@ from app.modules.cart.repository import CartRepository
 from app.modules.checkout.service import CheckoutService, Quote, render
 from app.modules.discounts.redemption import RedemptionService
 from app.modules.inventory.reservation import ReservationService, ReserveLine
-from app.modules.orders.schemas import CreateOrderRequest, OrderResponse
+from app.modules.orders.cancel import OrderCancellation, lock_order, order_advisory_lock
+from app.modules.orders.schemas import CreateOrderRequest, OrderResponse, OrderStatusResponse
 from app.shared.audit import record_audit
 from app.shared.idempotency import (
     NO_STORE,
@@ -175,6 +182,39 @@ class OrderService:
                 body=body,
             )
         return PlacedOrder(status_code=201, body=body, replayed=False)
+
+    async def cancel(
+        self, user_id: UUID, order_id: UUID, request: Request | None = None
+    ) -> OrderStatusResponse:
+        """Customer cancel (ORD-06, ADR-050): only the user's own ``pending_payment`` order.
+
+        Idempotent: an order already cancelled (by the customer or by expiry) answers its
+        current state and changes nothing. A payment at the gateway (``pending``) is 409
+        ``PAYMENT_IN_PROGRESS``, so a customer cancel never ends in ``refund_required``.
+        """
+        async with self._session.begin():
+            # Ownership before the advisory lock: no contention on other users' order keys.
+            owned = await self._session.scalar(
+                select(Order.id).where(Order.id == order_id, Order.user_id == user_id)
+            )
+            if owned is None:
+                raise NotFoundError(message="Order not found")
+            await self._session.execute(order_advisory_lock(order_id))
+            order = await lock_order(self._session, order_id, user_id=user_id)
+            if order is None:
+                raise NotFoundError(message="Order not found")
+            if order.status != OrderStatus.CANCELLED:
+                cancellation = OrderCancellation(self._session)
+                cancellation.check(order)
+                if order.payment_status == PaymentStatus.PENDING:
+                    raise ConflictError(
+                        code=ErrorCode.PAYMENT_IN_PROGRESS,
+                        message="A payment for this order is in progress",
+                    )
+                await cancellation.cancel_locked(order, actor_user_id=user_id, request=request)
+                await self._session.flush()
+                await self._session.refresh(order)
+            return OrderStatusResponse.model_validate(order, from_attributes=True)
 
     async def _verified_phone(self, user_id: UUID) -> str:
         """Sign-in is by OTP only, so the account's mobile is verified; never trust less."""

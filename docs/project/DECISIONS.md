@@ -515,6 +515,17 @@
   - تست‌ها: callback دوباره، callback بعد از لغو یا انقضا، مبلغ ناهمخوان، callback جعلی، و همزمانی پرداخت موفق با sweep انقضا.
 - پیامدها: PAY-01..06، PAY-07.
 
+### ADR-050 — لغو سفارش و لغو در انقضای رزرو (ORD-06)
+- تاریخ: 2026-10-18
+- تصمیم (کاربر): لغو مشتری با payment `unpaid` و `failed` مجاز است. با `pending` (مشتری در درگاه است) → 409 `PAYMENT_IN_PROGRESS`، تا لغو مشتری هرگز به `refund_required` نرسد. انقضا همیشه سفارش را لغو می‌کند (D32).
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی opus روی plan و diff):
+  - `POST /orders/{id}/cancel`: ترتیب بررسی‌ها: 401 → 400 (path و query) → 404 (سفارش دیگران یا ناموجود؛ مالکیت قبل از advisory) → advisory سفارش → ردیف سفارش `FOR UPDATE` کامل. سفارش لغوشده → 200 با وضعیت فعلی، بدون نوشتن (idempotent). guard وضعیت قبل از هر اثر جانبی → 422. پاسخ `OrderStatusResponse` با no-store؛ نمای کامل در ACC-01. بدون Idempotency-Key.
+  - منطق مشترک در `app/modules/orders/cancel.py`: رزرو active با `release()` موجود آزاد می‌شود (`now` بعد از lockهای inventory). اگر `released_at ≥ expires_at` باشد، یا رزرو از قبل `expired` باشد، لغو با reason `expired` و actor system ثبت می‌شود (انقضای lazy، D34). movement و audit `reservation.released` در این حالت actor مشتری و پرچم `expired: true` دارند. سرویس رزرو تغییر نکرد؛ فقط `order_lock_key` عمومی شد.
+  - redemption با `RedemptionService.release` آزاد می‌شود و audit `discount.redemption_released` دارد (فقط id).
+  - job انقضا (INV-06): رزرو سفارش‌دار با try-advisory → ردیف سفارش `SKIP LOCKED` → `expire()` → لغو در همان تراکنش. سفارش مشغول skip می‌شود و دور بعد بسته می‌شود. مرحله دوم sweep سفارش‌های `pending_payment` با رزرو بسته‌شده و بدون رزرو active/committed را با `expired` لغو می‌کند (job قدیمی یا deploy غلتان). `SweepResult.cancelled` اضافه شد.
+  - invariant: هر مسیری که رزرو سفارش را بدون commit می‌بندد، سفارش را در همان تراکنش لغو می‌کند. **PAY-03:** شاخه EXPIRED از `commit()` باید با advisory → ردیف سفارش شروع شود و سفارش را در همان تراکنش لغو کند (`refund_required`، D32)؛ وگرنه مرحله دوم sweep یک دور دیرتر لغو می‌کند. مسیرهای انقضای lazy: فعلاً لغو؛ PAY-02/03 و ACC-01 (حداقل در نمایش) بعداً.
+- پیامدها: PAY-02..04، ACC-01، ADM.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 

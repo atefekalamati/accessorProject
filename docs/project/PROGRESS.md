@@ -3,36 +3,37 @@
 **Last Updated:** 2026-10-18
 
 ## Current / Next
-- **Phase › Milestone:** 3 Purchase flow › M3.4 Checkout & orders
-- **Current Task:** ORD-06 — plan بازبینی‌شده (opus) منتظر تأیید کاربر ([ORD-06](../../tasks/phase-03/ORD-06-order-cancel-expiry-tests.md)).
+- **Phase › Milestone:** 3 Purchase flow › M3.5 Payment
+- **Current Task:** —. ORD-06 COMPLETE؛ M3.4 کامل شد.
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 94/148 task COMPLETE · وزنی 59.7% (252.5h / 423h) · MVP 90.0%
+- **Progress:** 95/148 task COMPLETE · وزنی 60.4% (255.5h / 423h) · MVP 91.1%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** تأیید plan ORD-06 (لغو مشتری `POST /orders/{id}/cancel`، لغو سفارش در انقضای رزرو با job/lazy، تست‌ها؛ `GET /orders` در ACC-01 می‌ماند)، سپس M3.5 (PAY-*؛ plan هر کدام برای کاربر متوقف می‌شود و الزام‌های ADR-049 را دارد). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
+- **Next Action:** M3.5: یک plan مشترک برای همه taskهای PAY (PAY-01..06؛ PAY-07 BLOCKED با D8) با الزام‌های ADR-049 و یادداشت PAY-03 در ADR-050 برای کاربر فرستاده می‌شود؛ بعد از تأیید پشت هم اجرا می‌شوند (CLAUDE.md، AUTOPILOT 2026-10-18). سپس HANDOFF-01. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند؛ `POST /orders` هنوز `allowed_query_params` را در سطح route دارد (query ناشناخته بدون token → 400 قبل از 401؛ اصلاح کوچک در HANDOFF-01).
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**59.7%** = 252.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**60.4%** = 255.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 73.5h | 72.4% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 76.5h | 75.4% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 170.5h ≈ ۱۳ هفته. MVP باقی‌مانده: 28h ≈ ۸ هفته.
+- باقی‌مانده: 167.5h ≈ ۱۲ هفته. MVP باقی‌مانده: 25h ≈ ۷ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-18: ORD-06 (لغو مشتری `POST /orders/{id}/cancel`، لغو سفارش در انقضای رزرو با job و lazy، مرحله دوم sweep، تست e2e؛ ADR-050).
 - 2026-10-18: ORD-04 (`POST /orders`: idempotent، یک تراکنش، رزرو ۱۵ دقیقه، redemption pending، snapshot کامل، یک سفارش pending زنده برای هر کاربر؛ ترتیب سراسری lock در ADR-048).
 - 2026-10-18: CAT-17 (sort `best_selling` از واحدهای سفارش‌های paid؛ ADR-047).
 - 2026-10-18: ORD-05 (state machine سه وضعیت با guardهای بین فیلدها، history و audit، قفل ردیف سفارش؛ ADR-047).
@@ -219,6 +220,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-18 — ORD-06 COMPLETE (جلسه phase، batch ۱)
+- plan بعد از بازبینی opus و تأیید کاربر اجرا شد (لغو با payment pending → 409). بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. قاعده AUTOPILOT در CLAUDE.md به‌روز شد. pytest 1895 سبز.
 ### 2026-10-18 — ORD-04 COMPLETE (batch ۴ جلسه phase)
 - plan با ۴ افزوده کاربر تأیید شد؛ بازبینی plan و diff با opus (یافته deadlock KEY SHARE/FOR UPDATE قبل از پیاده‌سازی رفع شد)؛ pytest 1871 سبز.
 ### 2026-10-18 — ORD-03، ORD-05 و CAT-17 COMPLETE (batch ۳ جلسه phase)

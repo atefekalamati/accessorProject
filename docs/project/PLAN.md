@@ -162,7 +162,7 @@
 | ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | COMPLETE | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional; DiscountCode FOR UPDATE + pending redemption (D31); cart not cleared (D34); SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
 | ORD-05 | Order state machine (order/payment/shipment) | COMPLETE | HIGH | HIGH | 4 | ORD-01 | invalid transitions → 422 |
 | CAT-17 | `best_selling` sort for product listing (from successful OrderItems) | COMPLETE | MEDIUM | MEDIUM | 1 | CAT-07, ORD-01 | sort allowlisted; ties by `id` |
-| ORD-06 | Customer cancel + expiry cancels the order (job/lazy) + order tests | IN_PROGRESS | HIGH | HIGH | 3 | ORD-03…05 | duplicate create → one order; SD rule (test) |
+| ORD-06 | Customer cancel + expiry cancels the order (job/lazy) + order tests | COMPLETE | HIGH | HIGH | 3 | ORD-03…05 | duplicate create → one order; SD rule (test) |
 
 ### M3.5 Payment — PRD «پرداخت» (قالبی) + «معماری سیستم» ✓
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |

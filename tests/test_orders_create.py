@@ -19,7 +19,6 @@ from test_checkout_validate import _add, _address, _item_id, codes, methods, sho
 from app.core.time import utc_now
 from app.db.models import (
     AuditLog,
-    CancelReason,
     DiscountCode,
     DiscountRedemption,
     IdempotencyKey,
@@ -31,7 +30,6 @@ from app.db.models import (
     OrderPriceSnapshot,
     OrderStatusHistory,
     ProductVariant,
-    StatusField,
 )
 from app.modules.checkout.service import CheckoutService
 from app.modules.discounts.redemption import RedemptionService
@@ -40,7 +38,6 @@ from app.modules.inventory.jobs import sweep_expired_reservations
 from app.modules.inventory.reservation import RESERVATION_TTL
 from app.modules.orders.schemas import CreateOrderRequest
 from app.modules.orders.service import OrderService
-from app.modules.orders.state_service import OrderStateService
 
 pytestmark = pytest.mark.integration
 
@@ -594,23 +591,15 @@ async def test_orders_racing_the_expiry_sweep_and_a_release(
     ready = await buyer((variant, 2))
     fp = await _with_code(auth_client, ready, code)
 
-    async def release() -> None:
-        async with AsyncSession(db_engine) as session, session.begin():
-            await OrderStateService(session).transition(
-                old_id,
-                StatusField.ORDER,
-                "cancelled",
-                actor_user_id=None,
-                cancel_reason=CancelReason.EXPIRED,
-                reason="reservation expired",
-            )
-            await RedemptionService(session).release(old_id)
-
-    order, swept, _ = await asyncio.gather(
-        ready.order(fingerprint=fp), sweep_expired_reservations(db_engine), release()
+    # The old order's customer cancels while the job expires it (ORD-06: one of them wins).
+    order, swept, cancelled = await asyncio.gather(
+        ready.order(fingerprint=fp),
+        sweep_expired_reservations(db_engine),
+        old.client.post(f"{ORDERS}/{old_id}/cancel", headers=old.account.headers),
     )
 
     assert order.status_code == 201, order.text
+    assert cancelled.status_code == 200, cancelled.text
     assert swept.failed == 0
 
 

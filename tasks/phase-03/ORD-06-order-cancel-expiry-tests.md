@@ -1,6 +1,6 @@
 # ORD-06 — لغو مشتری، لغو سفارش با انقضای رزرو، تست‌های سفارش
 
-**Status:** IN_PROGRESS · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** ORD-03, ORD-04, ORD-05, INV-06 · **Level:** HIGH
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** ORD-03, ORD-04, ORD-05, INV-06 · **Level:** HIGH
 
 ## Objective
 لغو سفارش `pending_payment` توسط مشتری، و لغو سفارش وقتی رزرو آن منقضی می‌شود (job یا بررسی lazy). هر دو در یک تراکنش و با ترتیب lock ADR-048 رزرو و redemption را آزاد می‌کنند. تست‌های باقی‌مانده سفارش، به‌علاوه یک تست end-to-end از سبد تا سفارش و لغو.
@@ -70,12 +70,22 @@
 - بقیه فهرست اولیه ORD-06 (idempotency، PRICE_CHANGED، INSUFFICIENT_STOCK، SD rule) در `test_orders_create.py` پوشش داده شده است (۱۸ تست).
 
 ## Acceptance Criteria
-- [ ] ایجاد تکراری → یک سفارش (موجود)؛ SD rule (موجود + e2e).
-- [ ] لغو مشتری فقط در `pending_payment` (و قاعده پرداخت ADR-050)؛ رزرو و redemption در یک تراکنش آزاد می‌شوند؛ idempotent؛ سفارش دیگران → 404.
-- [ ] انقضای رزرو (job یا lazy) سفارش را با `expired` لغو می‌کند، redemption را آزاد می‌کند و audit با actor system دارد.
-- [ ] ترتیب lock ADR-048 در لغو و job؛ تست‌های همزمانی بالا سبزند.
-- [ ] pytest، ruff، format و mypy سبزند.
+- [x] ایجاد تکراری → یک سفارش (موجود)؛ SD rule (موجود + e2e).
+- [x] لغو مشتری فقط در `pending_payment` (و قاعده پرداخت ADR-050)؛ رزرو و redemption در یک تراکنش آزاد می‌شوند؛ idempotent؛ سفارش دیگران → 404.
+- [x] انقضای رزرو (job یا lazy) سفارش را با `expired` لغو می‌کند، redemption را آزاد می‌کند و audit با actor system دارد.
+- [x] ترتیب lock ADR-048 در لغو و job؛ تست‌های همزمانی بالا سبزند.
+- [x] pytest، ruff، format و mypy سبزند.
 
 ## Log
 - 2026-10-18: plan (جلسه `/phase`، batch ۱؛ چون رزرو را آزاد می‌کند تنها اجرا می‌شود و طبق AUTOPILOT برای تأیید کاربر متوقف می‌شود؛ بازبین opus).
 - 2026-10-18: بازبینی plan (opus): APPROVE WITH CHANGES، بدون چرخه deadlock و بدون نیاز به schema. ۱۰ یافته اعمال شد: guard وضعیت قبل از هر اثر جانبی (422 نه 409)؛ تصمیم expire/release بعد از lockها؛ قاعده لغو در وضعیت پرداخت pending/failed (سؤال از کاربر)؛ سفارش pending بدون رزرو active (مرحله دوم sweep و invariant)؛ مسیرهای lazy و اصلاح PLAN.md؛ `FOR UPDATE` کامل؛ بررسی مالکیت قبل از advisory؛ نتیجه redemption در audit؛ تست‌های اضافه؛ rollback در deploy غلتان. منتظر تأیید کاربر.
+- 2026-10-18: کاربر تأیید کرد: لغو با `unpaid`/`failed` مجاز است و با `pending` → 409 `PAYMENT_IN_PROGRESS`. قاعده جدید AUTOPILOT (taskی که فقط سرویس رزرو را صدا می‌زند متوقف نمی‌شود؛ PAY با یک plan مشترک) در CLAUDE.md ثبت شد.
+- 2026-10-18: پیاده‌سازی. انحراف‌ها از plan (برای اینکه سرویس رزرو تغییر نکند):
+  - انقضای lazy با `release()` موجود و مقایسه `released_at ≥ expires_at` تشخیص داده می‌شود. رزرو `released` با پرچم `expired` می‌ماند و `expire()` پارامتر جدید نگرفت.
+  - audit جدای `discount.redemption_released`.
+  - تست e2e در `test_orders_cancel.py` است، نه فایل جدا.
+  - تست‌های job در `test_orders_cancel.py` نوشته شدند. تست‌های موجود `test_reservation_jobs.py` همه از مسیر سفارش‌دار می‌گذرند و سبزند. رزرو بدون سفارش از `reserve` ساخته نمی‌شود.
+  - `test_orders_racing_the_expiry_sweep_and_a_release` با لغو واقعی بازنویسی شد.
+  - بازبینی diff (opus): PASS WITH CHANGES، بدون چرخه deadlock. اعمال شد: query param بعد از احراز هویت، `force_expired` برای مرحله دوم، assertهای اضافه (skipped، audit یکتا، شمارنده‌ها)، تست لغو سفارشی که رزروش از قبل expired است، و یادداشت PAY-03 در ADR-050.
+  - همان اصلاح query param برای `POST /orders` به HANDOFF-01 موکول شد.
+  - pytest (1895)، ruff، format و mypy سبز. COMPLETE.

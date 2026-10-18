@@ -81,3 +81,15 @@ class OrderResponse(BaseModel):
     # keeps the original value: read GET /orders/{number} for the current state.
     reservation_expires_at: datetime
     created_at: datetime
+
+
+class OrderStatusResponse(BaseModel):
+    """The order's current statuses after a cancel (ORD-06); the full view is ACC-01."""
+
+    id: UUID
+    order_number: str
+    status: str
+    payment_status: str
+    shipment_status: str
+    cancel_reason: str | None
+    updated_at: datetime

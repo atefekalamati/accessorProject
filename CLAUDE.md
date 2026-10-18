@@ -134,7 +134,7 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 
   سپس بدون صبر برو سراغ task بعدی.
 - **توقف فوری** وقتی یکی از این‌ها پیش بیاید: تستی با علت نامشخص fail شود؛ تصمیم باز یا ابهام در PRD پیدا شود؛ کاری خارج از plan تأییدشده لازم شود؛ تغییر schema یا migration برنامه‌ریزی‌نشده لازم شود.
-- **هرگز batch نشوند:** taskهای `PAY-*` و taskهای رزرو، commit یا release موجودی. هر کدام در یک جلسه جدا انجام می‌شود.
+- **هرگز batch نشوند:** taskهایی که خود سرویس رزرو، commit یا release موجودی را تغییر می‌دهند. هر کدام در یک جلسه جدا انجام می‌شوند. taskهای `PAY-*` استثنا دارند و طبق قاعده AUTOPILOT پشت هم اجرا می‌شوند.
 - پایان batch: یک گزارش واحد شامل یک خط برای هر task (ID، وضعیت، commit، تست‌ها)، جمع کل و پیشنهاد batch بعدی، به‌همراه نتیجه CI.
 
 ### Phase mode (`/phase`، جزئیات در `.claude/commands/phase.md`؛ ADR-037)
@@ -147,7 +147,9 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 ### Speed mode
 
 - CI: بعد از هر push، run همان commit را با `gh run watch <id> --exit-status` دنبال کن (`gh` روی PATH نیست: `& "C:\Program Files\GitHub CLI\gh.exe"`). سبز = pass؛ قرمز = توقف و گزارش step شکست‌خورده.
-- **AUTOPILOT (2026-10-10):** plan هیچ batch یا task، حتی HIGH، منتظر تأیید نمی‌ماند، مگر: `PAY-*`، رزرو/commit/release موجودی، تغییر scope در PRD، dependency بیرونی جدید یا ابهام در PRD. در این موارد توقف کن و plan را بفرست.
+- **AUTOPILOT (2026-10-10، به‌روز 2026-10-18):** plan هیچ batch یا task، حتی HIGH، منتظر تأیید نمی‌ماند، مگر در این موارد: تغییر خود سرویس رزرو/commit/release موجودی، `PAY-*`، تغییر scope در PRD، dependency بیرونی جدید، یا ابهام در PRD. در این موارد توقف کن و plan را بفرست.
+  - taskی که فقط سرویس‌های موجود reserve/commit/release را صدا می‌زند متوقف نمی‌شود، ولی بازبین opus برای آن الزامی است.
+  - `PAY-*`: برای همه taskهای PAY یک plan مشترک فرستاده می‌شود. بعد از تأیید، همه پشت هم اجرا می‌شوند.
 - هر task HIGH: plan با [REVIEW-CHECKLIST.md](docs/project/REVIEW-CHECKLIST.md) چک می‌شود. سپس یک subagent بازبین مستقل plan و diff نهایی را در برابر همان فهرست بررسی می‌کند. یافته‌ها قبل از commit رفع می‌شوند و نتیجه بازبینی در Log فایل task ثبت می‌شود.
 - مدل بازبین: subagentهای بازبین پیش‌فرض با model `sonnet` اجرا می‌شوند؛ `opus` فقط برای taskهایی که پول، رزرو موجودی، پرداخت یا auth را لمس می‌کنند.
 - اگر بازبین به rate limit خورد، صبر کن و دوباره اجرا کن؛ بازبینی هرگز حذف نمی‌شود.
