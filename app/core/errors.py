@@ -65,6 +65,7 @@ class ErrorCode(StrEnum):
     # 5xx — server side
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
     DATABASE_UNAVAILABLE = "DATABASE_UNAVAILABLE"
+    PAYMENT_GATEWAY_UNAVAILABLE = "PAYMENT_GATEWAY_UNAVAILABLE"
 
 
 ERROR_STATUS: Mapping[ErrorCode, int] = MappingProxyType(
@@ -93,6 +94,7 @@ ERROR_STATUS: Mapping[ErrorCode, int] = MappingProxyType(
         ErrorCode.OTP_RATE_LIMITED: 429,
         ErrorCode.INTERNAL_SERVER_ERROR: 500,
         ErrorCode.DATABASE_UNAVAILABLE: 503,
+        ErrorCode.PAYMENT_GATEWAY_UNAVAILABLE: 503,
     }
 )
 """Single source of truth: every ErrorCode maps to exactly one HTTP status."""

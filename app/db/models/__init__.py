@@ -45,6 +45,7 @@ from app.db.models.orders import (
     ShipmentStatus,
     StatusField,
 )
+from app.db.models.payments import FakeGatewaySession, Payment, PaymentEvent
 from app.db.models.pricing import PriceHistory, PricingSetting
 from app.db.models.rbac import Permission, Role, RolePermission, UserRole
 from app.db.models.settings import AppSetting
@@ -66,6 +67,7 @@ __all__ = [
     "DiscountCode",
     "DiscountRedemption",
     "DiscountType",
+    "FakeGatewaySession",
     "IdempotencyKey",
     "InventoryItem",
     "InventoryMovement",
@@ -78,6 +80,8 @@ __all__ = [
     "OrderAddress",
     "OrderItem",
     "OrderPriceSnapshot",
+    "Payment",
+    "PaymentEvent",
     "OrderStatus",
     "OrderStatusHistory",
     "PaymentStatus",

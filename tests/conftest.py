@@ -45,6 +45,7 @@ from app.db.models import (
     OrderPriceSnapshot,
     OrderStatusHistory,
     OtpCode,
+    Payment,
     PriceHistory,
     Product,
     ProductAttribute,
@@ -352,6 +353,7 @@ async def delete_orders(session: AsyncSession, order_ids: list[UUID]) -> None:
     """Remove orders and everything that references them (RESTRICT everywhere)."""
     if not order_ids:
         return
+    await session.execute(delete(Payment).where(Payment.order_id.in_(order_ids)))
     reservations = select(InventoryReservation.id).where(
         InventoryReservation.order_id.in_(order_ids)
     )

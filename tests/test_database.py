@@ -40,7 +40,7 @@ from app.modules.auth.otp import hash_otp_code
 
 pytestmark = pytest.mark.integration
 
-HEAD_REVISION = "20261018_0023"
+HEAD_REVISION = "20261019_0024"
 
 EXPECTED_TABLES = {
     "addresses",
@@ -54,6 +54,7 @@ EXPECTED_TABLES = {
     "discount_attempts",
     "discount_codes",
     "discount_redemptions",
+    "fake_gateway_sessions",
     "idempotency_keys",
     "inventory_items",
     "inventory_movements",
@@ -66,6 +67,8 @@ EXPECTED_TABLES = {
     "order_status_history",
     "orders",
     "otp_codes",
+    "payment_events",
+    "payments",
     "permissions",
     "price_history",
     "pricing_settings",

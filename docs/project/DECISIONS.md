@@ -526,6 +526,29 @@
   - invariant: هر مسیری که رزرو سفارش را بدون commit می‌بندد، سفارش را در همان تراکنش لغو می‌کند. **PAY-03:** شاخه EXPIRED از `commit()` باید با advisory → ردیف سفارش شروع شود و سفارش را در همان تراکنش لغو کند (`refund_required`، D32)؛ وگرنه مرحله دوم sweep یک دور دیرتر لغو می‌کند. مسیرهای انقضای lazy: فعلاً لغو؛ PAY-02/03 و ACC-01 (حداقل در نمایش) بعداً.
 - پیامدها: PAY-02..04، ACC-01، ADM.
 
+### ADR-051 — پرداخت (M3.5، PAY-01..06؛ تأیید کاربر با تغییرات)
+- تاریخ: 2026-10-19
+- تصمیم (کاربر):
+  1. **مبلغ ناهمخوان:** verify نتیجه PAID می‌دهد ولی مبلغ ≠ `payment.amount` یا ≠ `grand_total`. در این حالت payment → `refund_required` با reason `amount_mismatch`، به‌همراه log ERROR و audit. رزرو مصرف نمی‌شود، سفارش باز می‌ماند (order payment → `failed`) و retry در مهلت ممکن است.
+  2. **پاسخ callback:** به هر callback پردازش‌شده 200 داده می‌شود و نتیجه (`outcome`) در بدنه است (تکراری، PAID، FAILED، PENDING، mismatch، refund_required، duplicate). هدف جلوگیری از retry storm درگاه است. ref ناشناخته 404 می‌گیرد، rate limit 429 و بدنه نامعتبر 400.
+  3. **init دوباره روی payment pending:** اگر session درگاه هنوز معتبر است (`gateway_expires_at` > now)، همان `redirect_url` برمی‌گردد. وگرنه payment قدیمی با درگاه verify و اعمال می‌شود؛ اگر باز هم pending ماند، `failed` (`superseded`) می‌شود و payment جدید ساخته می‌شود.
+  4. **پرداخت دوم روی سفارش paid:** payment → `refund_required` (`duplicate_payment`) با audit و WARNING. سفارش، موجودی، سبد و redemption فقط یک بار اثر می‌گیرند.
+  5. callback به شکل `POST` با JSON طبق PRD است. پشتیبانی GET redirect در PAY-07.
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی opus): جزئیات در [M3.5-PLAN.md](M3.5-PLAN.md).
+  - جدول انتقال جدای ردیف payment.
+  - order payment فقط با `check_transition` تغییر می‌کند.
+  - ترتیب lock: سبد (`lock_user_cart`) → advisory → ردیف سفارش → ردیف payment → inventory → رزرو → redemption.
+  - verify هرگز داخل تراکنش اجرا نمی‌شود.
+  - state fake در Postgres نگه داشته می‌شود و ref ناشناخته PENDING برمی‌گرداند.
+  - eventها ۹۰ روز نگه داشته می‌شوند.
+  - کد سبد اگر همان کد سفارش باشد بعد از پرداخت موفق برداشته می‌شود.
+  - سفارش با `grand_total = 0` در init → 422 (`zero_amount`؛ تأیید خودکار بدون درگاه به نسخه بعد موکول شد).
+  - duplicate با همان کلید در حین فراخوانی درگاه → 409 `PAYMENT_IN_PROGRESS` (پاسخ هنوز ذخیره نشده؛ مثل رفتار رایج idempotency).
+  - rate limit callback پشت proxy به OPS-04 نیاز دارد.
+  - fail-closed: `build_payment_gateway` (و job تطبیق در startup) در production خطا می‌دهد، مثل SMS؛ نه در Settings، که هر config production را تا PAY-07 نامعتبر می‌کرد. شکست اولین درخواست پرداخت در production → 503 (PAY-02).
+  - چرخه عمر ردیف payment: `failure_reason` فقط در failed/refund_required است (`failed → paid` آن را پاک می‌کند؛ سابقه در event و audit)؛ refund_required همیشه `paid_at` دارد؛ `paid_amount` مبلغ تأییدشده درگاه به تومان است. reconciliation رویداد `verify` می‌نویسد.
+- پیامدها: PAY-01..07، ADM (فیلتر `refund_required` و `failure_reason`)، HANDOFF-01 (redirect frontend).
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 

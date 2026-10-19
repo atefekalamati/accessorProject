@@ -36,6 +36,12 @@ _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
 _HOSTNAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$")
 
 
+class PaymentGatewayName(StrEnum):
+    # Dev, test and staging only: building it in production fails closed (ADR-049, like
+    # SMS). The real adapter comes with PAY-07 (D8).
+    FAKE = "fake"
+
+
 class MediaStorage(StrEnum):
     LOCAL = "local"
     MEMORY = "memory"  # tests only; holds files in process memory
@@ -87,6 +93,24 @@ class Settings(BaseSettings):
     discount_max_failed_per_ip: int = Field(default=30, ge=1)
     # Store-wide switch against a distributed flood; high, since reaching it blocks everyone.
     discount_max_failed_global: int = Field(default=10_000, ge=1)
+    # Payments (PAY-01..06, ADR-049, ADR-051).
+    payment_gateway: PaymentGatewayName = PaymentGatewayName.FAKE
+    # Where the gateway sends the customer back; passed to the gateway with each request.
+    payment_callback_url: str = "http://localhost:8000/api/v1/payments/callback"
+    # Longest wait for one gateway call; far below the stale age (checked below).
+    payment_gateway_timeout_seconds: float = Field(default=10, gt=0, le=30)
+    # Seconds between reconciliation rounds (lost callbacks); 0 turns it off.
+    payment_reconcile_seconds: int = Field(default=60, ge=0, le=3600)
+    # A pending payment older than this is verified with the gateway by reconciliation.
+    payment_pending_stale_seconds: int = Field(default=300, ge=60, le=3600)
+    # init refuses an order whose reservation ends sooner (payment would come too late).
+    payment_min_remaining_seconds: int = Field(default=60, ge=0, le=600)
+    # Callbacks per client IP over a rolling window; reaching it gives 429.
+    payment_callback_window_seconds: int = Field(default=60, ge=10, le=3600)
+    payment_callback_max_per_ip: int = Field(default=30, ge=1)
+    payment_event_retention_days: int = Field(default=90, ge=7, le=3650)
+    # How long a fake gateway session accepts the customer.
+    payment_fake_session_seconds: int = Field(default=900, ge=60, le=3600)
 
     @field_validator("database_url")
     @classmethod
@@ -126,6 +150,8 @@ class Settings(BaseSettings):
                 raise ValueError("OTP_HASH_SECRET is required in production")
             if self.media_storage is MediaStorage.MEMORY:
                 raise ValueError("MEDIA_STORAGE=memory is forbidden in production")
+        if self.payment_pending_stale_seconds < 3 * self.payment_gateway_timeout_seconds:
+            raise ValueError("PAYMENT_PENDING_STALE_SECONDS must be >= 3x the gateway timeout")
         self._check_media_base_url()
         return self
 
