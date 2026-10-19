@@ -94,7 +94,11 @@ class VerifyResult:
 
 
 class GatewayUnavailable(Exception):
-    """The gateway did not answer (network error or timeout)."""
+    """The gateway did not answer (network error or timeout).
+
+    Adapters raise it for every transport error of their HTTP client; callers also map
+    ``TimeoutError``/``OSError`` to it.
+    """
 
 
 class PaymentGateway(Protocol):

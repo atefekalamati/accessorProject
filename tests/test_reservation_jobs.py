@@ -201,7 +201,13 @@ async def test_cancelled_sweep_does_not_keep_the_job_lock(
         with pytest.raises(asyncio.CancelledError):
             await sweep
 
-    assert (await sweep_expired_reservations(db_engine, now=now)).ran
+    # The cancelled round's connection may still hold the order's advisory lock while it
+    # rolls back; the job only try-locks an order (ORD-06), so it skips it until then.
+    for _ in range(100):
+        assert (await sweep_expired_reservations(db_engine, now=now)).ran
+        if await _status(db_engine, old.reservation_id) == "expired":
+            break
+        await asyncio.sleep(0.05)
     assert await _status(db_engine, old.reservation_id) == "expired"
     await _assert_invariant(db_engine, [variant.id])
 

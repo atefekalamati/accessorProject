@@ -4,35 +4,36 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.5 Payment
-- **Current Task:** PAY-02 (اجرای مشترک PAY-01..06 بعد از تأیید کاربر، [M3.5-PLAN.md](M3.5-PLAN.md)، ADR-051). PAY-01 COMPLETE.
+- **Current Task:** PAY-03 (اجرای مشترک PAY-01..06، [M3.5-PLAN.md](M3.5-PLAN.md)، ADR-051). PAY-01 و PAY-02 COMPLETE.
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 96/148 task COMPLETE · وزنی 61.3% (259.5h / 423h) · MVP 92.5%
+- **Progress:** 97/148 task COMPLETE · وزنی 62.1% (262.5h / 423h) · MVP 93.6%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** M3.5: ادامه PAY-02..06 پشت هم (plan تأییدشده)، سپس HANDOFF-01. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند؛ `POST /orders` هنوز `allowed_query_params` را در سطح route دارد (query ناشناخته بدون token → 400 قبل از 401؛ اصلاح کوچک در HANDOFF-01).
+- **Next Action:** M3.5: ادامه PAY-03..06 پشت هم (plan تأییدشده)، سپس HANDOFF-01. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند؛ `POST /orders` هنوز `allowed_query_params` را در سطح route دارد (query ناشناخته بدون token → 400 قبل از 401؛ اصلاح کوچک در HANDOFF-01).
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**61.3%** = 259.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**62.1%** = 262.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 80.5h | 79.3% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 83.5h | 82.3% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 163.5h ≈ ۱۲ هفته. MVP باقی‌مانده: 21h ≈ ۶ هفته.
+- باقی‌مانده: 160.5h ≈ ۱۲ هفته. MVP باقی‌مانده: 18h ≈ ۶ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-19: PAY-02 (`POST /payments/init`: شروع، ادامه session معتبر، جایگزینی session منقضی، درگاه بی‌پاسخ، router فقط-dev درگاه fake).
 - 2026-10-19: PAY-01 (مدل payment، interface درگاه و fake با state در Postgres؛ migration `0024`؛ ADR-051).
 - 2026-10-18: ORD-06 (لغو مشتری `POST /orders/{id}/cancel`، لغو سفارش در انقضای رزرو با job و lazy، مرحله دوم sweep، تست e2e؛ ADR-050).
 - 2026-10-18: ORD-04 (`POST /orders`: idempotent، یک تراکنش، رزرو ۱۵ دقیقه، redemption pending، snapshot کامل، یک سفارش pending زنده برای هر کاربر؛ ترتیب سراسری lock در ADR-048).
@@ -221,6 +222,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-19 — PAY-02 COMPLETE (اجرای مشترک M3.5)
+- بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. یک flaky زمان‌بندی در تست job انقضا با علت مشخص رفع شد. pytest 1956 سبز.
 ### 2026-10-19 — PAY-01 COMPLETE (اجرای مشترک M3.5)
 - plan مشترک تأیید شد (ADR-051). بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. pytest 1935 سبز.
 ### 2026-10-18 — ORD-06 COMPLETE (جلسه phase، batch ۱)

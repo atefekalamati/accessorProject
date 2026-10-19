@@ -11,12 +11,19 @@ from starlette.responses import Response
 from starlette.types import Scope
 
 from app.api.v1.router import api_router
-from app.core.config import Environment, MediaStorage, Settings, get_settings
+from app.core.config import (
+    Environment,
+    MediaStorage,
+    PaymentGatewayName,
+    Settings,
+    get_settings,
+)
 from app.core.errors import ErrorResponse, register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
 from app.db.session import create_database_engine, create_session_factory
 from app.modules.inventory.jobs import run_sweeper
+from app.modules.payments.router import fake_gateway_router
 from app.shared.database.router import dev_router, readiness_router
 from app.shared.health.router import router as health_router
 from app.shared.storage import create_file_storage
@@ -97,6 +104,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(api_router, prefix="/api/v1")
     if app_settings.environment is not Environment.PRODUCTION:
         application.include_router(dev_router, prefix="/api/v1")
+        if app_settings.payment_gateway is PaymentGatewayName.FAKE:
+            application.include_router(fake_gateway_router, prefix="/api/v1")
     if (
         app_settings.environment is Environment.DEVELOPMENT
         and app_settings.media_storage is MediaStorage.LOCAL

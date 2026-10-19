@@ -546,6 +546,10 @@
   - duplicate با همان کلید در حین فراخوانی درگاه → 409 `PAYMENT_IN_PROGRESS` (پاسخ هنوز ذخیره نشده؛ مثل رفتار رایج idempotency).
   - rate limit callback پشت proxy به OPS-04 نیاز دارد.
   - fail-closed: `build_payment_gateway` (و job تطبیق در startup) در production خطا می‌دهد، مثل SMS؛ نه در Settings، که هر config production را تا PAY-07 نامعتبر می‌کرد. شکست اولین درخواست پرداخت در production → 503 (PAY-02).
+  - init (PAY-02):
+    - session منقضی فقط با verify FAILED قطعی بسته می‌شود. verify PAID → 409 `payment_confirming` (callback یا reconciliation اعمال می‌کند)؛ verify PENDING → 409 `session_open`، چون درگاه هنوز session قدیمی را می‌پذیرد و payment جدید می‌توانست دو بار شارژ کند (تفسیر محافظه‌کارانه تصمیم ۳).
+    - سفارش لغوشده با دلیل انقضا → 409 `RESERVATION_EXPIRED`.
+    - هر خطای درگاه یا adapter payment در جریان را `failed` (`gateway_error`) می‌کند.
   - چرخه عمر ردیف payment: `failure_reason` فقط در failed/refund_required است (`failed → paid` آن را پاک می‌کند؛ سابقه در event و audit)؛ refund_required همیشه `paid_at` دارد؛ `paid_amount` مبلغ تأییدشده درگاه به تومان است. reconciliation رویداد `verify` می‌نویسد.
 - پیامدها: PAY-01..07، ADM (فیلتر `refund_required` و `failure_reason`)، HANDOFF-01 (redirect frontend).
 

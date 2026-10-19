@@ -169,7 +169,7 @@
 |---|---|---|---|---|---|---|---|
 | PAY-00 | Rewrite payment requirements | COMPLETE | HIGH | HIGH | 2 | — | PRD section ✓ بازبینی‌شده + approved |
 | PAY-01 | Payment model + PaymentGateway interface + fake | COMPLETE | HIGH | HIGH | 4 | PAY-00, ORD-01, ADR-009 | fake usable in tests |
-| PAY-02 | POST /payments/init | NOT_STARTED | HIGH | HIGH | 3 | PAY-01, ORD-04 | amount = grandTotal from DB |
+| PAY-02 | POST /payments/init | COMPLETE | HIGH | HIGH | 3 | PAY-01, ORD-04 | amount = grandTotal from DB |
 | PAY-03 | Callback: verify, amount == grandTotal, idempotent, commit reservation | NOT_STARTED | HIGH | HIGH | 5 | PAY-02, INV-05 | duplicate callback changes nothing; success removes only ordered quantities from the cart (D34); late success → refund_required + audit + WARNING log (D32); branch on `CommitOutcome` (EXPIRED never marks paid, tested) |
 | PAY-04 | Failure/expiry: release reservation, allow retry | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, INV-06 | failure keeps reservation + redemption for retry within TTL; expired reservation never consumed; `release()` after commit → 409 handled |
 | PAY-05 | Callback tests (duplicate, amount mismatch, expired) | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, PAY-04 | abuse paths covered |
