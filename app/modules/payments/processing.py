@@ -200,7 +200,6 @@ class PaymentProcessor:
         result: VerifyResult,
         request: Request | None,
     ) -> Outcome:
-        now = utc_now()
         if (
             result.amount is None
             or result.amount != payment.amount
@@ -238,7 +237,9 @@ class PaymentProcessor:
             reservation_id = await self._reservation_of(order.id)
             committed = None
             if reservation_id is not None:
-                committed = await ReservationService(self._session).commit(reservation_id, now=now)
+                # No ``now`` from here: commit takes it after its item locks, so a wait can
+                # never let an expired reservation be consumed (D32).
+                committed = await ReservationService(self._session).commit(reservation_id)
             if committed is not None and committed.outcome is CommitOutcome.ALREADY_COMMITTED:
                 await self._refund(order, payment, result, DUPLICATE_PAYMENT, request)
                 return Outcome.DUPLICATE
