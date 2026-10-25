@@ -126,57 +126,57 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | DEC-05 | Validate endpoints (D5) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR-006 |
-| CART-00 | Rewrite cart & guest-checkout requirements | NOT_STARTED | HIGH | HIGH | 2 | ADR-006 | PRD sections ✓ بازبینی‌شده + approved |
-| CART-01 | Cart & CartItem models + secure guest cart token | NOT_STARTED | HIGH | MEDIUM | 4 | CART-00, CAT-03 | guest and user carts |
-| CART-02 | Add/update/remove items with free-stock check (no reservation) | NOT_STARTED | HIGH | HIGH | 4 | CART-01, INV-03 | qty ≤ free stock; add ≠ reserve; SD rule (test) |
-| CART-03 | GET /cart computed server-side with price/stock change flags | NOT_STARTED | HIGH | HIGH | 3 | CART-02, PRC-02 | changes reported; pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
-| CART-04 | Guest → user cart merge on login | NOT_STARTED | HIGH | MEDIUM | 3 | CART-01, AUTH-06 | deterministic merge |
-| CART-05 | Cart tests | NOT_STARTED | HIGH | MEDIUM | 3 | CART-02…04 | ownership 403/404 covered |
+| CART-00 | Rewrite cart & guest-checkout requirements | COMPLETE | HIGH | HIGH | 2 | ADR-006 | PRD sections ✓ بازبینی‌شده + approved |
+| CART-01 | Cart & CartItem models + secure guest cart token | COMPLETE | HIGH | MEDIUM | 4 | CART-00, CAT-03 | guest and user carts; `cart_token` HttpOnly cookie, hash stored (D30); max 50 lines; guest cart expires after 30 days |
+| CART-02 | Add/update/remove items with free-stock check (no reservation) | COMPLETE | HIGH | HIGH | 4 | CART-01, INV-03 | qty ≤ free stock; add ≠ reserve; SD rule (test) |
+| CART-03 | GET /cart computed server-side with price/stock change flags | COMPLETE | HIGH | HIGH | 3 | CART-02, PRC-02 | changes reported; pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
+| CART-04 | Guest → user cart merge on login | COMPLETE | HIGH | MEDIUM | 3 | CART-01, AUTH-06 | deterministic merge at verify-otp (sum, cap at free stock); guest `cart_token` cookie cleared (D30) |
+| CART-05 | Cart tests | COMPLETE | HIGH | MEDIUM | 3 | CART-02…04 | ownership 403/404 covered |
 
 ### M3.2 Discount codes — PRD «کد تخفیف»، «تخفیف‌ها» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| DSC-00 | Rewrite discount requirements | NOT_STARTED | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
-| DSC-01 | DiscountCode & redemption models | NOT_STARTED | HIGH | HIGH | 3 | DSC-00 | limits modeled; per-user usage limit keyed by normalized phone, not user_id (ADR-017) |
-| DSC-02 | Pure discount validation/calculation | NOT_STARTED | HIGH | HIGH | 4 | DSC-01, PRC-02 | expired/used/ineligible → 422 |
-| DSC-03 | Apply/remove code on cart | NOT_STARTED | HIGH | HIGH | 3 | DSC-02, CART-03 | recalculated server-side |
-| DSC-04 | Admin discount CRUD + AuditLog | NOT_STARTED | MEDIUM | HIGH | 3 | DSC-01, AUTH-10, INF-05 | audited |
-| DSC-05 | Concurrent usage-cap test | NOT_STARTED | HIGH | HIGH | 2 | DSC-03 | cap never exceeded |
+| DSC-00 | Rewrite discount requirements | COMPLETE | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
+| DSC-01 | DiscountCode & redemption models | COMPLETE | HIGH | HIGH | 3 | DSC-00 | limits modeled; DiscountRedemption pending/confirmed/released (D31); per-user usage limit keyed by normalized phone, not user_id (ADR-017) |
+| DSC-02 | Pure discount validation/calculation | COMPLETE | HIGH | HIGH | 4 | DSC-01, PRC-02 | expired/used/ineligible → 422 |
+| DSC-03 | Apply/remove code on cart | COMPLETE | HIGH | HIGH | 3 | DSC-02, CART-03 | recalculated server-side; failed attempts rate-limited per user/cart and per IP → 429 (D34) |
+| DSC-04 | Admin discount CRUD + AuditLog | COMPLETE | MEDIUM | HIGH | 3 | DSC-01, AUTH-10, INF-05 | audited |
+| DSC-05 | Concurrent usage-cap test | COMPLETE | HIGH | HIGH | 2 | DSC-03 | cap never exceeded; POST /orders locks the DiscountCode row FOR UPDATE before counting (D31) |
 
 ### M3.3 Address & shipping — PRD «آدرس»، «شیوه ارسال» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| ADDR-00 | Rewrite address & shipping requirements | NOT_STARTED | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
-| ADDR-01 | Address CRUD with ownership (table exists) | NOT_STARTED | HIGH | MEDIUM | 3 | ADDR-00, AUTH-10 | own addresses only; one default |
-| ADDR-02 | ShippingMethod + shipping calculator interface | NOT_STARTED | HIGH | HIGH | 3 | ADDR-00, INF-02 | cost from backend |
-| ADDR-03 | Admin shipping methods | NOT_STARTED | MEDIUM | HIGH | 2 | ADDR-02, AUTH-10 | audited |
-| ADDR-04 | Address & shipping tests | NOT_STARTED | HIGH | MEDIUM | 2 | ADDR-01…03 | ownership + validation |
+| ADDR-00 | Rewrite address & shipping requirements | COMPLETE | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
+| ADDR-01 | Address CRUD with ownership (table exists) | COMPLETE | HIGH | MEDIUM | 3 | ADDR-00, AUTH-10 | own addresses only; one default |
+| ADDR-02 | ShippingMethod + shipping calculator interface | COMPLETE | HIGH | HIGH | 3 | ADDR-00, INF-02 | cost from backend; flat cost + optional free threshold on subtotal after all discounts, before tax (D33, D34) |
+| ADDR-03 | Admin shipping methods | COMPLETE | MEDIUM | HIGH | 2 | ADDR-02, AUTH-10 | audited |
+| ADDR-04 | Address & shipping tests | COMPLETE | HIGH | MEDIUM | 2 | ADDR-01…03 | ownership + validation |
 
 ### M3.4 Checkout & orders — PRD «نتیجه سفارش»، «مدیریت سفارش» (قالبی) + «معماری سیستم» ✓
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| ORD-00 | Rewrite checkout & order requirements | NOT_STARTED | HIGH | HIGH | 2 | ADR-006, ADR-007 | PRD sections ✓ بازبینی‌شده + approved |
-| ORD-01 | Order, OrderItem snapshot, OrderPriceSnapshot, address snapshot | NOT_STARTED | HIGH | HIGH | 5 | ORD-00, PRC-01 | past orders immune to product changes; order number format cannot resemble a mobile number (e.g. `ORD-YYYY-NNNNNN`) |
-| ORD-02 | Idempotency-Key infrastructure | NOT_STARTED | HIGH | HIGH | 3 | INF-01 | same key → same result |
-| ORD-03 | POST /checkout/validate | NOT_STARTED | HIGH | HIGH | 3 | CART-03, DSC-03, ADDR-02 | price/stock/discount/shipping re-checked; SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
-| ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | NOT_STARTED | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional; SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
-| ORD-05 | Order state machine (order/payment/shipment) | NOT_STARTED | HIGH | HIGH | 4 | ORD-01 | invalid transitions → 422 |
-| CAT-17 | `best_selling` sort for product listing (from successful OrderItems) | NOT_STARTED | MEDIUM | MEDIUM | 1 | CAT-07, ORD-01 | sort allowlisted; ties by `id` |
-| ORD-06 | Order tests (idempotency, price-changed, insufficient stock) | NOT_STARTED | HIGH | HIGH | 3 | ORD-03…05 | duplicate create → one order; SD rule (test) |
+| ORD-00 | Rewrite checkout & order requirements | COMPLETE | HIGH | HIGH | 2 | ADR-006, ADR-007 | PRD sections ✓ بازبینی‌شده + approved |
+| ORD-01 | Order, OrderItem snapshot, OrderPriceSnapshot, address snapshot | COMPLETE | HIGH | HIGH | 5 | ORD-00, PRC-01 | past orders immune to product changes; order number format cannot resemble a mobile number (e.g. `ORD-YYYY-NNNNNN`) |
+| ORD-02 | Idempotency-Key infrastructure | COMPLETE | HIGH | HIGH | 3 | INF-01 | per-user keys, 24h TTL; same key + same body → original response; different body → 422 (D34) |
+| ORD-03 | POST /checkout/validate | COMPLETE | HIGH | HIGH | 3 | CART-03, DSC-03, ADDR-02 | price/stock/discount/shipping re-checked; fingerprint covers discount and shipping (D34); SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
+| ORD-04 | POST /orders (verified mobile, reserve 15 min, snapshot) | COMPLETE | HIGH | HIGH | 5 | ORD-01, ORD-02, INV-04 | idempotent; transactional; DiscountCode FOR UPDATE + pending redemption (D31); cart not cleared (D34); SD rule (test); pricing lines passed in stable order (by line id) + test: shuffled input order → identical output (ADR-031) |
+| ORD-05 | Order state machine (order/payment/shipment) | COMPLETE | HIGH | HIGH | 4 | ORD-01 | invalid transitions → 422 |
+| CAT-17 | `best_selling` sort for product listing (from successful OrderItems) | COMPLETE | MEDIUM | MEDIUM | 1 | CAT-07, ORD-01 | sort allowlisted; ties by `id` |
+| ORD-06 | Customer cancel + expiry cancels the order (job/lazy) + order tests | COMPLETE | HIGH | HIGH | 3 | ORD-03…05 | duplicate create → one order; SD rule (test) |
 
 ### M3.5 Payment — PRD «پرداخت» (قالبی) + «معماری سیستم» ✓
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| PAY-00 | Rewrite payment requirements | NOT_STARTED | HIGH | HIGH | 2 | — | PRD section ✓ بازبینی‌شده + approved |
-| PAY-01 | Payment model + PaymentGateway interface + fake | NOT_STARTED | HIGH | HIGH | 4 | PAY-00, ORD-01, ADR-009 | fake usable in tests |
-| PAY-02 | POST /payments/init | NOT_STARTED | HIGH | HIGH | 3 | PAY-01, ORD-04 | amount = grandTotal from DB |
-| PAY-03 | Callback: verify, amount == grandTotal, idempotent, commit reservation | NOT_STARTED | HIGH | HIGH | 5 | PAY-02, INV-05 | duplicate callback changes nothing; branch on `CommitOutcome` (EXPIRED never marks paid, tested) |
-| PAY-04 | Failure/expiry: release reservation, allow retry | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, INV-06 | expired reservation never consumed; `release()` after commit → 409 handled |
-| PAY-05 | Callback tests (duplicate, amount mismatch, expired) | NOT_STARTED | HIGH | HIGH | 3 | PAY-03, PAY-04 | abuse paths covered |
-| PAY-06 | End-to-end purchase test | NOT_STARTED | HIGH | HIGH | 4 | PAY-05 | cart → OTP → checkout → order → payment → stock committed |
-| HANDOFF-01 | PRD consistency review + export openapi.json | NOT_STARTED | HIGH | HIGH | 3 | PAY-06, all Phase 1–3 `-00` | PRD matches implemented API; `openapi.json` exported for frontend; frontend note: refresh must be single-flight across tabs (ADR-017 reuse detection) |
+| PAY-00 | Rewrite payment requirements | COMPLETE | HIGH | HIGH | 2 | — | PRD section ✓ بازبینی‌شده + approved |
+| PAY-01 | Payment model + PaymentGateway interface + fake | COMPLETE | HIGH | HIGH | 4 | PAY-00, ORD-01, ADR-009 | fake usable in tests |
+| PAY-02 | POST /payments/init | COMPLETE | HIGH | HIGH | 3 | PAY-01, ORD-04 | amount = grandTotal from DB |
+| PAY-03 | Callback: verify, amount == grandTotal, idempotent, commit reservation | COMPLETE | HIGH | HIGH | 5 | PAY-02, INV-05 | duplicate callback changes nothing; success removes only ordered quantities from the cart (D34); late success → refund_required + audit + WARNING log (D32); branch on `CommitOutcome` (EXPIRED never marks paid, tested) |
+| PAY-04 | Failure/expiry: release reservation, allow retry | COMPLETE | HIGH | HIGH | 3 | PAY-03, INV-06 | failure keeps reservation + redemption for retry within TTL; expired reservation never consumed; `release()` after commit → 409 handled |
+| PAY-05 | Callback tests (duplicate, amount mismatch, expired) | COMPLETE | HIGH | HIGH | 3 | PAY-03, PAY-04 | abuse paths covered |
+| PAY-06 | End-to-end purchase test | COMPLETE | HIGH | HIGH | 4 | PAY-05 | cart → OTP → checkout → order → payment → stock committed |
+| HANDOFF-01 | PRD consistency review + export openapi.json | COMPLETE | HIGH | HIGH | 3 | PAY-06, all Phase 1–3 `-00` | PRD matches implemented API; `openapi.json` exported for frontend; frontend note: refresh must be single-flight across tabs (ADR-017 reuse detection) |
 
-**Phase 3:** 100.5h · COMPLETE 0.5h
+**Phase 3:** 101.5h · COMPLETE 48.5h
 
 ---
 
@@ -238,7 +238,7 @@
 | OPS-01 | Metrics + error-tracking adapter | NOT_STARTED | MEDIUM | MEDIUM | 4 | — | metrics endpoint |
 | OPS-02 | Monitoring & alerts | NOT_STARTED | MEDIUM | MEDIUM | 3 | OPS-01 | alerts defined |
 | OPS-03 | Backup/restore runbook | NOT_STARTED | HIGH | HIGH | 3 | — | restore rehearsed |
-| OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | BLOCKED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies |
+| OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | BLOCKED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies; if `ENVIRONMENT=production`, `TRUSTED_PROXIES` must be explicitly set (empty value = explicit "none"), unset → startup fails |
 | OPS-05 | Real SMS provider adapter | BLOCKED | HIGH | HIGH | 3 | AUTH-04, D9 | works behind interface |
 | OPS-06 | OpenAPI export & versioning | NOT_STARTED | MEDIUM | LOW | 2 | HANDOFF-01 | versioned file |
 | OPS-07 | Real file storage adapter | BLOCKED | HIGH | MEDIUM | 3 | CAT-05, D10 | works behind interface |

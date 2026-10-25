@@ -18,11 +18,11 @@ from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 import pytest_asyncio
-from conftest import Catalog, MakeAccount
+from conftest import Catalog, MakeAccount, new_order
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -43,7 +43,7 @@ from app.modules.inventory.reservation import (
 )
 from app.modules.inventory.service import AdjustmentType, InventoryService
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("order_factory")]
 
 PAST = timedelta(minutes=20)  # a 15-minute reservation made this long ago has expired
 URL = "/api/v1/admin/inventory"
@@ -76,7 +76,7 @@ async def _reserve(
     try:
         async with AsyncSession(engine, expire_on_commit=False) as session, session.begin():
             result = await ReservationService(session).reserve(
-                order_id=uuid4(),
+                order_id=await new_order(),
                 lines=[ReserveLine(variant_id, quantity) for variant_id, quantity in lines],
                 user_id=None,
                 now=utc_now() - PAST if past else None,

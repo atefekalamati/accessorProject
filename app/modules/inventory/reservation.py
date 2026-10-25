@@ -61,7 +61,8 @@ logger = logging.getLogger(__name__)
 # ADR-007: stock is held for 15 minutes from POST /orders.
 RESERVATION_TTL: Final = timedelta(minutes=15)
 MAX_RESERVATION_LINES: Final = 100
-# Namespace of the per-order advisory lock (the cleanup job uses its own key).
+# Namespace of the per-order advisory lock (the cleanup job uses its own key). Every path
+# on an order takes it first, before the order row (ADR-048).
 ORDER_LOCK_NAMESPACE: Final = 73_011
 
 
@@ -140,7 +141,7 @@ def merge_lines(lines: Iterable[ReserveLine]) -> dict[UUID, int]:
     return wanted
 
 
-def _order_key(order_id: UUID) -> int:
+def order_lock_key(order_id: UUID) -> int:
     """A signed 32-bit key from the order id for the two-key advisory lock."""
     return int.from_bytes(order_id.bytes[:4], "big", signed=True)
 
@@ -176,7 +177,7 @@ class ReservationService:
         # First lock of all, taken only here: calls for the same order run one at a time,
         # so the checks below cannot race and the unique index never fires (ADR-036).
         await self._session.execute(
-            select(func.pg_advisory_xact_lock(ORDER_LOCK_NAMESPACE, _order_key(order_id)))
+            select(func.pg_advisory_xact_lock(ORDER_LOCK_NAMESPACE, order_lock_key(order_id)))
         )
         # One read of the order's live reservation (the unique index allows one): a commit
         # landing between two separate reads would otherwise let a second one be inserted.

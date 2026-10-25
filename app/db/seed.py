@@ -50,6 +50,7 @@ PERMISSIONS: tuple[PermissionSeed, ...] = (
     PermissionSeed("inventory:read", "View stock levels"),
     PermissionSeed("inventory:update", "Change stock levels"),
     PermissionSeed("discounts:manage", "Manage discount codes"),
+    PermissionSeed("shipping:manage", "Manage shipping methods and their costs"),
     PermissionSeed("orders:read", "View orders"),
     PermissionSeed("orders:update_status", "Change order and shipment status"),
     PermissionSeed("customers:read", "View customers"),

@@ -5,11 +5,20 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
-from conftest import INTERNAL_FIELDS, Catalog, count_queries, nested_keys, unique_slug
+from conftest import (
+    INTERNAL_FIELDS,
+    Catalog,
+    MakeOrder,
+    count_queries,
+    nested_keys,
+    unique_slug,
+)
 from httpx import AsyncClient, Response
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from app.core.time import utc_now
-from app.db.models import Category, Product, ProductStatus, ProductVariant
+from app.db.models import Category, OrderItem, Product, ProductStatus, ProductVariant
 from app.modules.catalog.router import MAX_FILTER_VALUES
 
 pytestmark = pytest.mark.integration
@@ -196,7 +205,6 @@ async def test_all_products_listing_spans_categories(
     "params",
     [
         {"unknown": "1"},
-        {"sort": "best_selling"},
         {"sort": "cheapest"},
         {"page": "0"},
         {"page": "1001"},
@@ -374,7 +382,7 @@ async def test_pages_neither_repeat_nor_skip_ties(
         str((await _priced(catalog, category, 500, published_at=published_at)).id) for _ in range(7)
     }
 
-    for sort in ("newest", "price_asc", "price_desc", "discount_desc"):
+    for sort in ("newest", "price_asc", "price_desc", "discount_desc", "best_selling"):
         seen: list[str] = []
         for page in (1, 2, 3):
             response = await _list(auth_client, category, sort=sort, limit=3, page=page)
@@ -386,6 +394,62 @@ async def test_pages_neither_repeat_nor_skip_ties(
         assert again == seen, sort
     beyond = await _list(auth_client, category, page=4, limit=3)
     assert _ids(beyond) == [] and beyond.json()["total"] == 7
+
+
+async def test_best_selling_counts_units_of_paid_orders_only(
+    auth_client: AsyncClient, catalog: Catalog, make_order: MakeOrder, db_engine: AsyncEngine
+) -> None:
+    category = await catalog.category()
+    products = [await _priced(catalog, category, 1_000) for _ in range(4)]
+    variants = {}
+    async with AsyncSession(db_engine) as session:
+        for product in products:
+            variants[product.id] = (
+                await session.scalars(
+                    select(ProductVariant).where(ProductVariant.product_id == product.id)
+                )
+            ).one()
+
+    async def sell(product: Product, quantity: int, payment_status: str) -> None:
+        extra = {"status": "cancelled", "cancel_reason": "expired"}
+        order_id = await make_order(
+            payment_status=payment_status, **(extra if payment_status == "refund_required" else {})
+        )
+        variant = variants[product.id]
+        async with AsyncSession(db_engine) as session, session.begin():
+            session.add(
+                OrderItem(
+                    order_id=order_id,
+                    position=0,
+                    product_id=product.id,
+                    variant_id=variant.id,
+                    product_title=product.title,
+                    sku=variant.sku,
+                    quantity=quantity,
+                    unit_price=1_000,
+                    unit_final_price=1_000,
+                    subtotal=1_000 * quantity,
+                    product_discount=0,
+                    code_discount=0,
+                    discount_amount=0,
+                    tax_amount=0,
+                    final_line_total=1_000 * quantity,
+                )
+            )
+
+    first, second, unpaid_only, none = products
+    await sell(first, 2, "paid")
+    await sell(first, 3, "paid")
+    await sell(second, 4, "paid")
+    await sell(second, 9, "refund_required")
+    await sell(unpaid_only, 50, "unpaid")
+    await sell(unpaid_only, 50, "failed")
+
+    ordered = _ids(await _list(auth_client, category, sort="best_selling"))
+
+    # 5 > 4 > 0 = 0, and the two unsold products tie by id.
+    assert ordered[:2] == [str(first.id), str(second.id)]
+    assert ordered[2:] == sorted([str(unpaid_only.id), str(none.id)])
 
 
 # --- queries -------------------------------------------------------------------------

@@ -30,25 +30,35 @@ from alembic import command
 from app.core.config import Environment, MediaStorage, Settings
 from app.core.time import utc_now
 from app.db.models import (
+    CartItem,
     Category,
     CategoryFilter,
+    DiscountRedemption,
     InventoryItem,
     InventoryMovement,
     InventoryReservation,
     InventoryReservationItem,
     Media,
+    Order,
+    OrderAddress,
+    OrderItem,
+    OrderPriceSnapshot,
+    OrderStatusHistory,
     OtpCode,
+    Payment,
     PriceHistory,
     Product,
     ProductAttribute,
     ProductMedia,
     ProductStatus,
     ProductVariant,
+    ShippingMethod,
     User,
     UserRole,
     VariantOption,
 )
 from app.db.models.inventory import DEFAULT_WAREHOUSE_ID
+from app.db.models.orders import format_order_number, order_number_seq
 from app.db.seed import role_id, seed_rbac
 from app.main import create_app
 from app.modules.auth.otp import hash_otp_code, otp_hash_key
@@ -97,6 +107,8 @@ def settings() -> Settings:
         media_allowed_hosts=["cdn.example.com"],
         # Tests sweep explicitly (tests/test_reservation_jobs.py).
         reservation_sweep_seconds=0,
+        # Tests reconcile explicitly (tests/test_payment_reconcile.py).
+        payment_reconcile_seconds=0,
     )
 
 
@@ -305,6 +317,107 @@ async def make_account(
         await session.execute(delete(User).where(User.phone.in_(mobiles)))
 
 
+# --- orders (ORD-01) ---------------------------------------------------------------
+
+
+MakeOrder = Callable[..., Awaitable[UUID]]
+
+
+async def insert_order(
+    session: AsyncSession, user_id: UUID, method_id: UUID, **values: Any
+) -> Order:
+    """A minimal, valid order header (no lines) for tests that only need an order id."""
+    now = utc_now()
+    number = int(await session.scalar(order_number_seq.next_value()) or 0)
+    order = Order(
+        order_number=format_order_number(now.year, number),
+        user_id=user_id,
+        phone="+989120000000",
+        subtotal=0,
+        product_discount_total=0,
+        discount_code_amount=0,
+        tax_amount=0,
+        shipping_amount=0,
+        grand_total=0,
+        shipping_method_id=method_id,
+        shipping_method_title="Test post",
+        created_at=now,
+        updated_at=now,
+    )
+    for name, value in values.items():
+        setattr(order, name, value)
+    session.add(order)
+    await session.flush()
+    return order
+
+
+async def delete_orders(session: AsyncSession, order_ids: list[UUID]) -> None:
+    """Remove orders and everything that references them (RESTRICT everywhere)."""
+    if not order_ids:
+        return
+    await session.execute(delete(Payment).where(Payment.order_id.in_(order_ids)))
+    reservations = select(InventoryReservation.id).where(
+        InventoryReservation.order_id.in_(order_ids)
+    )
+    await session.execute(
+        delete(InventoryReservationItem).where(
+            InventoryReservationItem.reservation_id.in_(reservations)
+        )
+    )
+    await session.execute(
+        delete(InventoryReservation).where(InventoryReservation.order_id.in_(order_ids))
+    )
+    await session.execute(
+        delete(DiscountRedemption).where(DiscountRedemption.order_id.in_(order_ids))
+    )
+    for model in (OrderStatusHistory, OrderItem, OrderPriceSnapshot, OrderAddress):
+        await session.execute(delete(model).where(model.order_id.in_(order_ids)))
+    await session.execute(delete(Order).where(Order.id.in_(order_ids)))
+
+
+@pytest_asyncio.fixture
+async def make_order(db_engine: AsyncEngine) -> AsyncIterator[MakeOrder]:
+    """Create minimal orders owned by a throwaway user; torn down with all their references.
+
+    It removes the reservations and redemptions of its orders itself, so those never block
+    teardown. Order lines (variants) and a ``discount_code_id`` (codes) are RESTRICT: request
+    ``catalog`` and code fixtures before this one so it is torn down first (LIFO).
+    """
+    async with AsyncSession(db_engine, expire_on_commit=False) as session, session.begin():
+        user = User(phone=f"+989{uuid4().int % 1_000_000_000:09d}")
+        method = ShippingMethod(title=f"Test post {uuid4().hex[:6]}", cost=0)
+        session.add_all([user, method])
+    order_ids: list[UUID] = []
+
+    async def _make(**values: Any) -> UUID:
+        async with AsyncSession(db_engine) as session, session.begin():
+            order = await insert_order(session, user.id, method.id, **values)
+            order_ids.append(order.id)
+            return order.id
+
+    yield _make
+    async with AsyncSession(db_engine) as session, session.begin():
+        await delete_orders(session, order_ids)
+        await session.execute(delete(ShippingMethod).where(ShippingMethod.id == method.id))
+        await session.execute(delete(User).where(User.id == user.id))
+
+
+_ORDER_FACTORIES: list[MakeOrder] = []
+
+
+@pytest_asyncio.fixture
+async def order_factory(make_order: MakeOrder) -> AsyncIterator[None]:
+    """Lets module helpers call ``new_order()``; use with ``pytest.mark.usefixtures``."""
+    _ORDER_FACTORIES.append(make_order)
+    yield
+    _ORDER_FACTORIES.pop()
+
+
+async def new_order(**values: Any) -> UUID:
+    """A real order id (reservations and redemptions reference orders since ORD-01)."""
+    return await _ORDER_FACTORIES[-1](**values)
+
+
 # --- catalog builder (CAT-07, CAT-08, CAT-12) -------------------------------------
 
 INTERNAL_FIELDS = {
@@ -481,6 +594,7 @@ async def catalog(db_engine: AsyncEngine, make_media: MakeMedia) -> AsyncIterato
         await session.execute(
             delete(InventoryMovement).where(InventoryMovement.inventory_item_id.in_(items))
         )
+        await session.execute(delete(CartItem).where(CartItem.product_id.in_(products)))
         await session.execute(delete(InventoryItem).where(InventoryItem.product_id.in_(products)))
         await session.execute(delete(PriceHistory).where(PriceHistory.product_id.in_(products)))
         await session.execute(delete(VariantOption).where(VariantOption.variant_id.in_(variants)))

@@ -47,7 +47,8 @@ from app.modules.inventory.stock import (
     product_stock_status,
     stock_status,
 )
-from app.modules.pricing.calculator import CURRENCY, UnitPrice, VariantPrice, unit_price
+from app.modules.pricing.calculator import CURRENCY, UnitPrice, unit_price
+from app.modules.pricing.variants import variant_price
 from app.shared.pagination import Page, PageParams
 from app.shared.storage import FileStorage
 
@@ -74,17 +75,6 @@ def _breadcrumb(chain: list[Category]) -> list[BreadcrumbItem]:
     return items
 
 
-def _variant_price(variant: ProductVariant) -> VariantPrice:
-    return VariantPrice(
-        base_price=variant.base_price,
-        sale_price=variant.sale_price,
-        sale_start_at=variant.sale_start_at,
-        sale_end_at=variant.sale_end_at,
-        tax_enabled=variant.tax_enabled,
-        price_version=variant.price_version,
-    )
-
-
 def _price_out(unit: UnitPrice) -> VariantPriceOut:
     return VariantPriceOut(
         base_price=unit.original,
@@ -105,7 +95,7 @@ def _purchasable(variant: ProductVariant, unit: UnitPrice, level: StockLevel | N
 
 
 def _unit(variant: ProductVariant, now: datetime) -> UnitPrice:
-    unit = unit_price(_variant_price(variant), now)
+    unit = unit_price(variant_price(variant), now)
     if unit is None:  # callers pass active variants, and those always have a base price
         raise RuntimeError(f"variant {variant.id} has no price")
     return unit

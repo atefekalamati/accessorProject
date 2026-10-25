@@ -46,13 +46,16 @@ from app.modules.inventory.reservation import (
     ReservationService,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("order_factory")]
 
 
 async def _wait_for_lock_waiter(engine: AsyncEngine) -> None:
     """Until a backend in this database waits on a lock (bounded polling, no fixed sleep)."""
     async with AsyncSession(engine) as session:
         for _ in range(500):
+            # A new transaction per poll: pg_stat_activity is cached for a whole transaction,
+            # so a backend that connected after the first poll would never be seen.
+            await session.rollback()
             waiting = await session.scalar(
                 select(func.count())
                 .select_from(text("pg_locks"))

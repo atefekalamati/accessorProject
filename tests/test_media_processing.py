@@ -258,6 +258,16 @@ def _settings(**overrides: Any) -> Settings:
     return Settings(**values)
 
 
+# Everything production needs besides media, independent of the local .env, so each
+# production test fails only for the media reason it is about.
+_PRODUCTION: dict[str, Any] = {
+    "_env_file": None,
+    "environment": Environment.PRODUCTION,
+    "otp_mock_enabled": False,
+    "cors_origins": ["https://shop.example.com"],
+}
+
+
 def test_default_media_settings_are_valid_for_development() -> None:
     settings = _settings(_env_file=None)
 
@@ -299,14 +309,13 @@ def test_invalid_media_settings_fail_closed(overrides: dict[str, Any]) -> None:
     ],
 )
 def test_production_requires_https_media_and_real_storage(overrides: dict[str, Any]) -> None:
-    with pytest.raises(ValidationError):
-        _settings(environment=Environment.PRODUCTION, otp_mock_enabled=False, **overrides)
+    with pytest.raises(ValidationError, match="MEDIA_"):
+        _settings(**_PRODUCTION, **overrides)
 
 
 def test_production_accepts_https_media_on_allowed_host() -> None:
     settings = _settings(
-        environment=Environment.PRODUCTION,
-        otp_mock_enabled=False,
+        **_PRODUCTION,
         media_public_base_url="https://cdn.example.com/media",
         media_allowed_hosts="cdn.example.com",
     )

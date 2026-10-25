@@ -1,38 +1,71 @@
 # PROGRESS — منبع واحد «کجاییم؟»
 
-**Last Updated:** 2026-10-12
+**Last Updated:** 2026-10-18
 
 ## Current / Next
-- **Phase › Milestone:** 2 Core domain › M2.3 Inventory + M2.4 Pricing
-- **Current Task:** دروازه فاز ۲ (ADR-037). همه taskهای فاز ۲ COMPLETE (batch ۲ جلسه `/phase`: OPS-08، OPS-09).
-- **Status:** فاز ۱ کامل است و در `master` merge شد (PR #2 و PR #3؛ `master` = `1b5d92e`). فاز ۲ در جریان است؛ SEC-05 (gitleaks در CI) COMPLETE شد.
-- **Progress:** 69/148 task COMPLETE · وزنی 42.4% (179.5h / 423h) · MVP 64.0%
-- **Blockers:** فاز ۲ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** دروازه فاز ۲: PR به `master` → CI (با staging-smoke) → merge توسط کاربر → تأیید image در GHCR و git tag `phase-2` → شاخه `feat/phase-3-purchase-flow` → نیازمندی‌های فاز ۳ (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00؛ یک خلاصه برای تأیید).
-- **Branch:** `feat/phase-2-core-domain` (از `master` در `1b5d92e`). در پایان فاز ۲ با PR در `master` merge می‌شود. شاخه فاز ۱ (`feat/m1.1-repo-foundation`) کاملاً merge شده است.
+- **Phase › Milestone:** 3 Purchase flow › M3.5 Payment
+- **Current Task:** دروازه فاز ۳. همه taskهای فاز ۳ COMPLETE هستند (آخرین: HANDOFF-01، 2026-10-25).
+- **Status:** فاز ۱ و ۲ در `master` merge شده‌اند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ کامل است و PR آن به `master` منتظر merge کاربر است.
+- **Progress:** 102/148 task COMPLETE · وزنی 66.3% (280.5h / 423h) · MVP 100%
+- **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
+- **Next Action:** دروازه فاز ۳ (ADR-037). مراحل:
+  - CI PR، شامل smoke staging.
+  - merge توسط کاربر.
+  - تأیید image `phase-3` در GHCR و git tag `phase-3`.
+  - ساخت شاخه `feat/phase-4-account-admin` از `master`.
+  - سپس شروع فاز ۴ (ACC-00 / ADM-00). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
+- **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**42.4%** = 179.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**66.3%** = 280.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
-| 2 Core domain | COMPLETE (منتظر merge) | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | NOT_STARTED | 101.5h | 0.5h | 0.5% | 2027-01-23 |
+| 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
+| 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 243.5h ≈ ۱۷ هفته. MVP باقی‌مانده: 101h ≈ ۸ هفته.
+- باقی‌مانده: 142.5h ≈ ۹٫۵ هفته. MVP کامل است.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-19: PAY-06 (خرید end-to-end در pytest و stage جدید `purchase` در smoke staging با درگاه fake).
+- 2026-10-19: PAY-05 (تست‌های سوءاستفاده و رقابت پرداخت با ترتیب‌های اجباری؛ رفع باگ زمان commit رزرو (D32)).
+- 2026-10-19: PAY-04 (job تطبیق پرداخت‌های pending (callback گم‌شده، request_lost، abandoned) زیر advisory lock، purge رویدادها، lifespan با fail-closed در production).
+- 2026-10-19: PAY-03 (`POST /payments/callback`: verify سمت سرور، اعمال نتیجه در یک تراکنش با ترتیب ADR-048، refund_required برای mismatch، پرداخت دیرهنگام و پرداخت دوم).
+- 2026-10-19: PAY-02 (`POST /payments/init`: شروع، ادامه session معتبر، جایگزینی session منقضی، درگاه بی‌پاسخ، router فقط-dev درگاه fake).
+- 2026-10-19: PAY-01 (مدل payment، interface درگاه و fake با state در Postgres؛ migration `0024`؛ ADR-051).
+- 2026-10-18: ORD-06 (لغو مشتری `POST /orders/{id}/cancel`، لغو سفارش در انقضای رزرو با job و lazy، مرحله دوم sweep، تست e2e؛ ADR-050).
+- 2026-10-18: ORD-04 (`POST /orders`: idempotent، یک تراکنش، رزرو ۱۵ دقیقه، redemption pending، snapshot کامل، یک سفارش pending زنده برای هر کاربر؛ ترتیب سراسری lock در ADR-048).
+- 2026-10-18: CAT-17 (sort `best_selling` از واحدهای سفارش‌های paid؛ ADR-047).
+- 2026-10-18: ORD-05 (state machine سه وضعیت با guardهای بین فیلدها، history و audit، قفل ردیف سفارش؛ ADR-047).
+- 2026-10-18: ORD-03 (`POST /checkout/validate`: quote با ارسال و کد، fingerprint کامل، SD rule، موجودی مؤثر؛ ADR-047).
+- 2026-10-18: ORD-02 (زیرساخت Idempotency-Key: per-user، ۲۴ ساعت، replay پاسخ موفق، بدنه متفاوت 422، advisory lock؛ migration `0023`؛ ADR-046).
+- 2026-10-18: ORD-01 (schema سفارش، خطوط snapshot، snapshot قیمت و آدرس، تاریخچه وضعیت، شماره `ORD-YYYY-NNNNNN`؛ FK سفارش در رزرو و redemption؛ migration `0022`؛ ADR-046).
+- 2026-10-18: ADDR-04 (تست‌های مالکیت و validation آدرس، اثر end-to-end ادمین روی فهرست عمومی و انتخاب روش). M3.3 کامل شد.
+- 2026-10-18: ADDR-03 (CRUD ادمین روش ارسال با مجوز جدید `shipping:manage`، audit، قفل ردیف؛ ADR-045).
+- 2026-10-18: ADDR-02 (ShippingMethod، محاسبه‌گر هزینه ارسال پشت interface با سقف رایگان روی مبنای بعد از تخفیف‌ها، `GET /shipping-methods`؛ migration `0021`؛ ADR-045).
+- 2026-10-18: ADDR-01 (CRUD آدرس‌های خود کاربر، سقف ۱۰ و یک پیش‌فرض زیر lock هر کاربر؛ ADR-045).
+- 2026-10-18: DSC-05 (سرویس داخلی redeem/confirm/release با قفل ردیف کد و شمارش زیر lock، outcome بدون raise، تست همزمانی سقف کل و هر موبایل؛ ADR-044). M3.2 کامل شد.
+- 2026-10-18: DSC-04 (CRUD ادمین کد تخفیف با `discounts:manage`، audit، شمارش استفاده، فیلتر وضعیت؛ ADR-044).
+- 2026-10-18: DSC-03 (POST/DELETE /cart/discount، بررسی دوباره کد در GET، rate limit تلاش‌های ناموفق per owner/IP/سراسری با 429 و Retry-After، انتقال کد در ادغام؛ migration `0020`؛ ADR-043).
+- 2026-10-18: DSC-02 (قواعد خالص کد تخفیف با ترتیب rejection قطعی و مبنای حداقل بعد از تخفیف محصول؛ ADR-043).
+- 2026-10-18: DSC-01 (جدول‌های discount_codes و discount_redemptions با قیدهای سازگاری، `carts.discount_code_id`، `normalize_code` فقط ASCII؛ migration `0019`؛ ADR-042).
+- 2026-10-18: CART-05 (نقشه پوشش خطای ۵ endpoint سبد با guard، تست شکاف‌های 400/401/403، end-to-end مهمان → ورود → سبد). M3.1 کامل شد.
+- 2026-10-12: CART-04 (ادغام سبد مهمان در verify-otp، پاک‌شدن cookie، idempotent و امن در همزمانی؛ ADR-040).
+- 2026-10-12: CART-03 (GET /cart با قیمت سرور، flag تغییر قیمت per-line با مبنای `seen_*`، POST /cart/acknowledge-prices، flag موجودی بدون عدد؛ migration `0018`؛ ADR-041).
+- 2026-10-12: CART-02 (POST/PATCH/DELETE /cart/items برای مهمان و کاربر، موجودی آزاد مؤثر بدون رزرو، 409 بدون عدد موجودی؛ رفع باگ ON CONFLICT با generic plan؛ ADR-040).
+- 2026-10-12: CART-01 (carts و cart_items، token مهمان فقط با hash، cookie D30، یک سبد active برای هر کاربر؛ ADR-040).
+- 2026-10-12: CART-00، DSC-00، ADDR-00، ORD-00، PAY-00 (نه بخش قالبی PRD بازنویسی و ✓ شد؛ D30–D34، ADR-039).
 - 2026-10-12: OPS-09 (CD به GHCR: job publish-image با tag های sha و phase-N، packages:write فقط در همان job).
 - 2026-10-12: OPS-08 (staging موقت در CI: image، دیتابیس خالی، migration، seed و smoke؛ project جدای compose).
 - 2026-10-12: PRC-06 (suite تجمیعی قیمت: نقشه ۳۲ قاعده → تست با guard، خروجی int، ترتیب بی‌اثر، گردکردن فقط اجزای محاسبه‌شده، tamper API).
@@ -101,6 +134,10 @@
 ---
 
 ## Plan changes
+### 2026-10-18 — اجرای بقیه فاز ۳ (تصمیم کاربر)
+- برای بقیه milestoneهای فاز ۳ plan milestone فرستاده نمی‌شود (نیازمندی‌ها در ADR-039 تأیید شده‌اند). توقف فقط برای planهای PAY-* و استثناهای استاندارد AUTOPILOT. بازبین‌های taskهای کد تخفیف (DSC-*) با model `opus` (پول).
+### 2026-10-12 — نیازمندی‌های فاز ۳ (تصمیم کاربر)
+- CART-00، DSC-00، ADDR-00، ORD-00، PAY-00 با ۸ تغییر کاربر تأیید شدند (ADR-039). «Done when» این taskها به‌روز شد: CART-01، CART-04، DSC-01، DSC-03، DSC-05، ADDR-02، ORD-02، ORD-03، ORD-04، PAY-03، PAY-04. بدون تغییر برآورد. جمع فاز ۳ در PLAN از 100.5h به 101.5h اصلاح شد (جمع ردیف‌ها؛ PROGRESS از قبل 101.5h بود).
 ### 2026-10-12 — Phase mode، دروازه فاز، OPS-08/OPS-09 و ترتیب جدید (تصمیم کاربر)
 - `/phase` و دروازه فاز (ADR-037). سقف جلسه از ۳ به ۴ batch.
 - task جدید در M2.5: OPS-08 (staging موقت و smoke در CI، MEDIUM، 3h) و OPS-09 (CD به GHCR، MEDIUM، 2h). کل: 148 task، 423h؛ فاز ۲: 142h؛ MVP: 280.5h.
@@ -194,6 +231,57 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-25 — HANDOFF-01 COMPLETE؛ فاز ۳ کامل
+- PRD با کد هم‌خوان شد: ۵۲ اصلاح در ۱۲ بخش (ADR-052)، با تأیید کاربر.
+- `docs/api/openapi.json` و `docs/api/FRONTEND.md` اضافه شدند.
+- bug CORS رفع شد: `Idempotency-Key` مجاز و `Retry-After` قابل‌خواندن.
+- production بدون `CORS_ORIGINS` صریح بالا نمی‌آید (افزوده کاربر).
+- بازبینی opus: PASS WITH CHANGES و یافته‌ها اعمال شد.
+- CI: 2013 تست و smoke staging سبز.
+### 2026-10-19 — PAY-06 COMPLETE (اجرای مشترک M3.5)
+- بازبینی opus: PASS WITH CHANGES و اعمال شد. smoke محلی و pytest 2005 سبز.
+### 2026-10-19 — PAY-05 COMPLETE (اجرای مشترک M3.5)
+- بازبینی opus: PASS WITH CHANGES؛ یک باگ D32 پیدا و رفع شد. pytest 2002 سبز.
+### 2026-10-19 — PAY-04 COMPLETE (اجرای مشترک M3.5)
+- بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. pytest 1989 سبز.
+### 2026-10-19 — PAY-03 COMPLETE (اجرای مشترک M3.5)
+- بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. pytest 1974 سبز.
+### 2026-10-19 — PAY-02 COMPLETE (اجرای مشترک M3.5)
+- بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. یک flaky زمان‌بندی در تست job انقضا با علت مشخص رفع شد. pytest 1956 سبز.
+### 2026-10-19 — PAY-01 COMPLETE (اجرای مشترک M3.5)
+- plan مشترک تأیید شد (ADR-051). بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. pytest 1935 سبز.
+### 2026-10-18 — ORD-06 COMPLETE (جلسه phase، batch ۱)
+- plan بعد از بازبینی opus و تأیید کاربر اجرا شد (لغو با payment pending → 409). بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. قاعده AUTOPILOT در CLAUDE.md به‌روز شد. pytest 1895 سبز.
+### 2026-10-18 — ORD-04 COMPLETE (batch ۴ جلسه phase)
+- plan با ۴ افزوده کاربر تأیید شد؛ بازبینی plan و diff با opus (یافته deadlock KEY SHARE/FOR UPDATE قبل از پیاده‌سازی رفع شد)؛ pytest 1871 سبز.
+### 2026-10-18 — ORD-03، ORD-05 و CAT-17 COMPLETE (batch ۳ جلسه phase)
+- بازبینی plan هر سه و diff ORD-03/ORD-05 با opus؛ pytest 1846 سبز.
+### 2026-10-18 — ORD-01 و ORD-02 COMPLETE (batch ۲ جلسه phase)
+- بازبینی plan و diff با opus؛ pytest 1819 سبز. plan milestone M3.4 در M3.4-PLAN.md.
+### 2026-10-18 — ADDR-03 و ADDR-04 COMPLETE (batch ۱ جلسه phase)
+- بازبینی plan و diff ADDR-03 با opus؛ pytest 1740 سبز. قوانین جدید کاربر: بازبین read-only (CLAUDE.md)، معیار TRUSTED_PROXIES در OPS-04، توقف plan ORD-04.
+### 2026-10-18 — ADDR-01 و ADDR-02 COMPLETE (batch ۴ جلسه phase)
+- بازبینی plan و diff ADDR-02 با opus؛ pytest 1705 سبز.
+### 2026-10-18 — DSC-04 و DSC-05 COMPLETE (batch ۳ جلسه phase)
+- بازبینی plan و diff با opus؛ pytest 1659 سبز. یک اجرای کامل کند (۲:۴۱ ساعت، ۱۲ شکست نامرتبط) به‌خاطر اجرای همزمان pytest بازبین‌ها روی دیتابیس پایه تست بود؛ اجرای تنها سبز.
+### 2026-10-18 — DSC-02 و DSC-03 COMPLETE (batch ۲ جلسه phase)
+- بازبینی plan و diff با opus؛ pytest 1620 سبز.
+### 2026-10-18 — DSC-01 COMPLETE (batch ۱ جلسه phase)
+- بازبینی plan و diff با opus؛ pytest 1573 سبز.
+### 2026-10-18 — CART-05 COMPLETE (batch ۱ جلسه phase)
+- pytest 1573 سبز.
+### 2026-10-12 — CART-04 COMPLETE (batch ۴ جلسه phase)
+- pytest 1522 سبز.
+### 2026-10-12 — CART-03 COMPLETE
+- volume `project-ak-staging_postgres_data` وجود ندارد (کاربر و `docker volume ls` تأیید کردند)؛ مورد بسته شد. قاعده مدل بازبین (sonnet پیش‌فرض، opus برای پول/رزرو/پرداخت/auth، retry بدون حذف بازبینی) به CLAUDE.md افزوده شد. pytest 1513 سبز.
+### 2026-10-12 — CART-02 COMPLETE (batch ۳ جلسه phase)
+- بازبینی plan و diff با subagent؛ pytest 1499 سبز.
+### 2026-10-12 — CART-01 COMPLETE (batch ۳ جلسه phase)
+- migration `20261012_0017`؛ pytest 1477 سبز.
+### 2026-10-12 — نیازمندی‌های فاز ۳ COMPLETE
+- خلاصه ≤۸۰ خط، چهار سؤال و ۸ تغییر کاربر؛ PRD، DECISIONS، PLAN در یک commit.
+### 2026-10-12 — دروازه فاز ۲ کامل شد
+- PR #5 merge شد (`e750ddf`)؛ CI روی `master` سبز؛ image با tagهای `<sha>` و `phase-2` در GHCR (digest یکسان)؛ git tag `phase-2`؛ شاخه `feat/phase-3-purchase-flow`. staging حالا روی tmpfs است (`docker-compose.staging.yml`، درخواست کاربر).
 ### 2026-10-12 — OPS-09 COMPLETE (batch ۲ جلسه phase)
 - job `publish-image`؛ تأیید push در GHCR در گام d دروازه فاز ۲. همه taskهای فاز ۲ COMPLETE.
 ### 2026-10-12 — OPS-08 COMPLETE (batch ۲ جلسه phase)

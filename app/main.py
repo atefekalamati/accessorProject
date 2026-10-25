@@ -11,12 +11,21 @@ from starlette.responses import Response
 from starlette.types import Scope
 
 from app.api.v1.router import api_router
-from app.core.config import Environment, MediaStorage, Settings, get_settings
+from app.core.config import (
+    Environment,
+    MediaStorage,
+    PaymentGatewayName,
+    Settings,
+    get_settings,
+)
 from app.core.errors import ErrorResponse, register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
 from app.db.session import create_database_engine, create_session_factory
 from app.modules.inventory.jobs import run_sweeper
+from app.modules.payments.gateways import build_payment_gateway
+from app.modules.payments.jobs import reconcile_pending_payments, run_reconciler
+from app.modules.payments.router import fake_gateway_router
 from app.shared.database.router import dev_router, readiness_router
 from app.shared.health.router import router as health_router
 from app.shared.storage import create_file_storage
@@ -40,6 +49,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         engine = create_database_engine(app_settings)
         app.state.db_engine = engine
         app.state.session_factory = create_session_factory(engine)
+        if app_settings.payment_reconcile_seconds > 0:
+            # Built at startup so production without a real gateway fails closed here.
+            try:
+                gateway = build_payment_gateway(app_settings, engine)
+            except Exception:
+                await engine.dispose()
+                raise
+            app.state.payment_gateway = gateway
         sweeper: asyncio.Task[None] | None = None
         if app_settings.reservation_sweep_seconds > 0:
             sweeper = asyncio.create_task(
@@ -47,13 +64,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 name="reservation-sweeper",
             )
         app.state.reservation_sweeper = sweeper
+        reconciler: asyncio.Task[None] | None = None
+        if app_settings.payment_reconcile_seconds > 0:
+            reconciler = asyncio.create_task(
+                run_reconciler(
+                    lambda purge: reconcile_pending_payments(
+                        engine, gateway, app_settings, purge=purge
+                    ),
+                    app_settings.payment_reconcile_seconds,
+                ),
+                name="payment-reconciler",
+            )
+        app.state.payment_reconciler = reconciler
         try:
             yield
         finally:
-            if sweeper is not None:
-                sweeper.cancel()
-                with suppress(asyncio.CancelledError):
-                    await sweeper
+            for task in (sweeper, reconciler):
+                if task is not None:
+                    task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await task
             await engine.dispose()
 
     application = FastAPI(
@@ -86,8 +116,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_origins=app_settings.cors_origins_list,
         allow_credentials="*" not in app_settings.cors_origins_list,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
-        expose_headers=["X-Request-ID"],
+        # Idempotency-Key: POST /orders and /payments/init (ADR-046); without it a browser
+        # preflight refuses both. Retry-After: every 429, readable by the frontend.
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key"],
+        expose_headers=["X-Request-ID", "Retry-After"],
     )
     application.add_middleware(RequestContextMiddleware)
     register_exception_handlers(application)
@@ -97,6 +129,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(api_router, prefix="/api/v1")
     if app_settings.environment is not Environment.PRODUCTION:
         application.include_router(dev_router, prefix="/api/v1")
+        if app_settings.payment_gateway is PaymentGatewayName.FAKE:
+            application.include_router(fake_gateway_router, prefix="/api/v1")
     if (
         app_settings.environment is Environment.DEVELOPMENT
         and app_settings.media_storage is MediaStorage.LOCAL

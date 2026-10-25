@@ -67,6 +67,43 @@ def test_wildcard_cors_is_forbidden_in_production() -> None:
         )
 
 
+@pytest.mark.parametrize("value", [None, "", "[]"])
+def test_production_without_cors_origins_fails_startup(
+    monkeypatch: pytest.MonkeyPatch, value: str | None
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", BASE_SETTINGS["database_url"])
+    monkeypatch.setenv("JWT_SECRET", BASE_SETTINGS["jwt_secret"])
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("OTP_MOCK_ENABLED", "false")
+    monkeypatch.setenv("OTP_HASH_SECRET", "test-otp-hash-secret-at-least-32-characters")
+    monkeypatch.setenv("MEDIA_PUBLIC_BASE_URL", "https://cdn.example.com/media")
+    monkeypatch.setenv("MEDIA_ALLOWED_HOSTS", "cdn.example.com")
+    if value is None:
+        monkeypatch.delenv("CORS_ORIGINS", raising=False)
+    else:
+        monkeypatch.setenv("CORS_ORIGINS", value)
+
+    with pytest.raises(ValidationError, match="CORS_ORIGINS must list the frontend origins"):
+        Settings(_env_file=None)
+
+
+def test_production_cors_sends_credentials_to_the_listed_origins() -> None:
+    from starlette.middleware.cors import CORSMiddleware
+
+    from app.main import create_app
+
+    settings = Settings(
+        **PRODUCTION_SETTINGS,
+        otp_hash_secret="test-otp-hash-secret-at-least-32-characters",
+        payment_reconcile_seconds=0,
+    )
+    middleware = create_app(settings).user_middleware
+    cors = next(m for m in middleware if getattr(m, "cls", None) is CORSMiddleware)
+
+    assert cors.kwargs["allow_origins"] == ["https://shop.example.com"]
+    assert cors.kwargs["allow_credentials"] is True
+
+
 def test_mock_otp_is_forbidden_in_production() -> None:
     with pytest.raises(ValidationError, match="Mock OTP must be disabled"):
         Settings(

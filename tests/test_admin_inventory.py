@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
-from conftest import Catalog, MakeAccount, count_queries
+from conftest import Catalog, MakeAccount, count_queries, new_order
 from httpx import AsyncClient, Response
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -27,7 +27,7 @@ from app.db.models.inventory import WarehouseStatus
 from app.modules.inventory.reservation import ReservationService, ReserveLine
 from app.modules.inventory.stock import StockLevel, stock_status
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures("order_factory")]
 
 URL = "/api/v1/admin/inventory"
 PAST = timedelta(minutes=20)
@@ -45,7 +45,7 @@ async def _reserve(
 ) -> UUID:
     async with AsyncSession(engine, expire_on_commit=False) as session, session.begin():
         result = await ReservationService(session).reserve(
-            order_id=uuid4(),
+            order_id=await new_order(),
             lines=[ReserveLine(variant_id, quantity)],
             user_id=None,
             now=now,

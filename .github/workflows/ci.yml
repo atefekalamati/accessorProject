@@ -129,8 +129,11 @@ jobs:
 
     env:
       APP_ENV_FILE: .env.staging
-      # Own project name: never shares containers or volumes with a dev stack.
-      COMPOSE: docker compose -p project-ak-staging --env-file .env.staging
+      # Own project name and an in-memory database (docker-compose.staging.yml): never shares
+      # containers or volumes with a dev stack.
+      COMPOSE: >-
+        docker compose -p project-ak-staging -f docker-compose.yml -f docker-compose.staging.yml
+        --env-file .env.staging
       SMOKE_MOBILE: "+989120000001"
 
     steps:
@@ -150,6 +153,9 @@ jobs:
           MEDIA_PUBLIC_BASE_URL=http://localhost:8000/media
           MEDIA_ALLOWED_HOSTS=localhost
           RESERVATION_SWEEP_SECONDS=0
+          PAYMENT_GATEWAY=fake
+          PAYMENT_CALLBACK_URL=http://localhost:8000/api/v1/payments/callback
+          PAYMENT_RECONCILE_SECONDS=60
           POSTGRES_DB=project_ak_staging
           POSTGRES_USER=project_ak
           POSTGRES_PASSWORD=$(openssl rand -hex 16)
@@ -179,6 +185,11 @@ jobs:
 
       - name: Smoke - admin write
         run: python3 scripts/smoke.py admin --token-file "$RUNNER_TEMP/smoke-token"
+
+      # PAY-06: a sellable product through the admin API, then a full purchase with the
+      # fake gateway (cart, checkout, order, payment, callback, confirmed order).
+      - name: Smoke - purchase end to end
+        run: python3 scripts/smoke.py purchase --token-file "$RUNNER_TEMP/smoke-token"
 
       - name: API logs on failure
         if: failure()

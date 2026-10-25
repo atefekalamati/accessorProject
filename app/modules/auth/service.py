@@ -158,6 +158,8 @@ class IssuedTokens:
     access_expires_in_seconds: int
     refresh_token: str
     refresh_expires_at: datetime
+    # The signed-in user; the router merges the guest cart into theirs (CART-04).
+    user_id: UUID
 
 
 class _Outcome(Enum):
@@ -362,6 +364,7 @@ class AuthService:
             access_expires_in_seconds=settings.access_token_ttl_seconds,
             refresh_token=refresh_token,
             refresh_expires_at=user_session.expires_at,
+            user_id=user_id,
         )
         return tokens, user_session
 
