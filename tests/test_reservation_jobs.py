@@ -53,6 +53,9 @@ async def _wait_for_lock_waiter(engine: AsyncEngine) -> None:
     """Until a backend in this database waits on a lock (bounded polling, no fixed sleep)."""
     async with AsyncSession(engine) as session:
         for _ in range(500):
+            # A new transaction per poll: pg_stat_activity is cached for a whole transaction,
+            # so a backend that connected after the first poll would never be seen.
+            await session.rollback()
             waiting = await session.scalar(
                 select(func.count())
                 .select_from(text("pg_locks"))
@@ -201,13 +204,7 @@ async def test_cancelled_sweep_does_not_keep_the_job_lock(
         with pytest.raises(asyncio.CancelledError):
             await sweep
 
-    # The cancelled round's connection may still hold the order's advisory lock while it
-    # rolls back; the job only try-locks an order (ORD-06), so it skips it until then.
-    for _ in range(100):
-        assert (await sweep_expired_reservations(db_engine, now=now)).ran
-        if await _status(db_engine, old.reservation_id) == "expired":
-            break
-        await asyncio.sleep(0.05)
+    assert (await sweep_expired_reservations(db_engine, now=now)).ran
     assert await _status(db_engine, old.reservation_id) == "expired"
     await _assert_invariant(db_engine, [variant.id])
 

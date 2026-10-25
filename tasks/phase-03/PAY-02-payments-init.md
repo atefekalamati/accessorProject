@@ -29,7 +29,9 @@
     - tx2 بعد از لغو یا انقضا payment را می‌بندد.
     - سفارش لغوشده به دلیل انقضا → 409 (نه 422).
     - log در 503 supersede؛ docstringها؛ تست‌های اضافه.
-  - flaky واقعی (یک بار در suite موازی):
-    - `test_cancelled_sweep_does_not_keep_the_job_lock`. علت: اتصال sweep لغوشده هنگام rollback هنوز advisory سفارش را دارد و sweep بعدی (try-lock، ORD-06) یک دور skip می‌کند. در production بی‌خطر است. تست اکنون چند دور اجرا می‌کند.
+  - flaky واقعی در suite موازی:
+    - `test_cancelled_sweep_does_not_keep_the_job_lock`. توضیح اول (advisory مانده از sweep لغوشده) اشتباه بود و با instrumentation رد شد.
+    - علت واقعی: helper `_wait_for_lock_waiter` همه pollها را در یک تراکنش اجرا می‌کرد. `pg_stat_activity` برای کل تراکنش cache می‌شود، پس backendی که بعد از poll اول وصل شده بود هرگز دیده نمی‌شد. وقتی sweep اتصال تازه‌ای از pool می‌گرفت، تست fail می‌شد.
+    - اصلاح: یک تراکنش جدید برای هر poll (commit `fix(tests)` بعدی). ۲۰ اجرای پشت هم با xdist سبز شد.
     - assertion جدید همزمانی متن JSON را مقایسه می‌کرد (JSONB ترتیب کلید را عوض می‌کند)؛ به مقایسه json اصلاح شد.
   - pytest (1956)، ruff، format و mypy سبز. COMPLETE.
