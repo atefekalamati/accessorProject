@@ -142,6 +142,9 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def enforce_environment_safety(self) -> Settings:
         if self.environment is Environment.PRODUCTION:
+            # Explicit origins only: the browser sends cookies (credentials) to them (ADR-052).
+            if not self.cors_origins:
+                raise ValueError("CORS_ORIGINS must list the frontend origins in production")
             if "*" in self.cors_origins:
                 raise ValueError("Wildcard CORS origin is forbidden in production")
             if self.otp_mock_enabled:

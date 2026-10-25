@@ -278,7 +278,16 @@ async def test_header_and_body_errors(
         401,
         "UNAUTHORIZED",
     )
+    # An unknown query parameter never answers before 401 either.
+    _error(await auth_client.post(f"{ORDERS}?x=1", json=body), 401, "UNAUTHORIZED")
     headers = ready.account.headers
+    _error(
+        await auth_client.post(
+            f"{ORDERS}?x=1", json=body, headers=headers | {"Idempotency-Key": "k-q"}
+        ),
+        400,
+        "VALIDATION_ERROR",
+    )
     _error(await auth_client.post(ORDERS, json=body, headers=headers), 400, "VALIDATION_ERROR")
     keyed = headers | {"Idempotency-Key": "k-1"}
     for bad in (

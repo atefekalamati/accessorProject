@@ -116,8 +116,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_origins=app_settings.cors_origins_list,
         allow_credentials="*" not in app_settings.cors_origins_list,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
-        expose_headers=["X-Request-ID"],
+        # Idempotency-Key: POST /orders and /payments/init (ADR-046); without it a browser
+        # preflight refuses both. Retry-After: every 429, readable by the frontend.
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key"],
+        expose_headers=["X-Request-ID", "Retry-After"],
     )
     application.add_middleware(RequestContextMiddleware)
     register_exception_handlers(application)

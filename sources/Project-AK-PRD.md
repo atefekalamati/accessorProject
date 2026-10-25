@@ -39,7 +39,7 @@
 - اطلاعات کاربر: شماره موبایل، نام، نام خانوادگی، آدرس، کد پستی
 - اطلاعات محصول: شناسه محصول، شناسه تنوع، تعداد، رنگ/مدل/سایز
 - اطلاعات سبد خرید: آیتم‌ها، کد تخفیف، روش ارسال
-- اطلاعات پرداخت: شناسه سفارش، مبلغ نهایی، درگاه انتخابی
+- اطلاعات پرداخت: فقط شناسه سفارش؛ مبلغ همان grandTotal ذخیره‌شده سفارش است و از کلاینت پذیرفته نمی‌شود. نسخه اول یک درگاه دارد (ADR-001، ADR-051).
 
 خروجی‌ها:
 - اطلاعات محصول و موجودی قابل خرید
@@ -66,7 +66,7 @@
   افزودن محصول به سبد خرید
 
 - PATCH /cart/items/{id}
-  تغییر تعداد یا تنوع محصول در سبد خرید
+  تغییر تعداد محصول در سبد خرید (بدنه فقط `quantity`؛ تغییر تنوع = حذف خط و افزودن تنوع دیگر)
 
 - DELETE /cart/items/{id}
   حذف آیتم از سبد خرید
@@ -89,8 +89,12 @@
 - 403: دسترسی غیرمجاز
 - 404: محصول یا سفارش پیدا نشد
 - 409: تغییر قیمت، اتمام موجودی یا تداخل وضعیت
-- 422: کد تخفیف نامعتبر یا غیرقابل استفاده
+- 422: کد تخفیف نامعتبر یا غیرقابل استفاده، یا نقض قانون کسب‌وکار (مثل `INVALID_STATE_TRANSITION`)
+- 429: تعداد درخواست بیش از حد مجاز، با header `Retry-After`
 - 500: خطای داخلی سرور
+- 503: دیتابیس یا درگاه پرداخت در دسترس نیست (`PAYMENT_GATEWAY_UNAVAILABLE`)
+
+قرارداد API (HANDOFF-01): بدنه و پاسخ JSON با نام فیلد snake_case است (مثل `address_id`)؛ نام‌های camelCase در بخش‌های «مدل داده» فقط نمادین‌اند. شکل خطا ثابت است: `{"error": {"code", "message", "details"}, "request_id"}`. قرارداد دقیق endpointها در `docs/api/openapi.json` و یادداشت‌های frontend در `docs/api/FRONTEND.md` است.
 
 #### مدل داده و دیتابیس
 
@@ -106,7 +110,7 @@ Entityهای اصلی:
 - Address: آدرس‌های کاربر
 - DiscountCode: کد تخفیف و محدودیت‌های استفاده
 - Payment: اطلاعات پرداخت، درگاه، مبلغ، وضعیت
-- Shipment: روش ارسال، هزینه، کد رهگیری، وضعیت ارسال
+- Shipment: روش ارسال، هزینه، کد رهگیری، وضعیت ارسال (در نسخه فعلی وضعیت، روش و هزینه ارسال روی Order ذخیره می‌شود؛ Shipment جدا با کد رهگیری در فاز ۴؛ ADR-046)
 - AuditLog: ثبت عملیات حساس پنل مدیریت
 
 ارتباط‌ها:
@@ -234,10 +238,10 @@ Success:
 - کاربر مهمان می‌تواند سبد خرید داشته باشد، اما برای پرداخت باید شماره موبایل تأیید شود.
 - هر شماره موبایل فقط به یک حساب کاربری فعال متصل باشد.
 - نقش پیش‌فرض پس از ورود، Customer است.
-- دسترسی به پنل مدیریت فقط برای Admin و Super Admin مجاز است.
+- دسترسی به endpointهای پنل مدیریت (`/admin/*`) با مجوز (permission) نقش کنترل می‌شود: admin و super_admin، و support و content_manager فقط در محدوده مجوزهای خود (تصمیم D2، ADR-018). Customer هیچ مجوز مدیریتی ندارد.
 - تغییر نقش کاربران فقط توسط Super Admin انجام شود.
 - عملیات حساس مدیریتی باید در Audit Log ثبت شود.
-- حساب غیرفعال‌شده نباید امکان ورود یا ثبت سفارش داشته باشد.
+- حساب غیرفعال‌شده نباید امکان ورود یا ثبت سفارش داشته باشد (حساب `inactive` یا `blocked` → 403 `FORBIDDEN`، در هر درخواست از دیتابیس بررسی می‌شود؛ ADR-017، ADR-018).
 - ارسال OTP باید محدودیت زمانی و تعداد تلاش داشته باشد.
 
 #### داده‌های ورودی و خروجی
@@ -297,11 +301,12 @@ Success:
 
 خطاهای کلیدی:
 - 400: شماره موبایل یا داده ورودی نامعتبر
-- 401: کد ورود اشتباه، منقضی‌شده یا نشست نامعتبر
-- 403: دسترسی غیرمجاز
+- 401: کد ورود اشتباه، منقضی‌شده، مصرف‌شده یا ناموجود (همه یک پاسخ `OTP_INVALID`)، یا نشست نامعتبر (`UNAUTHORIZED`)
+- 403: دسترسی غیرمجاز، یا حساب غیرفعال یا مسدود (`FORBIDDEN`)
 - 404: کاربر پیدا نشد
-- 409: شماره موبایل قبلاً ثبت شده یا وضعیت حساب ناسازگار است
-- 429: تعداد درخواست OTP بیش از حد مجاز
+- 409: شماره موبایل قبلاً ثبت شده یا وضعیت حساب ناسازگار است؛ تغییری که هیچ super_admin فعالی باقی نگذارد (`CONFLICT`؛ ADR-019)
+- 422: تغییر نقش یا وضعیت خود (ADR-019)
+- 429: تعداد درخواست OTP بیش از حد مجاز (`OTP_RATE_LIMITED` با `Retry-After`؛ ADR-016)
 
 #### مدل داده و دیتابیس
 
@@ -349,6 +354,7 @@ Entityها:
 - Session
   id
   userId
+  familyId (زنجیره چرخش refresh؛ ADR-017)
   refreshTokenHash
   userAgent
   ipAddress
@@ -362,6 +368,7 @@ Entityها:
   entityType
   entityId
   metadata
+  ip
   createdAt
 
 ارتباط‌ها:
@@ -393,6 +400,7 @@ Entityها:
 - تغییر نقش و غیرفعال‌کردن مدیران فقط برای Super Admin مجاز باشد.
 - کاربر نباید بتواند نقش یا مجوز خود را از سمت فرانت‌اند تغییر دهد.
 - نشست‌های مشکوک یا باطل‌شده نباید امکان دریافت توکن جدید داشته باشند.
+- چرخش refresh (ADR-017): هر refresh نشست قبلی را باطل و نشست جدیدی در همان family می‌سازد. ارائه دوباره refresh باطل‌شده، حتی دو refresh همزمان با یک token، کل family را باطل می‌کند (reuse detection) و کاربر خارج می‌شود. پس frontend باید refresh را در همه تب‌ها single-flight کند. access قبلی بعد از refresh یا logout فوراً باطل است (ADR-018).
 
 #### حالت‌های صفحه
 
@@ -578,7 +586,7 @@ Success:
 - 401: نیاز به ورود
 - 403: دسترسی غیرمجاز برای تغییر قیمت یا تنظیمات
 - 404: محصول، تنوع یا تنظیمات پیدا نشد
-- 409: قیمت تغییر کرده یا سفارش در وضعیت قابل محاسبه نیست
+- 409: قیمت تغییر کرده (`PRICE_CHANGED`: fingerprint quote متفاوت است و quote جدید در `details` می‌آید؛ ADR-047، ADR-048)
 - 422: تخفیف، مالیات یا روش ارسال قابل اعمال نیست
 
 #### مدل داده و دیتابیس
@@ -606,40 +614,37 @@ Entityها:
   updatedBy
   updatedAt
 
-- CartPriceSnapshot
-  id
-  cartId
-  subtotal
-  productDiscountTotal
-  discountCodeAmount
-  taxAmount
-  shippingAmount
-  grandTotal
-  calculatedAt
+- CartPriceSnapshot: ساخته نشد (ADR-041). سبد در هر `GET /cart` دوباره محاسبه می‌شود و مبنای flag تغییر قیمت per-line روی CartItem است (`seenUnitPrice`، `seenPriceVersion`).
 
-- OrderItem
+- OrderItem (ADR-031، ADR-046)
   id
   orderId
+  position (ترتیب پایدار قیمت‌گذاری)
   productId
   variantId
-  productTitleSnapshot
-  variantTitleSnapshot
-  unitPrice
+  productTitle (snapshot)
+  sku (snapshot)
+  variantLabel (snapshot)
+  unitPrice (قیمت واحد اصلی)
+  unitFinalPrice
   quantity
-  discountAmount
+  subtotal
+  productDiscount
+  codeDiscount
+  discountAmount (= productDiscount + codeDiscount)
   taxAmount
   finalLineTotal
 
-- OrderPriceSnapshot
-  id
+- OrderPriceSnapshot (ADR-046): اجزای مبلغ (subtotal، productDiscountTotal، discountCodeAmount، taxAmount، shippingAmount، grandTotal، currency) روی خود Order ذخیره می‌شوند. snapshot سیاست قیمت لحظه ثبت را نگه می‌دارد:
   orderId
-  subtotal
-  productDiscountTotal
-  discountCodeAmount
-  taxAmount
-  shippingAmount
-  grandTotal
-  currency
+  pricingVersion
+  taxEnabled
+  taxRateBps
+  roundingMode
+  roundingStep
+  fingerprint (quote)
+  shippingMethodCost (قبل از سقف رایگان)
+  shippingFreeThreshold
   calculatedAt
 
 - PriceHistory
@@ -656,7 +661,7 @@ Entityها:
 
 ارتباط‌ها:
 - هر ProductVariant قیمت مستقل دارد.
-- هر Cart می‌تواند یک CartPriceSnapshot آخرین محاسبه داشته باشد.
+- هر CartItem مبنای قیمتی را که مشتری آخرین بار دیده نگه می‌دارد (ADR-041).
 - هر Order باید یک OrderPriceSnapshot نهایی داشته باشد.
 - هر OrderItem قیمت لحظه خرید را مستقل از ProductVariant ذخیره می‌کند.
 - هر تغییر قیمت در PriceHistory و AuditLog ثبت می‌شود.
@@ -789,7 +794,7 @@ Success:
 - موجودی باید قبل از شروع پرداخت دوباره بررسی شود.
 - رزرو موجودی هنگام ثبت سفارش (POST /orders) و قبل از ایجاد پرداخت انجام شود (تصمیم D6).
 - مدت رزرو محدود باشد؛ پیشنهاد نسخه اول: ۱۵ دقیقه.
-- اگر پرداخت در زمان رزرو موفق نشود، رزرو باید آزاد شود.
+- اگر پرداخت تا پایان مهلت رزرو موفق نشود، رزرو منقضی و آزاد می‌شود و سفارش با reason `expired` لغو می‌شود. شکست یک تلاش پرداخت رزرو را آزاد نمی‌کند تا تلاش دوباره در همان مهلت ممکن باشد (D34).
 - اگر پرداخت موفق شود، رزرو باید به کاهش قطعی موجودی تبدیل شود.
 - تعداد قابل خرید نباید بیشتر از موجودی آزاد باشد.
 - موجودی آزاد برابر است با موجودی کل منهای رزروهای فعال.
@@ -840,7 +845,7 @@ Success:
 - GET /products/{id}/availability
   دریافت وضعیت موجودی محصول و تنوع‌ها
 
-- رزرو، آزادسازی و commit رزرو endpoint عمومی ندارند و داخلی انجام می‌شوند: رزرو در POST /orders، commit در callback موفق پرداخت، release در شکست پرداخت، لغو یا انقضا (تصمیم D6). بررسی موجودی سبد در POST /checkout/validate انجام می‌شود (تصمیم D5).
+- رزرو، آزادسازی و commit رزرو endpoint عمومی ندارند و داخلی انجام می‌شوند: رزرو در POST /orders، commit در callback موفق پرداخت، release در لغو سفارش یا انقضا (تصمیم D6؛ شکست پرداخت رزرو را نگه می‌دارد، D34). بررسی موجودی سبد در POST /checkout/validate انجام می‌شود (تصمیم D5).
 
 - GET /admin/inventory
   دریافت لیست موجودی محصولات و فیلتر براساس کم‌موجودی یا ناموجود
@@ -893,6 +898,8 @@ Entityها:
   userId
   status: active, released, committed, expired
   expiresAt
+  committedAt
+  releasedAt
   createdAt
   updatedAt
 
@@ -903,6 +910,8 @@ Entityها:
   productId
   variantId
   quantity
+  status: active, released, committed
+  releasedAt
 
 - InventoryMovement
   id
@@ -934,7 +943,7 @@ Entityها:
 نقش‌ها:
 - Guest: مشاهده وضعیت کلی موجودی محصول
 - Customer: بررسی موجودی سبد؛ رزرو هنگام ثبت سفارش ایجاد می‌شود (تصمیم D6)
-- Admin: مشاهده و ویرایش موجودی در صورت داشتن مجوز inventory:update
+- Admin: مشاهده موجودی با مجوز inventory:read یا inventory:update و ویرایش با inventory:update (ADR-038)
 - Warehouse Manager: به نسخه بعد موکول شد؛ در نسخه اول Admin با مجوز inventory:update (تصمیم D2)
 - Super Admin: دسترسی کامل به تنظیمات و اصلاحات حساس موجودی
 
@@ -1191,7 +1200,7 @@ Entityها:
   title
   slug
   iconKey
-  imageUrl
+  imageMediaId (ADR-028)
   isFeatured
   displayOrder
   isActive
@@ -2354,7 +2363,7 @@ Success:
 - مسئول: —
 - اولویت: بالا
 - نسخه هدف: نسخه اول
-- بازبینی: 2026-10-12 (CART-00)؛ متن قالبی با الزامات دقیق جایگزین شد. تصمیم‌ها: D30، D34 (ADR-039)، D5 (ADR-006).
+- بازبینی: 2026-10-12 (CART-00)؛ متن قالبی با الزامات دقیق جایگزین شد. تصمیم‌ها: D30، D34 (ADR-039)، D5 (ADR-006). هم‌خوانی با کد: 2026-10-25 (HANDOFF-01). ADR-040، ADR-041، ADR-043.
 
 #### هدف و کاربر
 
@@ -2368,7 +2377,7 @@ Success:
 - تعداد عدد صحیح ۱ تا موجودی آزاد تنوع است (`free = total − active reservations`). افزودن به سبد رزرو نمی‌کند.
 - فقط تنوع فعال، قابل‌خرید، دارای قیمت و متعلق به محصول منتشرشده و حذف‌نشده افزوده می‌شود (SD rule).
 - حداکثر ۵۰ خط در سبد. سبد مهمان ۳۰ روز بعد از آخرین تغییر منقضی می‌شود.
-- `GET /cart` همیشه با محاسبه سرور (تابع قیمت، خطوط به ترتیب id خط؛ ADR-031) برمی‌گردد و برای هر خط تغییر قیمت یا موجودی را با flag اعلام می‌کند (خط ناموجود یا غیرقابل‌خرید حذف نمی‌شود، علامت می‌خورد).
+- `GET /cart` همیشه با محاسبه سرور (تابع قیمت، خطوط به ترتیب id خط؛ ADR-031) برمی‌گردد و برای هر خط تغییر قیمت یا موجودی را با flag اعلام می‌کند (خط ناموجود یا غیرقابل‌خرید حذف نمی‌شود، علامت می‌خورد). flagها (ADR-041): `price_changed` و `previous_unit_price` (قیمت نهایی واحد ≠ قیمتی که مشتری آخرین بار دید)، `available` (خط غیرقابل‌دسترس قیمت‌گذاری نمی‌شود)، `stock_status` (`ok`، `insufficient`، `out_of_stock`؛ بدون عدد موجودی)، `discount.applied` و `discount.reason`، و `has_changes` در سطح سبد. هر نوشتن روی یک خط مبنای همان خط را به‌روز می‌کند و `POST /cart/acknowledge-prices` مبنای همه خطوط را. flag فقط UX است؛ امنیت سفارش با fingerprint و 409 `PRICE_CHANGED` است.
 - ادغام بعد از ورود: در `POST /auth/verify-otp`، سبد مهمان در سبد کاربر ادغام می‌شود؛ تعداد تنوع‌های یکسان جمع و به موجودی آزاد و سقف خطوط محدود می‌شود؛ سبد مهمان بسته می‌شود و cookie `cart_token` پاک می‌شود. ادغام قطعی و idempotent است.
 - سبد هنگام ثبت سفارش خالی نمی‌شود. بعد از پرداخت موفق فقط تعداد تنوع‌های سفارش‌داده‌شده از سبد کم می‌شود (خطی که به صفر برسد حذف می‌شود؛ D34).
 - قیمت، تخفیف، مالیات و مبلغی که کلاینت بفرستد نادیده گرفته یا رد می‌شود.
@@ -2379,16 +2388,17 @@ Success:
 - POST /cart/items — افزودن تنوع (`variant_id`، `quantity`)؛ سبد مهمان در صورت نبود ساخته می‌شود
 - PATCH /cart/items/{id} — تغییر تعداد
 - DELETE /cart/items/{id} — حذف خط
+- POST /cart/acknowledge-prices — پذیرفتن قیمت‌های فعلی همه خطوط (پاک‌شدن flag تغییر قیمت؛ ADR-041)
 - POST /cart/discount و DELETE /cart/discount — بخش «کد تخفیف»
 - endpointهای قالبی `GET/POST/PATCH/DELETE /cart/{id}` و CartHistory حذف شدند.
 
-خطاهای کلیدی: 400 ورودی نامعتبر؛ 404 خط یا تنوع پیدا نشد یا متعلق به سبد دیگری است؛ 409 `INSUFFICIENT_STOCK`؛ 422 تنوع غیرقابل‌خرید یا سقف خطوط.
+خطاهای کلیدی: 400 ورودی نامعتبر؛ 401 header `Authorization` نامعتبر (هرگز به مهمان برنمی‌گردد)؛ 404 خط یا تنوع پیدا نشد، تنوع یا محصول عمومی نیست (غیرفعال، حذف‌شده، بی‌قیمت یا منتشرنشده) یا خط متعلق به سبد دیگری است؛ 409 `INSUFFICIENT_STOCK`؛ 422 تنوع با `is_purchasable = false` یا سقف خطوط (ADR-040).
 
 #### مدل داده و دیتابیس
 
-- Cart: id، userId (nullable)، tokenHash (nullable، unique)، status (active، merged، converted، expired)، expiresAt، createdAt، updatedAt
-- CartItem: id، cartId، productId، variantId، quantity، createdAt، updatedAt (unique cartId + variantId)
-- CartPriceSnapshot (بخش «قیمت و مالیات»): آخرین محاسبه، فقط برای نمایش؛ مرجع ثبت سفارش نیست.
+- Cart: id، userId (nullable)، tokenHash (nullable، unique)، status (active، merged، expired؛ ADR-040)، expiresAt (فقط مهمان)، discountCodeId (nullable)، createdAt، updatedAt
+- CartItem: id، cartId، productId، variantId، quantity، seenUnitPrice، seenPriceVersion، createdAt، updatedAt (unique cartId + variantId)
+- CartPriceSnapshot ساخته نشد (ADR-041؛ بخش «قیمت و مالیات»).
 
 #### دسترسی و امنیت
 
@@ -2418,7 +2428,7 @@ Success:
 #### قوانین کسب‌وکار
 
 - entity جداگانه CheckoutSession و endpointهای قالبی `/checkout` (GET، POST، PATCH، DELETE) حذف شدند. checkout شامل `POST /checkout/validate` و `POST /orders` است (بخش «نتیجه سفارش»).
-- `POST /orders` و `POST /checkout/validate` فقط برای کاربر واردشده با موبایل تأییدشده؛ وگرنه 401.
+- `POST /checkout/validate` و `POST /orders` فقط برای کاربر واردشده (401 `UNAUTHORIZED`)؛ `POST /orders` موبایل تأییدشده هم می‌خواهد (401 `MOBILE_NOT_VERIFIED`).
 - بعد از `POST /auth/verify-otp` سبد مهمان در سبد کاربر ادغام و cookie `cart_token` پاک می‌شود (بخش «سبد خرید»).
 - ورود، rate limit و توکن‌ها طبق بخش «هویت و دسترسی» ✓ (ADR-016، ADR-017).
 
@@ -2491,12 +2501,12 @@ Success:
 
 #### مدل داده و دیتابیس
 
-- ShippingMethod: id، title، cost، freeShippingThreshold (nullable)، isActive، displayOrder، deletedAt، createdAt، updatedAt
+- ShippingMethod: id، title، description (اختیاری؛ ADR-045)، cost، freeShippingThreshold (nullable)، isActive، displayOrder، deletedAt، createdAt، updatedAt
 - Shipment (بخش «نتیجه سفارش»): وضعیت ارسال، روش، هزینه snapshot، کد رهگیری.
 
 #### دسترسی و امنیت
 
-- مدیریت روش‌ها با مجوز admin مربوط؛ هر تغییر در AuditLog.
+- مدیریت روش‌ها با مجوز `shipping:manage` (admin و super_admin؛ ADR-045)؛ هر تغییر در AuditLog.
 
 #### معیار پذیرش و تست
 
@@ -2529,7 +2539,7 @@ Success:
 
 - POST /cart/discount — اعمال کد (`code`)؛ DELETE /cart/discount — حذف کد
 - مدیریت در بخش «تخفیف‌ها» (پنل مدیریت). endpointهای قالبی `/discounts` حذف شدند.
-- خطاها: 400؛ 401 برای مسیرهای مشتری واردشده؛ 404 سبد پیدا نشد؛ 422 `DISCOUNT_NOT_APPLICABLE` (نامعتبر، منقضی، استفاده‌شده، زیر حداقل)؛ 429 `RATE_LIMITED`.
+- خطاها: 400 (فیلد اضافه، کد خالی یا بیش از ۶۴ کاراکتر)؛ 401 برای مسیرهای مشتری واردشده؛ 404 سبد پیدا نشد؛ 422 `DISCOUNT_NOT_APPLICABLE` با `details.type` (`invalid`، `expired`، `exhausted`، `user_exhausted`، `below_minimum`، `no_eligible_lines`؛ کد با شکل نامعتبر هم 422 `invalid` است و یک تلاش ناموفق شمرده می‌شود؛ ADR-043)؛ 429 `RATE_LIMITED` با `Retry-After`.
 
 #### مدل داده و دیتابیس
 
@@ -2548,7 +2558,7 @@ Success:
 - مسئول: —
 - اولویت: بالا
 - نسخه هدف: نسخه اول
-- بازبینی: 2026-10-12 (PAY-00)؛ متن قالبی جایگزین شد. تصمیم‌ها: D32، D34 (ADR-039)، ADR-001، ADR-007، ADR-009.
+- بازبینی: 2026-10-12 (PAY-00)؛ متن قالبی جایگزین شد. تصمیم‌ها: D32، D34 (ADR-039)، ADR-001، ADR-007، ADR-009. هم‌خوانی با کد: 2026-10-25 (HANDOFF-01). ADR-049، ADR-050، ADR-051.
 
 #### هدف و کاربر
 
@@ -2556,25 +2566,36 @@ Success:
 
 #### قوانین کسب‌وکار
 
-- `POST /payments/init` فقط برای مالک سفارش، در وضعیت `pending_payment` و با رزرو معتبر. مبلغ همان `grandTotal` ذخیره‌شده سفارش است؛ مبلغ کلاینت پذیرفته نمی‌شود.
+- `POST /payments/init` (بدنه فقط `order_id`؛ header `Idempotency-Key` الزامی، scope جدا از سفارش) فقط برای مالک سفارش، در وضعیت `pending_payment` و با رزرو معتبر. مبلغ همان `grandTotal` ذخیره‌شده سفارش است؛ مبلغ کلاینت پذیرفته نمی‌شود (فیلد اضافه → 400). کمتر از `PAYMENT_MIN_REMAINING_SECONDS` (60) از مهلت رزرو مانده → 409 `RESERVATION_EXPIRED` (`too_late`) بدون لغو. سفارش با `grandTotal = 0` → 422 (`zero_amount`).
 - هر سفارش در هر لحظه حداکثر یک Payment در وضعیت `pending` دارد. تلاش دوباره بعد از شکست یک Payment جدید می‌سازد.
-- Callback: verify سمت سرور با درگاه؛ مبلغ تأییدشده باید دقیقاً برابر `grandTotal` باشد؛ idempotent با unique روی مرجع درگاه؛ رخداد خام بعد از redact ذخیره می‌شود. callback تکراری چیزی را تغییر نمی‌دهد.
+- init دوباره روی payment `pending` (ADR-051): اگر session درگاه هنوز معتبر است (`gatewayExpiresAt` > now) همان `redirect_url` برمی‌گردد. وگرنه payment قدیمی با درگاه verify می‌شود: FAILED قطعی → بسته و payment جدید؛ PAID → اعمال می‌شود (سفارش paid شده و init بعدی 422)؛ PENDING → 409 `PAYMENT_IN_PROGRESS` (`session_open`)، چون درگاه هنوز session قدیمی را می‌پذیرد و payment جدید می‌توانست دو بار شارژ کند (تفسیر محافظه‌کارانه؛ تأیید کاربر 2026-10-25). درخواستی که به درگاه در جریان است → 409 `PAYMENT_IN_PROGRESS`.
+- خطای شبکه یا timeout درگاه → payment `failed` (`gateway_error`) و 503 `PAYMENT_GATEWAY_UNAVAILABLE`؛ تلاش دوباره مجاز است.
+- Callback: ورودی نامطمئن است و فقط برای پیدا کردن payment با (gateway، reference) خوانده می‌شود؛ هیچ تغییری بدون verify سمت سرور با درگاه انجام نمی‌شود. مبلغ تأییدشده باید دقیقاً برابر `grandTotal` باشد؛ idempotent با unique روی (gateway، reference)؛ رخداد بعد از redact (بدون داده کارت) در `payment_events` ذخیره می‌شود. callback تکراری یا با ترتیب نادرست چیزی را تغییر نمی‌دهد. rate limit per IP (429) و سقف بدنه ۸KB.
+- پاسخ callback (ADR-051): هر callback پردازش‌شده 200 می‌گیرد و نتیجه در `outcome` است: `paid`، `failed`، `pending`، `already_processed`، `amount_mismatch`، `duplicate_payment`، `refund_required`، به‌همراه وضعیت سفارش و payment. reference ناشناخته → 404، rate limit → 429، بدنه نامعتبر → 400، شکست یا timeout verify با درگاه → 503 `PAYMENT_GATEWAY_UNAVAILABLE` (هیچ تغییری؛ callback را دوباره بفرست یا job تطبیق جبران می‌کند). هدف جلوگیری از retry storm درگاه است.
+- بازگشت مشتری (HANDOFF-01): درگاه مرورگر را به صفحه نتیجه frontend (`PAYMENT_CALLBACK_URL`) برمی‌گرداند و frontend همان reference را با `POST /payments/callback` می‌فرستد و صفحه را از `outcome` می‌سازد. callback گم‌شده را job تطبیق جبران می‌کند. پشتیبانی GET redirect مستقیم درگاه در PAY-07.
+- مبلغ ناهمخوان (ADR-051): verify نتیجه PAID با مبلغ ≠ `grandTotal` → payment `refund_required` (`amount_mismatch`)، log ERROR و audit؛ رزرو مصرف نمی‌شود، order payment `failed` و سفارش برای تلاش دوباره در مهلت باز می‌ماند.
+- پرداخت دوم روی سفارش paid (ADR-051): payment → `refund_required` (`duplicate_payment`) با audit و WARNING؛ سفارش، موجودی، سبد و redemption فقط یک بار اثر می‌گیرند.
+- job تطبیق: هر `PAYMENT_RECONCILE_SECONDS` (60) paymentهای pending قدیمی‌تر از `PAYMENT_PENDING_STALE_SECONDS` (300) را با درگاه verify و اعمال می‌کند (callback گم‌شده)؛ زیر advisory lock. eventها ۹۰ روز نگه داشته می‌شوند.
+- درگاه fake فقط در development و staging؛ production با fake بالا نمی‌آید (fail-closed؛ ADR-049).
 - موفقیت: commit رزرو، `confirmed` شدن redemption، کم‌شدن تعداد سفارش‌داده‌شده از سبد، سفارش `confirmed` و payment `paid` در یک تراکنش.
-- شکست: payment `failed`؛ سفارش `pending_payment` می‌ماند؛ رزرو و redemption آزاد نمی‌شوند و تلاش دوباره تا پایان مهلت رزرو ممکن است (D34).
+- شکست: payment `failed` (و order payment `failed`)؛ سفارش `pending_payment` می‌ماند؛ رزرو و redemption آزاد نمی‌شوند و تلاش دوباره تا پایان مهلت رزرو ممکن است (D34).
 - پرداخت موفق بعد از انقضای رزرو (D32): رزرو منقضی هرگز مصرف نمی‌شود؛ payment `refund_required`، سفارش `cancelled` (reason `expired`)، بازپرداخت دستی. همین تراکنش audit `payment.refund_required` (actor system) دارد و log در سطح WARNING با شماره سفارش، id پرداخت و مبلغ (بدون PII) ثبت می‌شود (D32).
 - مبالغ تومان‌اند؛ تبدیل به ریال فقط داخل adapter درگاه (ADR-001).
 
 #### APIهای موردنیاز
 
-- POST /payments/init — ایجاد پرداخت و دریافت آدرس درگاه
-- POST /payments/callback — نتیجه درگاه
+- POST /payments/init — ایجاد پرداخت و دریافت آدرس درگاه؛ پاسخ 201: `payment_id`، `order_id`، `order_number`، `amount`، `currency`، `redirect_url`، `gateway_expires_at`، `reservation_expires_at`
+- POST /payments/callback — نتیجه درگاه (عمومی، بدون احراز هویت؛ fake: `{"reference"}`)
+- فقط development و staging با درگاه fake: `GET /payments/fake/{reference}` (صفحه درگاه) و `POST /payments/fake/{reference}/complete` (`result`: `paid` یا `failed`، `amount_rial` اختیاری)
 - مدیریت: GET /admin/payments با فیلتر `status` (از جمله `refund_required`) در فاز ۴ (D32).
 - endpointهای قالبی `/payments` (GET، PATCH، DELETE) حذف شدند.
-- خطاها: 400؛ 401؛ 404 سفارش دیگران یا ناموجود؛ 409 `RESERVATION_EXPIRED` یا پرداخت در جریان؛ 422 وضعیت سفارش اجازه نمی‌دهد یا مبلغ ناهمخوان.
+- خطاهای init: 400 (`Idempotency-Key` نبود یا نامعتبر، بدنه نامعتبر)؛ 401؛ 404 سفارش دیگران یا ناموجود؛ 409 `RESERVATION_EXPIRED` یا `PAYMENT_IN_PROGRESS`؛ 422 `INVALID_STATE_TRANSITION` (`order_not_payable`، `zero_amount`) یا `IDEMPOTENCY_KEY_REUSED`؛ 503 `PAYMENT_GATEWAY_UNAVAILABLE`. مبلغ ناهمخوان خطای HTTP نیست (outcome callback).
 
 #### مدل داده و دیتابیس
 
-- Payment: id، orderId، gateway، gatewayReference (unique)، amount، status (pending، paid، failed، refund_required)، failureReason، rawEvent (redact‌شده)، createdAt، updatedAt، paidAt
+- Payment: id، orderId، gateway، gatewayReference (unique با gateway)، redirectUrl، gatewayExpiresAt، idempotencyKey، amount، paidAmount (مبلغ تأییدشده درگاه، تومان)، status (pending، paid، failed، refund_required)، failureReason (فقط در failed و refund_required: `gateway_error`، `request_lost`، `superseded`، `abandoned`، `amount_mismatch`، `duplicate_payment`، …)، rawEvent (redact‌شده)، createdAt، updatedAt، paidAt، verifiedAt
+  - انتقال‌های ردیف payment: `pending → paid | failed | refund_required` و `failed → paid | refund_required` (ADR-051).
+- PaymentEvent: id، paymentId (nullable)، gateway، gatewayReference، kind (callback، verify؛ job تطبیق رویداد verify می‌نویسد)، ip، payload (redact‌شده)، createdAt
 
 #### دسترسی و امنیت
 
@@ -2592,7 +2613,7 @@ Success:
 - مسئول: —
 - اولویت: بالا
 - نسخه هدف: نسخه اول
-- بازبینی: 2026-10-12 (ORD-00)؛ متن قالبی جایگزین شد. تصمیم‌ها: D31 تا D34 (ADR-039)، ADR-006، ADR-007، ADR-031.
+- بازبینی: 2026-10-12 (ORD-00)؛ متن قالبی جایگزین شد. تصمیم‌ها: D31 تا D34 (ADR-039)، ADR-006، ADR-007، ADR-031. هم‌خوانی با کد: 2026-10-25 (HANDOFF-01). ADR-046 تا ADR-048، ADR-050.
 
 #### هدف و کاربر
 
@@ -2600,38 +2621,39 @@ Success:
 
 #### قوانین کسب‌وکار
 
-- `POST /checkout/validate` (`addressId`، `shippingMethodId`): قیمت، موجودی، کد تخفیف و ارسال را دوباره بررسی می‌کند و quote با `fingerprint` برمی‌گرداند. fingerprint قیمت خطوط، نسخه تنظیمات، کد تخفیف و مبلغ آن، و روش و هزینه ارسال را پوشش می‌دهد (D34).
+- `POST /checkout/validate` (`address_id`، `shipping_method_id`): قیمت، موجودی، کد تخفیف و ارسال را دوباره بررسی می‌کند و quote با `fingerprint` برمی‌گرداند. fingerprint قیمت خطوط، نسخه تنظیمات، کد تخفیف و مبلغ آن، و روش و هزینه ارسال را پوشش می‌دهد (D34).
 - `POST /orders`:
   - فقط برای موبایل تأییدشده؛ header `Idempotency-Key` الزامی (نبود → 400).
-  - بدنه `addressId`، `shippingMethodId` و `fingerprint` انتظاری؛ fingerprint متفاوت → 409 `PRICE_CHANGED` با quote جدید.
+  - بدنه `address_id`، `shipping_method_id` و `fingerprint` انتظاری؛ fingerprint متفاوت → 409 `PRICE_CHANGED` با quote جدید در `details[0].quote`.
+  - هر کاربر حداکثر یک سفارش `pending_payment` با رزرو زنده دارد؛ سفارش دوم → 409 `ORDER_PENDING` با `order_number` سفارش موجود در `details` (ADR-048).
   - در یک تراکنش: قفل ردیف DiscountCode (`FOR UPDATE`) و شمارش سقف‌ها، رزرو ۱۵ دقیقه‌ای، snapshot خطوط (عنوان و قیمت واحد)، OrderPriceSnapshot، snapshot آدرس، redemption `pending`.
   - سبد خالی نمی‌شود (بخش «سبد خرید»).
-- Idempotency-Key (D34): محدوده هر کاربر، مهلت ۲۴ ساعت. همان کلید با همان بدنه → همان پاسخ اولیه؛ همان کلید با بدنه متفاوت → 422.
+- Idempotency-Key (D34، ADR-046): ۱ تا ۲۵۵ کاراکتر ASCII قابل چاپ بدون فاصله؛ محدوده هر کاربر و هر endpoint (scope)، مهلت ۲۴ ساعت. همان کلید با همان بدنه → همان پاسخ اولیه (حتی اگر سفارش بعداً لغو شده باشد)؛ همان کلید با بدنه متفاوت → 422 `IDEMPOTENCY_KEY_REUSED`. فقط پاسخ 2xx ذخیره می‌شود؛ بعد از خطای 4xx/5xx همان کلید دوباره قابل استفاده است (ADR-048).
 - شماره سفارش قالب `ORD-YYYY-NNNNNN` دارد (شبیه موبایل نیست).
 - سه وضعیت مستقل:
   - order: `pending_payment → confirmed → completed`، و `pending_payment → cancelled`
-  - payment: `unpaid → pending → paid | failed`؛ `failed → pending` با تلاش دوباره؛ `refund_required` طبق بخش «پرداخت»
+  - payment: `unpaid → pending`؛ `pending → paid | failed | refund_required`؛ `failed → pending | paid | refund_required` (ADR-047؛ `refund_required` طبق بخش «پرداخت»)
   - shipment: `not_shipped → preparing → shipped → delivered`
   - انتقال نامعتبر → 422 `INVALID_STATE_TRANSITION`.
-- لغو توسط مشتری فقط در `pending_payment`؛ رزرو و redemption آزاد می‌شوند.
+- لغو توسط مشتری فقط در `pending_payment` و وقتی payment در جریان نیست (`unpaid` یا `failed`)؛ با payment `pending` (مشتری در درگاه است) → 409 `PAYMENT_IN_PROGRESS` (ADR-050). رزرو و redemption آزاد می‌شوند. لغو سفارش لغوشده 200 با وضعیت فعلی (idempotent). پاسخ: `id`، `order_number`، `status`، `payment_status`، `shipment_status`، `cancel_reason`، `updated_at`.
 - انقضای رزرو (job یا اولین بررسی): سفارش `cancelled` با reason `expired`، redemption آزاد، audit با actor system (D34).
 - `POST /orders/{id}/recalculate` (بخش «قیمت و مالیات») به نسخه بعد موکول شد؛ سفارش بعد از ثبت تغییرناپذیر است و سفارش منقضی با سفارش جدید از سبد جایگزین می‌شود (D33).
 
 #### APIهای موردنیاز
 
 - POST /checkout/validate، POST /orders
-- GET /orders، GET /orders/{orderNumber} — فقط سفارش‌های خود کاربر
+- GET /orders، GET /orders/{orderNumber} — فقط سفارش‌های خود کاربر (پیاده‌سازی در ACC-01، فاز ۴؛ تا آن زمان پاسخ `POST /orders`، لغو و callback وضعیت را می‌دهند)
 - POST /orders/{id}/cancel
 - endpointهای قالبی `PATCH/DELETE /orders/{id}` حذف شدند.
-- خطاها: 400؛ 401 نیاز به ورود یا موبایل تأییدنشده؛ 404 سفارش دیگران یا ناموجود؛ 409 `PRICE_CHANGED`، `INSUFFICIENT_STOCK`؛ 422 کد تخفیف، ارسال، وضعیت یا Idempotency-Key با بدنه متفاوت.
+- خطاها: 400 (از جمله نبود `Idempotency-Key`)؛ 401 نیاز به ورود (`UNAUTHORIZED`) یا موبایل تأییدنشده (`MOBILE_NOT_VERIFIED`)؛ 404 سفارش یا آدرس دیگران یا ناموجود؛ 409 `PRICE_CHANGED`، `INSUFFICIENT_STOCK`، `ORDER_PENDING`، `PAYMENT_IN_PROGRESS` (لغو)؛ 422 سبد خالی (`cart_empty`)، خط غیرقابل‌فروش (`line_unavailable`)، روش ارسال (`shipping_method_unavailable`)، کد تخفیف (`DISCOUNT_NOT_APPLICABLE`)، وضعیت (`INVALID_STATE_TRANSITION`) یا `IDEMPOTENCY_KEY_REUSED` (ADR-047).
 
 #### مدل داده و دیتابیس
 
-- Order: id، orderNumber، userId، status، paymentStatus، shipmentStatus، cancelReason، grandTotal، currency، createdAt، updatedAt
+- Order: id، orderNumber، userId، phone (snapshot)، status، paymentStatus، shipmentStatus، cancelReason (`customer`، `expired`، `admin`)، subtotal، productDiscountTotal، discountCodeAmount، taxAmount، shippingAmount، grandTotal، currency، discountCodeId، discountCode (snapshot)، shippingMethodId، shippingMethodTitle (snapshot)، createdAt، updatedAt
 - OrderItem: snapshot عنوان محصول و تنوع، unitPrice، quantity، discountAmount، taxAmount، finalLineTotal (بخش «قیمت و مالیات»)
-- OrderPriceSnapshot (بخش «قیمت و مالیات»)، OrderAddress (snapshot آدرس)، Shipment (روش، هزینه، کد رهگیری، وضعیت)
+- OrderPriceSnapshot (بخش «قیمت و مالیات»)، OrderAddress (snapshot آدرس)، Shipment (روش، هزینه، کد رهگیری، وضعیت؛ جدول جدا در فاز ۴، تا آن زمان روی Order؛ ADR-046)
 - OrderStatusHistory: id، orderId، field (order، payment، shipment)، oldStatus، newStatus، actor، reason، createdAt
-- IdempotencyKey: userId، key، requestHash، responseStatus، responseBody، expiresAt
+- IdempotencyKey: userId، scope، key، requestHash، responseStatus (فقط 2xx)، responseBody، expiresAt
 
 #### دسترسی و امنیت
 
@@ -4941,6 +4963,7 @@ Success:
 - مسئول: —
 - اولویت: متوسط
 - نسخه هدف: نسخه اول
+- یادداشت (HANDOFF-01، 2026-10-25): endpointهای پیاده‌شده موجودی ادمین در بخش «موجودی و رزرو» ✓ آمده‌اند (ADR-038). CRUD قالبی این بخش (`/admin/inventory/{id}`) پیاده نمی‌شود. این بخش در ADM-00 بازنویسی می‌شود.
 
 #### هدف و کاربر
 
@@ -5375,7 +5398,7 @@ Success:
 
 - GET /admin/discounts (فیلتر فعال/منقضی، جست‌وجوی کد)، GET /admin/discounts/{id} (با تعداد استفاده pending و confirmed)، POST /admin/discounts، PATCH /admin/discounts/{id}، DELETE /admin/discounts/{id} (حذف نرم).
 - مجوز `discounts:manage`. هر ایجاد، تغییر و حذف در AuditLog. فیلدهای سیستمی ارسالی نادیده گرفته می‌شوند.
-- اعتبارسنجی: درصد بین ۱ و ۱۰۰٪، مبلغ ثابت عدد صحیح مثبت تومان، بازه معتبر، سقف‌ها عدد صحیح مثبت.
+- اعتبارسنجی: درصد به basis point بین 1 و 10000 (۰٫۰۱٪ تا ۱۰۰٪؛ هم‌واحد DB و calculator؛ ADR-044)، مبلغ ثابت عدد صحیح مثبت تومان، بازه معتبر، سقف‌ها عدد صحیح مثبت. `code` و `type` بعد از ساخت تغییر نمی‌کنند.
 - تغییر کد فقط روی سفارش‌های بعدی اثر دارد؛ redemptionهای قبلی دست نمی‌خورند.
 
 #### معیار پذیرش و تست

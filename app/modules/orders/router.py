@@ -27,13 +27,14 @@ def get_order_service(
     response_model=OrderResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Place an order from the cart: reserve stock for 15 minutes (Idempotency-Key)",
-    dependencies=[Depends(allowed_query_params())],
 )
 async def create_order(
     payload: CreateOrderRequest,
     request: Request,
-    # Authentication first, then the header (ADR-046): a bad key never answers before 401.
+    # Authentication first, then the query and the header (ADR-046): neither answers
+    # before 401.
     user: Annotated[CurrentUser, Depends(get_current_user)],
+    _: Annotated[None, Depends(allowed_query_params())],
     key: Annotated[str, Depends(idempotency_key)],
     service: Annotated[OrderService, Depends(get_order_service)],
 ) -> JSONResponse:

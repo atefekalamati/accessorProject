@@ -563,6 +563,19 @@
   - چرخه عمر ردیف payment: `failure_reason` فقط در failed/refund_required است (`failed → paid` آن را پاک می‌کند؛ سابقه در event و audit)؛ refund_required همیشه `paid_at` دارد؛ `paid_amount` مبلغ تأییدشده درگاه به تومان است. reconciliation رویداد `verify` می‌نویسد.
 - پیامدها: PAY-01..07، ADM (فیلتر `refund_required` و `failure_reason`)، HANDOFF-01 (redirect frontend).
 
+### ADR-052 — تحویل به frontend: هم‌خوانی PRD، OpenAPI و قرارداد مرورگر (HANDOFF-01)
+- تاریخ: 2026-10-25
+- تصمیم (کاربر): تفسیر محافظه‌کارانه init دوباره (verify PENDING روی session منقضی → 409 `PAYMENT_IN_PROGRESS` `session_open`؛ ADR-051) تأیید شد.
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی opus):
+  - **بازگشت از درگاه:** `PAYMENT_CALLBACK_URL` به صفحه نتیجه frontend اشاره می‌کند. frontend همان reference را با `POST /payments/callback` (JSON، طبق PRD و ADR-051) می‌فرستد و UI را از `outcome` می‌سازد. callback ورودی نامطمئن است، پس relay از مرورگر امن است. callback گم‌شده را reconciliation جبران می‌کند. redirect مستقیم GET/POST فرم درگاه واقعی در PAY-07.
+  - **CORS (اصلاح bug):** `Idempotency-Key` به `allow_headers` اضافه شد؛ بدون آن preflight مرورگر `POST /orders` و `/payments/init` را رد می‌کرد. `Retry-After` به `expose_headers` اضافه شد تا frontend زمان 429 را بخواند.
+  - `POST /orders`: بررسی query ناشناخته بعد از احراز هویت (401 قبل از 400)، مثل لغو و init.
+  - **CORS در production (دستور کاربر):** `CORS_ORIGINS` باید origin(های) صریح frontend را داشته باشد. خالی یا تنظیم‌نشده باعث شکست startup می‌شود (`Settings`)، و `*` از قبل ممنوع بود. با origin صریح، credentials همیشه روشن است. نام setting همان `CORS_ORIGINS` موجود ماند تا configهای فعلی نشکنند.
+  - **OpenAPI:** `docs/api/openapi.json` با `scripts/export_openapi.py` از تنظیمات ثابت development ساخته می‌شود (مستقل از `.env`؛ شامل endpointهای fake فقط-dev). تست `tests/test_api_contract.py` هم‌خوانی را بررسی می‌کند. نسخه‌بندی در OPS-06.
+  - یادداشت‌های frontend در `docs/api/FRONTEND.md`: cookieها، single-flight refresh، Idempotency-Key، کدهای خطا، flagهای تغییر قیمت و outcomeهای پرداخت.
+  - PRD فقط جایی اصلاح شد که با ADR تأییدشده مغایرت داشت (جدول PRD changes). بخش‌های قالبی آینده دست نخوردند، به‌جز یادداشت ارجاع در «انبار».
+- پیامدها: PAY-07 (redirect درگاه واقعی)، ACC-01 (`GET /orders`)، OPS-06، ADM-00 («انبار»).
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
@@ -582,6 +595,7 @@
 | 2026-10-10 | «دسته‌بندی محصولات» ✓، «محصولات» ✓ | `imageUrl` دسته → `imageMediaId`؛ افزودن `POST /admin/media`؛ ProductMedia با `mediaId` به Media | ADR-028 |
 | 2026-10-12 | «سبد خرید»، «ورود یا خرید مهمان»، «آدرس»، «شیوه ارسال»، «کد تخفیف»، «پرداخت»، «نتیجه سفارش»، «مدیریت سفارش»، «تخفیف‌ها» (همه ✓) | بازنویسی نه بخش قالبی (CART-00، DSC-00، ADDR-00، ORD-00، PAY-00)؛ CRUDهای قالبی و CheckoutSession حذف شدند | D30–D34 (ADR-039) |
 | 2026-10-12 | «قیمت و مالیات» ✓ | `POST /orders/{id}/recalculate` به نسخه بعد موکول شد | D33 (ADR-039) |
+| 2026-10-25 | «معماری سیستم»، «هویت و دسترسی»، «قیمت و مالیات»، «موجودی و رزرو»، «سبد خرید»، «ورود یا خرید مهمان»، «شیوه ارسال»، «کد تخفیف»، «پرداخت»، «نتیجه سفارش»، «تخفیف‌ها»، «انبار» (یادداشت) | هم‌خوانی با کد (HANDOFF-01): قرارداد snake_case و 429/503؛ دسترسی پنل با permission؛ چرخش refresh و reuse detection؛ CartPriceSnapshot حذف و flagهای per-line؛ فیلدهای OrderItem/OrderPriceSnapshot/Order/Payment؛ شکست پرداخت رزرو را نگه می‌دارد؛ `acknowledge-prices`؛ وضعیت `converted` سبد حذف؛ callback همیشه 200 با `outcome`، mismatch و duplicate → refund_required، init دوباره و 503؛ `ORDER_PENDING`، لغو با payment pending → 409، `GET /orders` در ACC-01؛ انتقال‌های payment؛ درصد کد به basis point | ADR-017–019، ADR-038، ADR-040–048، ADR-050–052 |
 
 قاعده: هر task نوع `XX-00` بخش قالبی ماژول خود را در PRD بازنویسی می‌کند، به عنوان آن بخش «✓ بازبینی‌شده» اضافه می‌کند و یک ردیف به این جدول می‌افزاید.
 
