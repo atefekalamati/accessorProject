@@ -272,7 +272,7 @@ async def test_init_again_supersedes_an_expired_gateway_session(
     assert (await _order(db_engine, order_id)).payment_status == "pending"
 
 
-async def test_a_superseded_session_that_was_paid_is_not_closed(
+async def test_a_superseded_session_that_was_paid_is_applied(
     auth_client: AsyncClient, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
 ) -> None:
     ready, order_id = await _ready_order(catalog, buyer)
@@ -286,10 +286,13 @@ async def test_a_superseded_session_that_was_paid_is_not_closed(
             .values(gateway_expires_at=utc_now() - timedelta(seconds=1))
         )
 
-    _error(await _init(ready, order_id), 409, "PAYMENT_IN_PROGRESS", "payment_confirming")
+    # Its money arrived after all: init applies it like the callback would (PAY-03).
+    _error(await _init(ready, order_id), 422, "INVALID_STATE_TRANSITION", "order_not_payable")
 
-    [still] = await _payments(db_engine, order_id)
-    assert still.status == "pending"  # its callback or reconciliation applies it
+    [paid] = await _payments(db_engine, order_id)
+    assert paid.status == "paid"
+    order = await _order(db_engine, order_id)
+    assert (order.status, order.payment_status) == ("confirmed", "paid")
 
 
 async def test_a_request_in_flight_is_409_until_it_is_stale(

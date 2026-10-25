@@ -63,6 +63,7 @@ from app.modules.payments.gateways.base import (
     VerifyOutcome,
     VerifyResult,
 )
+from app.modules.payments.processing import PaymentProcessor
 from app.modules.payments.schemas import InitPaymentRequest, PaymentInitResponse
 from app.shared.audit import record_audit
 from app.shared.idempotency import IdempotencyService, request_hash
@@ -326,6 +327,11 @@ class PaymentService:
                 "payment.gateway_unavailable", extra={"payment_id": str(step.payment_id)}
             )
             raise gateway_unavailable() from None
+        if result.outcome is VerifyOutcome.PAID:
+            # The money arrived after all: apply it like its callback would (the next
+            # prepare then finds the order paid, or the payment refund_required).
+            await PaymentProcessor(self._session).apply(step.payment_id, result, request=request)
+            return
         async with self._session.begin():
             payment = await self._session.get(Payment, step.payment_id)
             assert payment is not None
@@ -340,18 +346,15 @@ class PaymentService:
                 reference=step.reference,
                 payment_id=payment.id,
             )
-            # Only a final FAILED closes it (ADR-051). PAID: its callback or reconciliation
-            # applies it (PAY-03). PENDING: the gateway still accepts the old session, so a
-            # new one could charge the customer twice; wait for it instead.
+            # Only a final FAILED closes it (ADR-051). PENDING: the gateway still accepts
+            # the old session, so a new one could charge the customer twice; wait for it.
             still_open = (
-                payment.status == PaymentStatus.PENDING
-                and result.outcome is not VerifyOutcome.FAILED
+                payment.status == PaymentStatus.PENDING and result.outcome is VerifyOutcome.PENDING
             )
             if payment.status == PaymentStatus.PENDING and not still_open:
                 await self._close(payment, order, result.failure_reason or "superseded", request)
         if still_open:
-            kind = "payment_confirming" if result.outcome is VerifyOutcome.PAID else "session_open"
-            raise _in_progress(step.payment_id, kind)
+            raise _in_progress(step.payment_id, "session_open")
 
     # --- steps 2 and 3 ---------------------------------------------------------------
 

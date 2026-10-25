@@ -547,9 +547,13 @@
   - rate limit callback پشت proxy به OPS-04 نیاز دارد.
   - fail-closed: `build_payment_gateway` (و job تطبیق در startup) در production خطا می‌دهد، مثل SMS؛ نه در Settings، که هر config production را تا PAY-07 نامعتبر می‌کرد. شکست اولین درخواست پرداخت در production → 503 (PAY-02).
   - init (PAY-02):
-    - session منقضی فقط با verify FAILED قطعی بسته می‌شود. verify PAID → 409 `payment_confirming` (callback یا reconciliation اعمال می‌کند)؛ verify PENDING → 409 `session_open`، چون درگاه هنوز session قدیمی را می‌پذیرد و payment جدید می‌توانست دو بار شارژ کند (تفسیر محافظه‌کارانه تصمیم ۳).
+    - session منقضی فقط با verify FAILED قطعی بسته می‌شود. verify PAID با `PaymentProcessor` همان‌جا اعمال می‌شود (PAY-03؛ prepare بعدی 422 `order_not_payable` می‌دهد، یا اگر نتیجه refund_required بود payment تازه می‌سازد)؛ verify PENDING → 409 `session_open`، چون درگاه هنوز session قدیمی را می‌پذیرد و payment جدید می‌توانست دو بار شارژ کند (تفسیر محافظه‌کارانه تصمیم ۳).
     - سفارش لغوشده با دلیل انقضا → 409 `RESERVATION_EXPIRED`.
     - هر خطای درگاه یا adapter payment در جریان را `failed` (`gateway_error`) می‌کند.
+  - callback و اعمال نتیجه (PAY-03):
+    - ترتیب lock: سبد کاربر سفارش → advisory → ردیف سفارش → ردیف payment → inventory → رزرو → redemption → خطوط سبد.
+    - mismatch فقط وقتی order payment را تغییر می‌دهد که آن payment تلاش زنده سفارش بوده باشد (`failed`)، یا سفارش لغو شده باشد (`refund_required`). FAILED بعد از paid نادیده گرفته و log می‌شود.
+    - بدنه callback قبل از خواندن محدود می‌شود (Content-Length، سپس stream تا ۸KB). بدنه نامعتبر ذخیره و شمرده نمی‌شود، فقط log می‌شود.
   - چرخه عمر ردیف payment: `failure_reason` فقط در failed/refund_required است (`failed → paid` آن را پاک می‌کند؛ سابقه در event و audit)؛ refund_required همیشه `paid_at` دارد؛ `paid_amount` مبلغ تأییدشده درگاه به تومان است. reconciliation رویداد `verify` می‌نویسد.
 - پیامدها: PAY-01..07، ADM (فیلتر `refund_required` و `failure_reason`)، HANDOFF-01 (redirect frontend).
 

@@ -14,10 +14,12 @@ from app.db.models import FakeGatewaySession
 from app.db.session import get_db_session
 from app.modules.auth.dependencies import get_current_user
 from app.modules.auth.service import CurrentUser
+from app.modules.payments.callback import CallbackService, read_body
 from app.modules.payments.gateways import get_payment_gateway
 from app.modules.payments.gateways.base import PaymentGateway
 from app.modules.payments.gateways.fake import FakeGateway
 from app.modules.payments.schemas import (
+    CallbackResponse,
     FakeCompleteRequest,
     FakeSessionResponse,
     InitPaymentRequest,
@@ -58,6 +60,30 @@ async def init_payment(
     return JSONResponse(
         status_code=started.status_code, content=started.body, headers=dict(NO_STORE)
     )
+
+
+@router.post(
+    "/callback",
+    response_model=CallbackResponse,
+    summary="The gateway's notice; verified with the gateway before anything changes",
+)
+async def payment_callback(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    gateway: Annotated[PaymentGateway, Depends(get_payment_gateway)],
+    settings: Annotated[Settings, Depends(get_app_settings)],
+) -> JSONResponse:
+    # Size-capped while it is read; its shape is the adapter's business.
+    payload = await read_body(request)
+    applied = await CallbackService(session, gateway, settings).handle(payload, request)
+    body = CallbackResponse(
+        outcome=applied.outcome.value,
+        order_number=applied.order_number,
+        order_status=applied.order_status,
+        order_payment_status=applied.order_payment_status,
+        payment_status=applied.payment_status,
+    )
+    return JSONResponse(content=body.model_dump(mode="json"), headers=dict(NO_STORE))
 
 
 def _fake(gateway: PaymentGateway) -> FakeGateway:

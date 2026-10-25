@@ -43,3 +43,13 @@ class FakeCompleteRequest(BaseModel):
 class FakeSessionResponse(BaseModel):
     reference: str
     status: str
+
+
+class CallbackResponse(BaseModel):
+    """The acknowledgement to the gateway; always 200 once processed (ADR-051)."""
+
+    outcome: str
+    order_number: str
+    order_status: str
+    order_payment_status: str
+    payment_status: str
