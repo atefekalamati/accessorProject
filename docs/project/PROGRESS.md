@@ -3,18 +3,16 @@
 **Last Updated:** 2026-10-18
 
 ## Current / Next
-- **Phase › Milestone:** 3 Purchase flow › M3.5 Payment
-- **Current Task:** دروازه فاز ۳. همه taskهای فاز ۳ COMPLETE هستند (آخرین: HANDOFF-01، 2026-10-25).
-- **Status:** فاز ۱ و ۲ در `master` merge شده‌اند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ کامل است و PR آن به `master` منتظر merge کاربر است.
+- **Phase › Milestone:** 4 Account & admin › M4.1 Customer account
+- **Current Task:** ACC-00 (بازنویسی بخش‌های قالبی «پروفایل» و «سفارش‌ها»؛ نیازمند تأیید کاربر).
+- **Status:** فازهای ۱ تا ۳ در `master` merge شده‌اند. فاز ۳: PR #6، merge `09da5ac`، git tag `phase-3`، image `ghcr.io/atefekalamati/accessorproject-api:phase-3` (هم‌digest با tag `<sha>`). فاز ۴ شروع شد.
 - **Progress:** 102/148 task COMPLETE · وزنی 66.3% (280.5h / 423h) · MVP 100%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** دروازه فاز ۳ (ADR-037). مراحل:
-  - CI PR، شامل smoke staging.
-  - merge توسط کاربر.
-  - تأیید image `phase-3` در GHCR و git tag `phase-3`.
-  - ساخت شاخه `feat/phase-4-account-admin` از `master`.
-  - سپس شروع فاز ۴ (ACC-00 / ADM-00). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
-- **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
+- **Next Action:** فاز ۴ با `/phase`.
+  - هر milestone با task `-00` شروع می‌شود (ACC-00، ADM-00، CNT-00). این taskها PRD را بازنویسی می‌کنند و قبل از پیاده‌سازی تأیید کاربر لازم دارند.
+  - دستور کاربر (2026-10-25): plan milestoneها برای تأیید متوقف نمی‌شود؛ فقط استثناهای استاندارد AUTOPILOT متوقف می‌شوند.
+  - taskهای وضعیت سفارش و بازپرداخت (ADM-02 و هر task `refund_required`) بازبین opus دارند. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
+- **Branch:** `feat/phase-4-account-admin` (از `master` در `09da5ac`). شاخه فاز ۳ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
@@ -28,7 +26,7 @@
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
-| 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
+| 4 Account & admin | IN_PROGRESS | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
@@ -231,6 +229,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-25 — دروازه فاز ۳ کامل
+- PR #6 توسط کاربر merge شد (`09da5ac`).
+- CD (run 40235262109) image را با tagهای `09da5ac…` و `phase-3` و digest یکسان `sha256:8211…fa71` در GHCR منتشر کرد.
+- git tag `phase-3` ساخته و push شد.
+- شاخه `feat/phase-4-account-admin` ساخته شد.
 ### 2026-10-25 — HANDOFF-01 COMPLETE؛ فاز ۳ کامل
 - PRD با کد هم‌خوان شد: ۵۲ اصلاح در ۱۲ بخش (ADR-052)، با تأیید کاربر.
 - `docs/api/openapi.json` و `docs/api/FRONTEND.md` اضافه شدند.
