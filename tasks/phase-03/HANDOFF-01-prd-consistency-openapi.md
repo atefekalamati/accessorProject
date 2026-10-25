@@ -1,6 +1,6 @@
 # HANDOFF-01 — PRD consistency review + OpenAPI export
 
-**Status:** IN_PROGRESS · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** PAY-06, all Phase 1–3 `-00` · **Level:** HIGH
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** PAY-06, all Phase 1–3 `-00` · **Level:** HIGH
 
 ## Objective
 مقایسه کامل PRD با API پیاده‌شده (endpointها، فیلدها، کدهای خطا و وضعیت‌ها). PRD فقط جایی اصلاح می‌شود که با ADR تأییدشده مغایرت دارد. `openapi.json` برای frontend export می‌شود و یادداشت‌های frontend نوشته می‌شوند. سپس دروازه فاز ۳ اجرا می‌شود.
@@ -25,8 +25,8 @@
 - [x] تأیید کاربر برای init دوباره محافظه‌کارانه (PENDING → 409) در ADR-052 ثبت شد.
 - [x] تأیید کاربر برای diffهای PRD و return-flow (2026-10-25).
 - [x] افزوده کاربر: production بدون `CORS_ORIGINS` صریح در startup شکست می‌خورد (`*` ممنوع، credentials روشن). تست در `tests/test_settings.py`.
-- [ ] کل suite در CI سبز.
-- [ ] دروازه فاز ۳ (PR، CI با smoke staging، merge توسط کاربر، tag و image `phase-3`).
+- [x] کل suite در CI سبز (run 40230753296: 2013 passed، smoke staging و secret-scan سبز).
+- دروازه فاز ۳ (PR، merge توسط کاربر، tag و image `phase-3`) بعد از این task در PROGRESS.md پیگیری می‌شود (ADR-037).
 
 ## Implementation Notes
 - `app/main.py` (CORS)، `app/modules/orders/router.py`، `scripts/export_openapi.py`، `tests/test_api_contract.py`، `tests/test_orders_create.py`.
@@ -56,3 +56,5 @@ python -m ruff check . ; python -m ruff format --check . ; python -m mypy app te
 - 2026-10-25: کاربر diffهای PRD و return-flow را تأیید کرد و قاعده CORS production را افزود.
   - نام setting همان `CORS_ORIGINS` موجود ماند؛ تغییر نام configهای موجود را می‌شکست.
   - COMPLETE فقط بعد از سبز شدن کل suite در CI.
+  - CI اول قرمز شد: تست‌های production در `test_media_processing.py` مقدار `CORS_ORIGINS` را از `.env` محلی می‌خواندند. اصلاح شد: تنظیمات صریح و `_env_file=None` (commit `1c5876d`).
+  - CI دوم سبز شد. COMPLETE.

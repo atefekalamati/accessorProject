@@ -4,32 +4,37 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.5 Payment
-- **Current Task:** HANDOFF-01 (آخرین task فاز ۳). PAY-01..06 COMPLETE؛ M3.5 فقط HANDOFF-01 را دارد.
-- **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 101/148 task COMPLETE · وزنی 65.6% (277.5h / 423h) · MVP 99.0%
+- **Current Task:** دروازه فاز ۳. همه taskهای فاز ۳ COMPLETE هستند (آخرین: HANDOFF-01، 2026-10-25).
+- **Status:** فاز ۱ و ۲ در `master` merge شده‌اند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ کامل است و PR آن به `master` منتظر merge کاربر است.
+- **Progress:** 102/148 task COMPLETE · وزنی 66.3% (280.5h / 423h) · MVP 100%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** HANDOFF-01 پیاده و بازبینی شد (ADR-052). منتظر تأیید کاربر برای diffهای PRD؛ سپس COMPLETE و دروازه فاز ۳ (PR، CI با smoke staging، merge توسط کاربر، tag و image `phase-3`). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
+- **Next Action:** دروازه فاز ۳ (ADR-037). مراحل:
+  - CI PR، شامل smoke staging.
+  - merge توسط کاربر.
+  - تأیید image `phase-3` در GHCR و git tag `phase-3`.
+  - ساخت شاخه `feat/phase-4-account-admin` از `master`.
+  - سپس شروع فاز ۴ (ACC-00 / ADM-00). یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**65.6%** = 277.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**66.3%** = 280.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 98.5h | 97.0% | 2027-01-23 |
+| 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 145.5h ≈ ۱۱ هفته. MVP باقی‌مانده: 3h ≈ ۱ هفته.
+- باقی‌مانده: 142.5h ≈ ۹٫۵ هفته. MVP کامل است.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -226,6 +231,13 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-25 — HANDOFF-01 COMPLETE؛ فاز ۳ کامل
+- PRD با کد هم‌خوان شد: ۵۲ اصلاح در ۱۲ بخش (ADR-052)، با تأیید کاربر.
+- `docs/api/openapi.json` و `docs/api/FRONTEND.md` اضافه شدند.
+- bug CORS رفع شد: `Idempotency-Key` مجاز و `Retry-After` قابل‌خواندن.
+- production بدون `CORS_ORIGINS` صریح بالا نمی‌آید (افزوده کاربر).
+- بازبینی opus: PASS WITH CHANGES و یافته‌ها اعمال شد.
+- CI: 2013 تست و smoke staging سبز.
 ### 2026-10-19 — PAY-06 COMPLETE (اجرای مشترک M3.5)
 - بازبینی opus: PASS WITH CHANGES و اعمال شد. smoke محلی و pytest 2005 سبز.
 ### 2026-10-19 — PAY-05 COMPLETE (اجرای مشترک M3.5)
