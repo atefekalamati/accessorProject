@@ -173,7 +173,7 @@
 | PAY-03 | Callback: verify, amount == grandTotal, idempotent, commit reservation | COMPLETE | HIGH | HIGH | 5 | PAY-02, INV-05 | duplicate callback changes nothing; success removes only ordered quantities from the cart (D34); late success → refund_required + audit + WARNING log (D32); branch on `CommitOutcome` (EXPIRED never marks paid, tested) |
 | PAY-04 | Failure/expiry: release reservation, allow retry | COMPLETE | HIGH | HIGH | 3 | PAY-03, INV-06 | failure keeps reservation + redemption for retry within TTL; expired reservation never consumed; `release()` after commit → 409 handled |
 | PAY-05 | Callback tests (duplicate, amount mismatch, expired) | COMPLETE | HIGH | HIGH | 3 | PAY-03, PAY-04 | abuse paths covered |
-| PAY-06 | End-to-end purchase test | NOT_STARTED | HIGH | HIGH | 4 | PAY-05 | cart → OTP → checkout → order → payment → stock committed |
+| PAY-06 | End-to-end purchase test | COMPLETE | HIGH | HIGH | 4 | PAY-05 | cart → OTP → checkout → order → payment → stock committed |
 | HANDOFF-01 | PRD consistency review + export openapi.json | NOT_STARTED | HIGH | HIGH | 3 | PAY-06, all Phase 1–3 `-00` | PRD matches implemented API; `openapi.json` exported for frontend; frontend note: refresh must be single-flight across tabs (ADR-017 reuse detection) |
 
 **Phase 3:** 101.5h · COMPLETE 48.5h
