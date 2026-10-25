@@ -23,6 +23,8 @@ from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
 from app.db.session import create_database_engine, create_session_factory
 from app.modules.inventory.jobs import run_sweeper
+from app.modules.payments.gateways import build_payment_gateway
+from app.modules.payments.jobs import reconcile_pending_payments, run_reconciler
 from app.modules.payments.router import fake_gateway_router
 from app.shared.database.router import dev_router, readiness_router
 from app.shared.health.router import router as health_router
@@ -47,6 +49,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         engine = create_database_engine(app_settings)
         app.state.db_engine = engine
         app.state.session_factory = create_session_factory(engine)
+        if app_settings.payment_reconcile_seconds > 0:
+            # Built at startup so production without a real gateway fails closed here.
+            try:
+                gateway = build_payment_gateway(app_settings, engine)
+            except Exception:
+                await engine.dispose()
+                raise
+            app.state.payment_gateway = gateway
         sweeper: asyncio.Task[None] | None = None
         if app_settings.reservation_sweep_seconds > 0:
             sweeper = asyncio.create_task(
@@ -54,13 +64,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 name="reservation-sweeper",
             )
         app.state.reservation_sweeper = sweeper
+        reconciler: asyncio.Task[None] | None = None
+        if app_settings.payment_reconcile_seconds > 0:
+            reconciler = asyncio.create_task(
+                run_reconciler(
+                    lambda purge: reconcile_pending_payments(
+                        engine, gateway, app_settings, purge=purge
+                    ),
+                    app_settings.payment_reconcile_seconds,
+                ),
+                name="payment-reconciler",
+            )
+        app.state.payment_reconciler = reconciler
         try:
             yield
         finally:
-            if sweeper is not None:
-                sweeper.cancel()
-                with suppress(asyncio.CancelledError):
-                    await sweeper
+            for task in (sweeper, reconciler):
+                if task is not None:
+                    task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await task
             await engine.dispose()
 
     application = FastAPI(

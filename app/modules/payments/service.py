@@ -49,10 +49,10 @@ from app.db.models import (
 from app.db.models.payments import PaymentEventKind
 from app.modules.orders.cancel import OrderCancellation
 from app.modules.payments.common import (
+    close_payment,
     lock_order_row,
     lock_payment,
     move_order_payment,
-    move_payment,
     pending_payment_of,
     record_event,
 )
@@ -302,16 +302,7 @@ class PaymentService:
     async def _close(
         self, payment: Payment, order: Order, reason: str, request: Request | None
     ) -> None:
-        """Close a locked pending payment as failed; the order may start a new one."""
-        await move_payment(self._session, payment, PaymentStatus.FAILED, reason=reason)
-        await move_order_payment(
-            self._session,
-            order,
-            PaymentStatus.FAILED,
-            actor_user_id=None,
-            reason=f"payment {reason}",
-            request=request,
-        )
+        await close_payment(self._session, payment, order, reason, request)
 
     # --- supersede an expired gateway session ----------------------------------------
 

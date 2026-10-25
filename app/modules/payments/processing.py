@@ -31,7 +31,7 @@ from typing import Final
 from uuid import UUID
 
 from fastapi import Request
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.time import utc_now
@@ -107,13 +107,18 @@ class PaymentProcessor:
         *,
         request: Request | None = None,
         try_locks: bool = False,
+        lock_timeout_ms: int | None = None,
     ) -> Applied:
         """Apply ``result`` in one transaction (opened here); see the module docstring.
 
-        With ``try_locks`` (reconciliation) a busy order is ``BusyError``; the caller sets
-        a ``lock_timeout`` so a busy cart or item fails fast too.
+        Reconciliation passes ``try_locks`` (a busy order is ``BusyError``) and a
+        ``lock_timeout_ms`` (a busy cart or item fails fast with 55P03).
         """
         async with self._session.begin():
+            if lock_timeout_ms is not None:
+                await self._session.execute(
+                    text(f"SET LOCAL lock_timeout = {int(lock_timeout_ms)}")
+                )
             payment = await self._session.get(Payment, payment_id)
             if payment is None:
                 raise LookupError(f"payment {payment_id} not found")

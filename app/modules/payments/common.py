@@ -131,6 +131,25 @@ async def move_order_payment(
     return True
 
 
+async def close_payment(
+    session: AsyncSession,
+    payment: Payment,
+    order: Order,
+    reason: str,
+    request: Request | None = None,
+) -> None:
+    """Close a locked pending payment as failed; the order may start a new one."""
+    await move_payment(session, payment, PaymentStatus.FAILED, reason=reason)
+    await move_order_payment(
+        session,
+        order,
+        PaymentStatus.FAILED,
+        actor_user_id=None,
+        reason=f"payment {reason}",
+        request=request,
+    )
+
+
 async def record_event(
     session: AsyncSession,
     *,

@@ -4,35 +4,36 @@
 
 ## Current / Next
 - **Phase › Milestone:** 3 Purchase flow › M3.5 Payment
-- **Current Task:** PAY-04 (اجرای مشترک PAY-01..06، [M3.5-PLAN.md](M3.5-PLAN.md)، ADR-051). PAY-01..03 COMPLETE.
+- **Current Task:** PAY-05 (اجرای مشترک PAY-01..06، [M3.5-PLAN.md](M3.5-PLAN.md)، ADR-051). PAY-01..04 COMPLETE.
 - **Status:** فاز ۱ و ۲ کامل و در `master` merge شدند (فاز ۲: PR #5، merge `e750ddf`، git tag `phase-2`، image `ghcr.io/atefekalamati/accessorproject-api:phase-2`). فاز ۳ شروع شد.
-- **Progress:** 98/148 task COMPLETE · وزنی 63.2% (267.5h / 423h) · MVP 95.4%
+- **Progress:** 99/148 task COMPLETE · وزنی 63.9% (270.5h / 423h) · MVP 96.5%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** M3.5: ادامه PAY-04..06 پشت هم (plan تأییدشده)، سپس HANDOFF-01. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند؛ `POST /orders` هنوز `allowed_query_params` را در سطح route دارد (query ناشناخته بدون token → 400 قبل از 401؛ اصلاح کوچک در HANDOFF-01).
+- **Next Action:** M3.5: ادامه PAY-05 و PAY-06 (plan تأییدشده)، سپس HANDOFF-01. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف (ADR-043)؛ بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند؛ `POST /orders` هنوز `allowed_query_params` را در سطح route دارد (query ناشناخته بدون token → 400 قبل از 401؛ اصلاح کوچک در HANDOFF-01).
 - **Branch:** `feat/phase-3-purchase-flow` (از `master` در `e750ddf`). شاخه فاز ۲ کاملاً merge شده است.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**63.2%** = 267.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**63.9%** = 270.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
 |---|---|---|---|---|---|
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
-| 3 Purchase flow | IN_PROGRESS | 101.5h | 88.5h | 87.2% | 2027-01-23 |
+| 3 Purchase flow | IN_PROGRESS | 101.5h | 91.5h | 90.1% | 2027-01-23 |
 | 4 Account & admin | NOT_STARTED | 61h | 0 | 0% | 2027-02-20 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 155.5h ≈ ۱۲ هفته. MVP باقی‌مانده: 13h ≈ ۴ هفته.
+- باقی‌مانده: 152.5h ≈ ۱۱ هفته. MVP باقی‌مانده: 10h ≈ ۳ هفته.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-10-19: PAY-04 (job تطبیق پرداخت‌های pending (callback گم‌شده، request_lost، abandoned) زیر advisory lock، purge رویدادها، lifespan با fail-closed در production).
 - 2026-10-19: PAY-03 (`POST /payments/callback`: verify سمت سرور، اعمال نتیجه در یک تراکنش با ترتیب ADR-048، refund_required برای mismatch، پرداخت دیرهنگام و پرداخت دوم).
 - 2026-10-19: PAY-02 (`POST /payments/init`: شروع، ادامه session معتبر، جایگزینی session منقضی، درگاه بی‌پاسخ، router فقط-dev درگاه fake).
 - 2026-10-19: PAY-01 (مدل payment، interface درگاه و fake با state در Postgres؛ migration `0024`؛ ADR-051).
@@ -223,6 +224,8 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-19 — PAY-04 COMPLETE (اجرای مشترک M3.5)
+- بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. pytest 1989 سبز.
 ### 2026-10-19 — PAY-03 COMPLETE (اجرای مشترک M3.5)
 - بازبینی diff با opus: PASS WITH CHANGES و اعمال شد. pytest 1974 سبز.
 ### 2026-10-19 — PAY-02 COMPLETE (اجرای مشترک M3.5)

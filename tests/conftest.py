@@ -107,6 +107,8 @@ def settings() -> Settings:
         media_allowed_hosts=["cdn.example.com"],
         # Tests sweep explicitly (tests/test_reservation_jobs.py).
         reservation_sweep_seconds=0,
+        # Tests reconcile explicitly (tests/test_payment_reconcile.py).
+        payment_reconcile_seconds=0,
     )
 
 

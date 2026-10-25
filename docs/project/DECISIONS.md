@@ -554,6 +554,12 @@
     - ترتیب lock: سبد کاربر سفارش → advisory → ردیف سفارش → ردیف payment → inventory → رزرو → redemption → خطوط سبد.
     - mismatch فقط وقتی order payment را تغییر می‌دهد که آن payment تلاش زنده سفارش بوده باشد (`failed`)، یا سفارش لغو شده باشد (`refund_required`). FAILED بعد از paid نادیده گرفته و log می‌شود.
     - بدنه callback قبل از خواندن محدود می‌شود (Content-Length، سپس stream تا ۸KB). بدنه نامعتبر ذخیره و شمرده نمی‌شود، فقط log می‌شود.
+  - reconciliation (PAY-04):
+    - با `PAYMENT_RECONCILE_SECONDS > 0` (پیش‌فرض 60)، gateway در startup ساخته می‌شود. نتیجه: **production بدون درگاه واقعی اصلاً بالا نمی‌آید** تا PAY-07 (fail-closed، ADR-049).
+    - هر payment pending قدیمی‌تر از stale verify می‌شود. ref NULL → `request_lost`. verify PENDING وقتی now ≥ `gateway_expires_at` + stale → `abandoned`، برای هر سفارشی، نه فقط سفارش لغوشده؛ امن است چون PAID دیرهنگام بعد از آن همچنان refund_required یا duplicate می‌شود.
+    - بعد از ۳ verify بی‌پاسخ پشت هم، دور متوقف می‌شود.
+    - purge رویدادها حداکثر ساعتی یک بار انجام می‌شود.
+    - `lock_user_cart` در apply ممکن است سبد خالی برای کاربر بسازد؛ مثل callback، بی‌خطر است.
   - چرخه عمر ردیف payment: `failure_reason` فقط در failed/refund_required است (`failed → paid` آن را پاک می‌کند؛ سابقه در event و audit)؛ refund_required همیشه `paid_at` دارد؛ `paid_amount` مبلغ تأییدشده درگاه به تومان است. reconciliation رویداد `verify` می‌نویسد.
 - پیامدها: PAY-01..07، ADM (فیلتر `refund_required` و `failure_reason`)، HANDOFF-01 (redirect frontend).
 
