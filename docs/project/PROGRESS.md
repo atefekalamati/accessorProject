@@ -4,12 +4,12 @@
 
 ## Current / Next
 - **Phase › Milestone:** 4 Account & admin › M4.1 Customer account
-- **Current Task:** ACC-00 (بازنویسی بخش‌های قالبی «پروفایل» و «سفارش‌ها»؛ نیازمند تأیید کاربر).
+- **Current Task:** batch 2: CAT-18 (نمونه رنگ و `is_new`؛ migration)، ACC-01، ACC-02. ACC-00، ADM-00 و CNT-00 COMPLETE (2026-10-26، ADR-053).
 - **Status:** فازهای ۱ تا ۳ در `master` merge شده‌اند. فاز ۳: PR #6، merge `09da5ac`، git tag `phase-3`، image `ghcr.io/atefekalamati/accessorproject-api:phase-3` (هم‌digest با tag `<sha>`). فاز ۴ شروع شد.
-- **Progress:** 102/148 task COMPLETE · وزنی 66.3% (280.5h / 423h) · MVP 100%
+- **Progress:** 105/151 task COMPLETE · وزنی 66.6% (288.5h / 433h) · MVP 100%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** فاز ۴ با `/phase`.
-  - هر milestone با task `-00` شروع می‌شود (ACC-00، ADM-00، CNT-00). این taskها PRD را بازنویسی می‌کنند و قبل از پیاده‌سازی تأیید کاربر لازم دارند.
+  - ترتیب: M4.1 (CAT-18، ACC-01، ACC-02) → M4.2 (ADM-01، ADM-03، ADM-06؛ ADM-02؛ ADM-08؛ ADM-04، ADM-05؛ ADM-07) → M4.3 (CNT-01..07).
   - دستور کاربر (2026-10-25): plan milestoneها برای تأیید متوقف نمی‌شود؛ فقط استثناهای استاندارد AUTOPILOT متوقف می‌شوند.
   - taskهای وضعیت سفارش و بازپرداخت (ADM-02 و هر task `refund_required`) بازبین opus دارند. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-4-account-admin` (از `master` در `09da5ac`). شاخه فاز ۳ کاملاً merge شده است.
@@ -18,7 +18,7 @@
 ---
 
 ## Overall Progress
-**66.3%** = 280.5h COMPLETE / 423h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**66.6%** = 288.5h COMPLETE / 433h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -26,13 +26,13 @@
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
-| 4 Account & admin | IN_PROGRESS | 61h | 0 | 0% | 2027-02-20 |
+| 4 Account & admin | IN_PROGRESS | 67h | 8h | 11.9% | 2027-02-24 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
-| 6 Post-core | NOT_STARTED | 38.5h | 0 | 0% | 2027-03-30 |
+| 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2027-04-13 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 142.5h ≈ ۹٫۵ هفته. MVP کامل است.
+- باقی‌مانده: 144.5h ≈ ۹٫۶ هفته. MVP کامل است.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -132,6 +132,13 @@
 ---
 
 ## Plan changes
+### 2026-10-26 — نیازمندی‌های فاز ۴ (تصمیم کاربر، ADR-053)
+- ACC-00، ADM-00 و CNT-00 تأیید و COMPLETE شدند (D35–D42).
+- task جدید ADM-08 (بازپرداخت دستی، HIGH، 3h، opus).
+- task جدید CAT-18 (نمونه رنگ hex با migration و `is_new`، طراحی storefront E، 3h، در اولین batch).
+- task جدید backlog ACC-05 (حذف حساب با ناشناس‌سازی، 4h، M6.6).
+- کل: 151 task، 433h؛ فاز ۴: 67h؛ فاز ۶: 42.5h.
+- در فاز ۴ plan milestone برای تأیید متوقف نمی‌شود. taskهای وضعیت سفارش و بازپرداخت (ADM-02، ADM-08) بازبین opus دارند.
 ### 2026-10-18 — اجرای بقیه فاز ۳ (تصمیم کاربر)
 - برای بقیه milestoneهای فاز ۳ plan milestone فرستاده نمی‌شود (نیازمندی‌ها در ADR-039 تأیید شده‌اند). توقف فقط برای planهای PAY-* و استثناهای استاندارد AUTOPILOT. بازبین‌های taskهای کد تخفیف (DSC-*) با model `opus` (پول).
 ### 2026-10-12 — نیازمندی‌های فاز ۳ (تصمیم کاربر)

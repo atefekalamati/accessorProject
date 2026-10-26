@@ -185,26 +185,28 @@
 ### M4.1 Customer account — PRD «پروفایل»، «سفارش‌ها» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| ACC-00 | Rewrite account requirements | NOT_STARTED | MEDIUM | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
+| ACC-00 | Rewrite account requirements | COMPLETE | MEDIUM | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
 | ACC-01 | Own orders list & detail | NOT_STARTED | HIGH | MEDIUM | 3 | ACC-00, ORD-05 | others' orders → 404 |
 | ACC-02 | Account ownership tests | NOT_STARTED | HIGH | MEDIUM | 2 | ACC-01 | IDOR covered |
+| CAT-18 | Color swatches (variant option hex, migration) + `is_new` in product summaries (D42) | NOT_STARTED | HIGH | MEDIUM | 3 | ACC-00 | lists and `/home` carry ≤5 swatches and `is_new`; admin sets hex; migration reviewed |
 
 ### M4.2 Admin panel — PRD «داشبورد»، «محصولات»، «مدیریت سفارش»، «مشتریان»، «گزارش‌ها»، «گزارش ممیزی» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| ADM-00 | Rewrite admin requirements | NOT_STARTED | MEDIUM | HIGH | 3 | — | PRD sections ✓ بازبینی‌شده + approved |
+| ADM-00 | Rewrite admin requirements | COMPLETE | MEDIUM | HIGH | 3 | — | PRD sections ✓ بازبینی‌شده + approved |
 | ADM-01 | Admin order list/detail/filter | NOT_STARTED | HIGH | MEDIUM | 4 | ADM-00, ORD-05 | paginated, permission-checked |
 | ADM-02 | Order status change + shipment tracking + AuditLog | NOT_STARTED | HIGH | HIGH | 4 | ADM-01 | valid transitions only; audited |
 | ADM-03 | Customer list/detail (admin, support) | NOT_STARTED | MEDIUM | MEDIUM | 3 | ADM-00 | no secrets exposed |
 | ADM-04 | Dashboard metrics | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-01 | metrics from backend |
 | ADM-05 | Sales reports | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-04 | integer Toman totals |
 | ADM-06 | Audit log viewer | NOT_STARTED | MEDIUM | MEDIUM | 3 | INF-05 | super_admin only |
-| ADM-07 | Role × endpoint matrix tests (5 roles) | NOT_STARTED | HIGH | MEDIUM | 4 | ADM-01…06 | every admin route checked |
+| ADM-08 | Manual refund record: `refund_required → refunded` (D35) | NOT_STARTED | HIGH | HIGH | 3 | ADM-01 | only from refund_required; idempotent; full refund; unique `refund_reference`; audited; opus review |
+| ADM-07 | Role × endpoint matrix tests (5 roles) | NOT_STARTED | HIGH | MEDIUM | 4 | ADM-01…06, ADM-08 | every admin route checked |
 
 ### M4.3 Content & home page — PRD «صفحه اصلی» ✓ + «محتوا و بنرها»، «درباره برند»، «تماس با ما»، «سؤالات متداول»، «قوانین و حریم خصوصی» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| CNT-00 | Rewrite content requirements | NOT_STARTED | MEDIUM | HIGH | 3 | — | PRD sections ✓ بازبینی‌شده + approved |
+| CNT-00 | Rewrite content requirements | COMPLETE | MEDIUM | HIGH | 3 | — | PRD sections ✓ بازبینی‌شده + approved |
 | CNT-01 | HomeSection/items + GET /home | NOT_STARTED | HIGH | MEDIUM | 5 | CAT-08 | only published, in-window content; SD rule (test) |
 | CNT-02 | Admin home sections CRUD (content_manager) | NOT_STARTED | MEDIUM | MEDIUM | 3 | CNT-01, AUTH-10 | ordering controllable; audited; SD rule (test) |
 | CNT-03 | Banner model + admin | NOT_STARTED | MEDIUM | MEDIUM | 3 | CNT-00, CAT-05 | schedule respected |
@@ -213,7 +215,7 @@
 | CNT-06 | Contact form / tickets | NOT_STARTED | LOW | MEDIUM | 4 | CNT-00 | rate-limited |
 | CNT-07 | Content tests | NOT_STARTED | MEDIUM | LOW | 2 | CNT-01…06 | public/admin split covered |
 
-**Phase 4:** 61h
+**Phase 4:** 67h
 
 ---
 
@@ -264,8 +266,9 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 | M6.4 Returns | ORD-08 | Returns (stock only after inspection) | NOT_STARTED | LOW | HIGH | 6 | ORD-07 |
 | M6.5 Notifications | CNT-08 | Rewrite «اعلان‌ها» requirements | NOT_STARTED | LOW | HIGH | 2 | — |
 | M6.5 Notifications | CNT-09 | Notifications implementation | NOT_STARTED | LOW | MEDIUM | 6 | CNT-08 |
+| M6.6 Account deletion | ACC-05 | Account deletion with anonymization (D37) | NOT_STARTED | LOW | HIGH | 4 | ACC-01 |
 
-**Phase 6:** 38.5h
+**Phase 6:** 42.5h
 
 ---
 
