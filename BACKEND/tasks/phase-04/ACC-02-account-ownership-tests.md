@@ -1,6 +1,6 @@
 # ACC-02 — Account ownership tests
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** ACC-01 · **Level:** MEDIUM
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** ACC-01 · **Level:** MEDIUM
 
 ## Objective
 تست IDOR برای همه endpointهای مالکیت‌دار مشتری.
@@ -9,8 +9,8 @@
 «سفارش‌ها» ✓، «آدرس» ✓، «سبد خرید» ✓.
 
 ## Acceptance Criteria
-- [ ] دو کاربر: سفارش، لغو، پرداخت، آدرس و خط سبد دیگری → 404 و بدون اثر جانبی.
-- [ ] فهرست‌ها هیچ ردیفی از کاربر دیگر ندارند.
+- [x] دو کاربر: سفارش، لغو، پرداخت، آدرس و خط سبد دیگری → 404 و بدون اثر جانبی.
+- [x] فهرست‌ها هیچ ردیفی از کاربر دیگر ندارند.
 
 ## Implementation Notes
 فقط `tests/test_account_ownership.py`.
@@ -22,4 +22,12 @@ python -m ruff check . ; python -m ruff format --check . ; python -m mypy app te
 ```
 
 ## Log
+- 2026-10-26: `tests/test_account_ownership.py` (batch 2).
+  - مهاجم روی همه این‌ها 404 می‌گیرد و snapshot قربانی بدون تغییر می‌ماند:
+    - جزئیات، لغو و init پرداخت سفارش
+    - GET، PATCH و DELETE آدرس
+    - PATCH و DELETE خط سبد
+    - checkout validate با آدرس قربانی
+  - فهرست‌های سفارش، آدرس و سبد ردیف قربانی را ندارند. مهمان هم به خط سبد مشتری دسترسی ندارد.
+  - هیچ IDOR پیدا نشد. pytest سبز. COMPLETE.
 
