@@ -2922,7 +2922,7 @@ Success:
 #### قوانین کسب‌وکار
 
 - فقط سفارش‌های خود کاربر؛ سفارش دیگران یا ناموجود → 404 (نه 403).
-- فهرست: صفحه‌بندی `page` و `limit` (حداکثر ۱۰۰)، مرتب `newest` (پیش‌فرض) یا `oldest`، فیلتر اختیاری `status`. هر ردیف: `id`، `order_number`، سه وضعیت، `grand_total`، `currency`، تعداد اقلام، تصویر اولین قلم (snapshot)، `created_at`.
+- فهرست: صفحه‌بندی `page` و `limit` (حداکثر ۱۰۰)، مرتب `newest` (پیش‌فرض) یا `oldest`، فیلتر اختیاری `status`. هر ردیف: `id`، `order_number`، سه وضعیت، `grand_total`، `currency`، تعداد اقلام، تصویر فعلی محصولِ اولین قلم (خطوط snapshot تصویر ندارند؛ محصول بی‌تصویر → null)، `created_at`.
 - جزئیات با `order_number`: همه فیلدهای پاسخ `POST /orders` (خطوط snapshot، آدرس، ارسال، تخفیف، اجزای مبلغ) به‌علاوه:
   - `payments`: هر Payment با `status`، `amount`، `created_at`، `paid_at` (بدون مرجع یا داده خام درگاه)
   - `history`: تاریخچه وضعیت (`field`، `old_status`، `new_status`، `created_at`؛ بدون actor)

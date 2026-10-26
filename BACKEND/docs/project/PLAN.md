@@ -186,7 +186,7 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | ACC-00 | Rewrite account requirements | COMPLETE | MEDIUM | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
-| ACC-01 | Own orders list & detail | NOT_STARTED | HIGH | MEDIUM | 3 | ACC-00, ORD-05 | others' orders → 404 |
+| ACC-01 | Own orders list & detail | COMPLETE | HIGH | MEDIUM | 3 | ACC-00, ORD-05 | others' orders → 404 |
 | ACC-02 | Account ownership tests | NOT_STARTED | HIGH | MEDIUM | 2 | ACC-01 | IDOR covered |
 | CAT-18 | Color swatches (variant option hex, migration) + `is_new` in product summaries (D42) | COMPLETE | HIGH | MEDIUM | 3 | ACC-00 | lists and `/home` carry ≤5 swatches and `is_new`; admin sets hex; migration reviewed |
 

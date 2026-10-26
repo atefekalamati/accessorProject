@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Final
+from typing import Any, Final, Protocol
 from uuid import UUID, uuid4
 
 from fastapi import Request
@@ -172,7 +172,9 @@ class OrderService:
                 },
                 request=request,
             )
-            body = _response(order, quote, items, reservation.expires_at).model_dump(mode="json")
+            body = order_response(order, quote.address, items, reservation.expires_at).model_dump(
+                mode="json"
+            )
             await idempotency.complete(
                 user_id=user_id,
                 scope=SCOPE,
@@ -365,61 +367,78 @@ def _replay(stored: StoredResponse) -> PlacedOrder:
     return PlacedOrder(status_code=stored.status_code, body=body, replayed=True)
 
 
-def _response(
-    order: Order, quote: Quote, items: list[OrderItem], expires_at: datetime
+class AddressFields(Protocol):
+    """The delivery address of a quote, or its snapshot on a placed order."""
+
+    recipient_name: str
+    phone: str
+    province: str
+    city: str
+    postal_code: str
+    address_line: str
+    plaque: str | None
+    unit: str | None
+
+
+def order_fields(
+    order: Order, address: AddressFields, items: list[OrderItem], expires_at: datetime
+) -> dict[str, Any]:
+    """The ``OrderResponse`` fields of an order (also the base of the account detail)."""
+    return {
+        "id": order.id,
+        "order_number": order.order_number,
+        "status": order.status,
+        "payment_status": order.payment_status,
+        "shipment_status": order.shipment_status,
+        "subtotal": order.subtotal,
+        "product_discount_total": order.product_discount_total,
+        "discount_code_amount": order.discount_code_amount,
+        "tax_amount": order.tax_amount,
+        "shipping_amount": order.shipping_amount,
+        "grand_total": order.grand_total,
+        "currency": order.currency,
+        "items": [
+            {
+                "position": item.position,
+                "product_id": item.product_id,
+                "variant_id": item.variant_id,
+                "product_title": item.product_title,
+                "sku": item.sku,
+                "variant_label": item.variant_label,
+                "quantity": item.quantity,
+                "unit_price": item.unit_price,
+                "unit_final_price": item.unit_final_price,
+                "subtotal": item.subtotal,
+                "discount_amount": item.discount_amount,
+                "tax_amount": item.tax_amount,
+                "final_line_total": item.final_line_total,
+            }
+            for item in items
+        ],
+        "address": {
+            "recipient_name": address.recipient_name,
+            "phone": address.phone,
+            "province": address.province,
+            "city": address.city,
+            "postal_code": address.postal_code,
+            "address_line": address.address_line,
+            "plaque": address.plaque,
+            "unit": address.unit,
+        },
+        "shipping": {
+            "method_id": order.shipping_method_id,
+            "title": order.shipping_method_title,
+            "amount": order.shipping_amount,
+        },
+        "discount": None
+        if order.discount_code is None
+        else {"code": order.discount_code, "amount": order.discount_code_amount},
+        "reservation_expires_at": expires_at,
+        "created_at": order.created_at,
+    }
+
+
+def order_response(
+    order: Order, address: AddressFields, items: list[OrderItem], expires_at: datetime
 ) -> OrderResponse:
-    address = quote.address
-    return OrderResponse.model_validate(
-        {
-            "id": order.id,
-            "order_number": order.order_number,
-            "status": order.status,
-            "payment_status": order.payment_status,
-            "shipment_status": order.shipment_status,
-            "subtotal": order.subtotal,
-            "product_discount_total": order.product_discount_total,
-            "discount_code_amount": order.discount_code_amount,
-            "tax_amount": order.tax_amount,
-            "shipping_amount": order.shipping_amount,
-            "grand_total": order.grand_total,
-            "currency": order.currency,
-            "items": [
-                {
-                    "position": item.position,
-                    "product_id": item.product_id,
-                    "variant_id": item.variant_id,
-                    "product_title": item.product_title,
-                    "sku": item.sku,
-                    "variant_label": item.variant_label,
-                    "quantity": item.quantity,
-                    "unit_price": item.unit_price,
-                    "unit_final_price": item.unit_final_price,
-                    "subtotal": item.subtotal,
-                    "discount_amount": item.discount_amount,
-                    "tax_amount": item.tax_amount,
-                    "final_line_total": item.final_line_total,
-                }
-                for item in items
-            ],
-            "address": {
-                "recipient_name": address.recipient_name,
-                "phone": address.phone,
-                "province": address.province,
-                "city": address.city,
-                "postal_code": address.postal_code,
-                "address_line": address.address_line,
-                "plaque": address.plaque,
-                "unit": address.unit,
-            },
-            "shipping": {
-                "method_id": order.shipping_method_id,
-                "title": order.shipping_method_title,
-                "amount": order.shipping_amount,
-            },
-            "discount": None
-            if order.discount_code is None
-            else {"code": order.discount_code, "amount": order.discount_code_amount},
-            "reservation_expires_at": expires_at,
-            "created_at": order.created_at,
-        }
-    )
+    return OrderResponse.model_validate(order_fields(order, address, items, expires_at))

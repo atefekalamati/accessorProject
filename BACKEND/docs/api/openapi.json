@@ -10207,6 +10207,182 @@
       }
     },
     "/api/v1/orders": {
+      "get": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "List your own orders, newest first (page/limit, status, sort)",
+        "operationId": "list_orders_api_v1_orders_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/OrderStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_OrderSummaryResponse_"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (see Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "orders"
@@ -10253,6 +10429,134 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (see Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{order_number}": {
+      "get": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "One of your orders with its payments, history and what you can do now",
+        "operationId": "get_order_api_v1_orders__order_number__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^ORD-[0-9]{4}-[0-9]{6,}$",
+              "title": "Order Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDetailResponse"
                 }
               }
             }
@@ -14040,6 +14344,177 @@
         ],
         "title": "OrderAddressResponse"
       },
+      "OrderDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "order_number": {
+            "type": "string",
+            "title": "Order Number"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "payment_status": {
+            "type": "string",
+            "title": "Payment Status"
+          },
+          "shipment_status": {
+            "type": "string",
+            "title": "Shipment Status"
+          },
+          "subtotal": {
+            "type": "integer",
+            "title": "Subtotal"
+          },
+          "product_discount_total": {
+            "type": "integer",
+            "title": "Product Discount Total"
+          },
+          "discount_code_amount": {
+            "type": "integer",
+            "title": "Discount Code Amount"
+          },
+          "tax_amount": {
+            "type": "integer",
+            "title": "Tax Amount"
+          },
+          "shipping_amount": {
+            "type": "integer",
+            "title": "Shipping Amount"
+          },
+          "grand_total": {
+            "type": "integer",
+            "title": "Grand Total"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLineResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "address": {
+            "$ref": "#/components/schemas/OrderAddressResponse"
+          },
+          "shipping": {
+            "$ref": "#/components/schemas/OrderShippingResponse"
+          },
+          "discount": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderDiscountResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reservation_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Reservation Expires At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "cancel_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Reason"
+          },
+          "payments": {
+            "items": {
+              "$ref": "#/components/schemas/OrderPaymentResponse"
+            },
+            "type": "array",
+            "title": "Payments"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/OrderHistoryResponse"
+            },
+            "type": "array",
+            "title": "History"
+          },
+          "shipment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderShipmentResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "payment_deadline": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Deadline"
+          },
+          "can_pay": {
+            "type": "boolean",
+            "title": "Can Pay"
+          },
+          "can_cancel": {
+            "type": "boolean",
+            "title": "Can Cancel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order_number",
+          "status",
+          "payment_status",
+          "shipment_status",
+          "subtotal",
+          "product_discount_total",
+          "discount_code_amount",
+          "tax_amount",
+          "shipping_amount",
+          "grand_total",
+          "currency",
+          "items",
+          "address",
+          "shipping",
+          "discount",
+          "reservation_expires_at",
+          "created_at",
+          "cancel_reason",
+          "payments",
+          "history",
+          "shipment",
+          "payment_deadline",
+          "can_pay",
+          "can_cancel"
+        ],
+        "title": "OrderDetailResponse",
+        "description": "The placed order plus its payments, history and what the customer can do now.\n\n``reservation_expires_at`` is the reservation's current end. A GET never writes, so an\nunpaid order past its deadline stays ``pending_payment`` (with ``can_pay`` and\n``can_cancel`` false) until the expiry job cancels it (ADR-050)."
+      },
       "OrderDiscountResponse": {
         "properties": {
           "code": {
@@ -14057,6 +14532,43 @@
           "amount"
         ],
         "title": "OrderDiscountResponse"
+      },
+      "OrderHistoryResponse": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "title": "Field"
+          },
+          "old_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Status"
+          },
+          "new_status": {
+            "type": "string",
+            "title": "New Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field",
+          "old_status",
+          "new_status",
+          "created_at"
+        ],
+        "title": "OrderHistoryResponse",
+        "description": "One status change; the actor is not shown to the customer."
       },
       "OrderLineResponse": {
         "properties": {
@@ -14132,6 +14644,50 @@
           "final_line_total"
         ],
         "title": "OrderLineResponse"
+      },
+      "OrderPaymentResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "paid_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "amount",
+          "created_at",
+          "paid_at"
+        ],
+        "title": "OrderPaymentResponse",
+        "description": "One payment attempt; no gateway reference or raw gateway data."
       },
       "OrderResponse": {
         "properties": {
@@ -14241,6 +14797,52 @@
         ],
         "title": "OrderResponse"
       },
+      "OrderShipmentResponse": {
+        "properties": {
+          "tracking_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tracking Code"
+          },
+          "shipped_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shipped At"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tracking_code",
+          "shipped_at",
+          "delivered_at"
+        ],
+        "title": "OrderShipmentResponse"
+      },
       "OrderShippingResponse": {
         "properties": {
           "method_id": {
@@ -14264,6 +14866,16 @@
           "amount"
         ],
         "title": "OrderShippingResponse"
+      },
+      "OrderStatus": {
+        "type": "string",
+        "enum": [
+          "pending_payment",
+          "confirmed",
+          "completed",
+          "cancelled"
+        ],
+        "title": "OrderStatus"
       },
       "OrderStatusResponse": {
         "properties": {
@@ -14317,6 +14929,73 @@
         ],
         "title": "OrderStatusResponse",
         "description": "The order's current statuses after a cancel (ORD-06); the full view is ACC-01."
+      },
+      "OrderSummaryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "order_number": {
+            "type": "string",
+            "title": "Order Number"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "payment_status": {
+            "type": "string",
+            "title": "Payment Status"
+          },
+          "shipment_status": {
+            "type": "string",
+            "title": "Shipment Status"
+          },
+          "grand_total": {
+            "type": "integer",
+            "title": "Grand Total"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "item_count": {
+            "type": "integer",
+            "title": "Item Count"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order_number",
+          "status",
+          "payment_status",
+          "shipment_status",
+          "grand_total",
+          "currency",
+          "item_count",
+          "image_url",
+          "created_at"
+        ],
+        "title": "OrderSummaryResponse"
       },
       "Page_AdminCategoryResponse_": {
         "properties": {
@@ -14569,6 +15248,42 @@
           "pages"
         ],
         "title": "Page[MovementRow]"
+      },
+      "Page_OrderSummaryResponse_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrderSummaryResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "pages": {
+            "type": "integer",
+            "title": "Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "limit",
+          "pages"
+        ],
+        "title": "Page[OrderSummaryResponse]"
       },
       "Page_PriceHistoryItem_": {
         "properties": {

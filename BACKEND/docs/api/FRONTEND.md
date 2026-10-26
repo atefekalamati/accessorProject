@@ -68,7 +68,7 @@
 - 409 `INSUFFICIENT_STOCK`، 422 `cart_empty`، `line_unavailable`، `shipping_method_unavailable`، `DISCOUNT_NOT_APPLICABLE`: کاربر را به سبد یا checkout برگردان.
 - 401 `MOBILE_NOT_VERIFIED`: ورود با OTP لازم است.
 - لغو: `POST /orders/{id}/cancel` فقط برای سفارش `pending_payment`. وقتی payment در جریان است (مشتری در درگاه است) → 409 `PAYMENT_IN_PROGRESS`. لغو تکراری 200 با وضعیت فعلی برمی‌گرداند.
-- `GET /orders` و `GET /orders/{order_number}` هنوز پیاده نشده‌اند (ACC-01، فاز ۴). تا آن زمان وضعیت را از پاسخ `POST /orders`، لغو و callback بخوان.
+- `GET /orders` (صفحه‌بندی، `status`، `sort=newest|oldest`) و `GET /orders/{order_number}` سفارش‌های خود کاربر را برمی‌گردانند (ACC-01). جزئیات `payments`، `history`، `payment_deadline`، `can_pay` و `can_cancel` دارد. دکمه‌های پرداخت و لغو را با `can_pay` و `can_cancel` نمایش بده. سفارش مهلت‌گذشته تا وقتی job آن را لغو کند `pending_payment` می‌ماند، ولی هر دو flag آن false است.
 
 ## ۶. Idempotency-Key
 - لازم برای `POST /orders` و `POST /payments/init`. نبود یا نامعتبر بودن آن → 400. مقدار: ۱ تا ۲۵۵ کاراکتر ASCII قابل چاپ بدون فاصله. `crypto.randomUUID()` کافی است.

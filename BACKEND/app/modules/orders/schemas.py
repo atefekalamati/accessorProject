@@ -93,3 +93,63 @@ class OrderStatusResponse(BaseModel):
     shipment_status: str
     cancel_reason: str | None
     updated_at: datetime
+
+
+# --- the customer's own orders (ACC-01, PRD «سفارش‌ها» ✓) --------------------------------
+
+
+class OrderSummaryResponse(BaseModel):
+    id: UUID
+    order_number: str
+    status: str
+    payment_status: str
+    shipment_status: str
+    grand_total: int
+    currency: str
+    item_count: int
+    # The first line's product image as it is now (lines snapshot no image).
+    image_url: str | None
+    created_at: datetime
+
+
+class OrderPaymentResponse(BaseModel):
+    """One payment attempt; no gateway reference or raw gateway data."""
+
+    id: UUID
+    status: str
+    amount: int
+    created_at: datetime
+    paid_at: datetime | None
+
+
+class OrderHistoryResponse(BaseModel):
+    """One status change; the actor is not shown to the customer."""
+
+    field: str
+    old_status: str | None
+    new_status: str
+    created_at: datetime
+
+
+class OrderShipmentResponse(BaseModel):
+    tracking_code: str | None
+    shipped_at: datetime | None
+    delivered_at: datetime | None
+
+
+class OrderDetailResponse(OrderResponse):
+    """The placed order plus its payments, history and what the customer can do now.
+
+    ``reservation_expires_at`` is the reservation's current end. A GET never writes, so an
+    unpaid order past its deadline stays ``pending_payment`` (with ``can_pay`` and
+    ``can_cancel`` false) until the expiry job cancels it (ADR-050).
+    """
+
+    cancel_reason: str | None
+    payments: list[OrderPaymentResponse]
+    history: list[OrderHistoryResponse]
+    # Set once the order ships (ADM-02).
+    shipment: OrderShipmentResponse | None
+    payment_deadline: datetime | None
+    can_pay: bool
+    can_cancel: bool
