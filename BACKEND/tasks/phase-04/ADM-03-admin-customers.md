@@ -1,6 +1,6 @@
 # ADM-03 — Customer list/detail (admin, support)
 
-**Status:** NOT_STARTED · **Priority:** MEDIUM · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** ADM-00 · **Level:** MEDIUM
+**Status:** COMPLETE · **Priority:** MEDIUM · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** ADM-00 · **Level:** MEDIUM
 
 ## Objective
 `GET /admin/customers` و `GET /admin/customers/{id}`.
@@ -9,9 +9,9 @@
 «مشتریان» ✓؛ D38 (ADR-053).
 
 ## Acceptance Criteria
-- [ ] فهرست: موبایل ماسک‌شده، `q`، `status`، صفحه‌بندی.
-- [ ] جزئیات: موبایل کامل، آدرس‌ها، تعداد و جمع فروش موفق، ۱۰ سفارش آخر؛ audit `customer.viewed` در هر مشاهده.
-- [ ] هیچ session، OTP یا token در پاسخ نیست (تست کلیدها)؛ مجوز `customers:read`.
+- [x] فهرست: موبایل ماسک‌شده، `q`، `status`، صفحه‌بندی.
+- [x] جزئیات: موبایل کامل، آدرس‌ها، تعداد و جمع فروش موفق، ۱۰ سفارش آخر؛ audit `customer.viewed` در هر مشاهده.
+- [x] هیچ session، OTP یا token در پاسخ نیست (تست کلیدها)؛ مجوز `customers:read`.
 
 ## Implementation Notes
 `app/modules/admin/`.
@@ -23,4 +23,9 @@ python -m ruff check . ; python -m ruff format --check . ; python -m mypy app te
 ```
 
 ## Log
+- 2026-10-26: پیاده‌سازی (batch 3).
+  - فهرست مشتریان (فقط نقش customer، حذف‌نشده) با موبایل ماسک‌شده.
+  - جزئیات با موبایل کامل، آدرس‌ها، تعداد سفارش، جمع فروش موفق و ۱۰ سفارش آخر.
+  - audit `customer.viewed` در همان تراکنش GET.
+  - مجوز `customers:read`. Level MEDIUM. COMPLETE.
 

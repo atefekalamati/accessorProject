@@ -196,7 +196,7 @@
 | ADM-00 | Rewrite admin requirements | COMPLETE | MEDIUM | HIGH | 3 | — | PRD sections ✓ بازبینی‌شده + approved |
 | ADM-01 | Admin order list/detail/filter | COMPLETE | HIGH | MEDIUM | 4 | ADM-00, ORD-05 | paginated, permission-checked |
 | ADM-02 | Order status change + shipment tracking + AuditLog | NOT_STARTED | HIGH | HIGH | 4 | ADM-01 | valid transitions only; audited |
-| ADM-03 | Customer list/detail (admin, support) | NOT_STARTED | MEDIUM | MEDIUM | 3 | ADM-00 | no secrets exposed |
+| ADM-03 | Customer list/detail (admin, support) | COMPLETE | MEDIUM | MEDIUM | 3 | ADM-00 | no secrets exposed |
 | ADM-04 | Dashboard metrics | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-01 | metrics from backend |
 | ADM-05 | Sales reports | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-04 | integer Toman totals |
 | ADM-06 | Audit log viewer | NOT_STARTED | MEDIUM | MEDIUM | 3 | INF-05 | super_admin only |
