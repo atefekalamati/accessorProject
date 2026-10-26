@@ -16,6 +16,8 @@
 
 ## ۳. ساختار repository
 
+monorepo (از 2026-10-26): ریشه git در `E:\BI\ATK` است. بک‌اند در `BACKEND/` و فرانت در `FRONTEND/` قرار دارد. CI در `.github/workflows/` ریشه است و همه stepهایش داخل `BACKEND/` اجرا می‌شوند. همه مسیرها و دستورهای این فایل نسبت به `BACKEND/` هستند. جلسه بک‌اند را از `BACKEND/` باز کن تا این فایل و `.claude/` بارگذاری شوند. به `FRONTEND/` دست نزن، مگر با درخواست صریح.
+
 ```
 app/core/            config (pydantic-settings)، errors، logging JSON، middleware request-id، time (UTC)
 app/db/              base (naming convention)، session، seed، models/

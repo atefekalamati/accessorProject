@@ -13,6 +13,12 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Monorepo: the backend lives in BACKEND/, the frontend in FRONTEND/. Every `run` step
+# works inside BACKEND/; paths given to actions (`with:`) stay relative to the repo root.
+defaults:
+  run:
+    working-directory: BACKEND
+
 jobs:
   secret-scan:
     runs-on: ubuntu-24.04
@@ -68,7 +74,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: requirements-dev.lock
+          cache-dependency-path: BACKEND/requirements-dev.lock
 
       # Hashed lock (SEC-06): a tampered or unpinned package fails the install.
       - name: Install dependencies
