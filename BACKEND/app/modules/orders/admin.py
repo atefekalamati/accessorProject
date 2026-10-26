@@ -85,6 +85,11 @@ def _payment(payment: Payment, order_number: str) -> AdminPaymentResponse:
         created_at=payment.created_at,
         paid_at=payment.paid_at,
         verified_at=payment.verified_at,
+        refund_reference=payment.refund_reference,
+        refund_amount=payment.refund_amount,
+        refund_amount_source=payment.refund_amount_source,
+        refunded_at=payment.refunded_at,
+        refunded_by=payment.refunded_by,
     )
 
 
@@ -103,6 +108,17 @@ def _shipment_snapshot(shipment: Shipment, status: str) -> dict[str, Any]:
         "shipped_at": shipment.shipped_at,
         "delivered_at": shipment.delivered_at,
     }
+
+
+async def admin_payment(session: AsyncSession, payment_id: UUID) -> AdminPaymentResponse:
+    row = (
+        await session.execute(
+            select(Payment, Order.order_number)
+            .join(Order, Order.id == Payment.order_id)
+            .where(Payment.id == payment_id)
+        )
+    ).one()
+    return _payment(row[0], row[1])
 
 
 class AdminOrderService:

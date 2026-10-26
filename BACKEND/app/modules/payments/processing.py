@@ -166,7 +166,13 @@ class PaymentProcessor:
         result: VerifyResult,
         request: Request | None,
     ) -> Outcome:
-        if payment.status in (PaymentStatus.PAID, PaymentStatus.REFUND_REQUIRED):
+        # Decided already: a late or repeated result never reopens a payment, and a
+        # refunded one (ADM-08) stays refunded.
+        if payment.status in (
+            PaymentStatus.PAID,
+            PaymentStatus.REFUND_REQUIRED,
+            PaymentStatus.REFUNDED,
+        ):
             return Outcome.ALREADY_PROCESSED
         if result.outcome is VerifyOutcome.PENDING:
             return Outcome.PENDING

@@ -53,6 +53,7 @@ PERMISSIONS: tuple[PermissionSeed, ...] = (
     PermissionSeed("shipping:manage", "Manage shipping methods and their costs"),
     PermissionSeed("orders:read", "View orders"),
     PermissionSeed("orders:update_status", "Change order and shipment status"),
+    PermissionSeed("payments:refund", "Record a manual refund of a payment (ADM-08)"),
     PermissionSeed("customers:read", "View customers"),
     PermissionSeed("content:manage", "Manage banners, sections and static content"),
     PermissionSeed("users:read", "View users"),

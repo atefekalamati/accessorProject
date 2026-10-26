@@ -61,8 +61,10 @@ class PaymentStatus(StrEnum):
     PENDING = "pending"
     PAID = "paid"
     FAILED = "failed"
-    # Paid after the reservation expired (D32): refunded by hand.
+    # The gateway took money the shop must give back (late, duplicate or wrong amount, D32).
     REFUND_REQUIRED = "refund_required"
+    # Given back by hand and recorded by staff (ADM-08, D35).
+    REFUNDED = "refunded"
 
 
 class ShipmentStatus(StrEnum):

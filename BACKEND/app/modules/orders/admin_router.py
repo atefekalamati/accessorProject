@@ -16,15 +16,22 @@ from app.db.models.orders import Order
 from app.db.session import get_db_session
 from app.modules.auth.dependencies import require_permission
 from app.modules.auth.service import CurrentUser
-from app.modules.orders.admin import AdminOrderService, OrderFilters, PaymentFilters
+from app.modules.orders.admin import (
+    AdminOrderService,
+    OrderFilters,
+    PaymentFilters,
+    admin_payment,
+)
 from app.modules.orders.admin_schemas import (
     AdminOrderDetailResponse,
     AdminOrderSummaryResponse,
     AdminPaymentResponse,
+    RecordRefundRequest,
     UpdateShipmentRequest,
 )
 from app.modules.orders.schemas import OrderStatusResponse
 from app.modules.orders.service import OrderService
+from app.modules.payments.refunds import RefundService
 from app.shared.idempotency import NO_STORE
 from app.shared.pagination import (
     Page,
@@ -186,3 +193,30 @@ async def list_payments(
     filters = PaymentFilters(status=status, failure_reason=failure_reason, created=created)
     page = await service.list_payments(filters, order_by, paging)
     return JSONResponse(content=page.model_dump(mode="json"), headers=dict(NO_STORE))
+
+
+@payments_router.post(
+    "/{payment_id}/refund",
+    response_model=AdminPaymentResponse,
+    summary="Record the full manual refund of a refund_required payment (idempotent)",
+)
+async def record_refund(
+    # Authorization first, then the path, query and body.
+    actor: Annotated[CurrentUser, Depends(require_permission("payments:refund"))],
+    _: Annotated[None, Depends(allowed_query_params())],
+    payment_id: UUID,
+    payload: RecordRefundRequest,
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> JSONResponse:
+    await RefundService(session).record(
+        actor.id,
+        payment_id,
+        reference=payload.refund_reference,
+        amount=payload.amount,
+        note=payload.note,
+        request=request,
+    )
+    async with session.begin():
+        refunded = await admin_payment(session, payment_id)
+    return JSONResponse(content=refunded.model_dump(mode="json"), headers=dict(NO_STORE))

@@ -30,6 +30,11 @@ TRANSITIONS: Final[Mapping[StatusField, Mapping[str, frozenset[str]]]] = Mapping
                 _P.PENDING: frozenset({_P.PAID, _P.FAILED, _P.REFUND_REQUIRED}),
                 # Retry, a late verify of the failed attempt, or a late success after cancel.
                 _P.FAILED: frozenset({_P.PENDING, _P.PAID, _P.REFUND_REQUIRED}),
+                # Staff recorded the manual refund (ADM-08, D35).
+                _P.REFUND_REQUIRED: frozenset({_P.REFUNDED}),
+                # Another attempt of the cancelled order paid late: money is owed again
+                # (D35; the refund_required guard below keeps it to cancelled orders).
+                _P.REFUNDED: frozenset({_P.REFUND_REQUIRED}),
             }
         ),
         StatusField.SHIPMENT: MappingProxyType(

@@ -49,6 +49,7 @@
 | D40 | قالب محتوای ایستا (Markdown بدون HTML خام) | CNT-00 | — | resolved (ADR-053) |
 | D41 | لینک بنر و سکشن فقط داخلی | CNT-00 | — | resolved (ADR-053) |
 | D42 | نمونه رنگ (hex) و `is_new` در خلاصه محصول | CAT-18 | — | resolved (ADR-053) |
+| D43 | مبلغ بازپرداخت نامعلوم و بازگشت بدهی بعد از بازپرداخت | ADM-08 | — | resolved (ADR-054) |
 
 ## ADR
 
@@ -613,6 +614,24 @@
   - داشبورد یک endpoint دارد (`reports:read`).
   - `GET /orders` چیزی نمی‌نویسد و `can_pay` و `can_cancel` را برمی‌گرداند (ADR-050).
 - پیامدها: ACC-01، ACC-02، ADM-01..08، CNT-01..07، CAT-18، ACC-05.
+
+### ADR-054 — ثبت بازپرداخت دستی: مبلغ و بازگشت بدهی (ADM-08؛ تصمیم کاربر)
+- تاریخ: 2026-10-26
+- زمینه: بازبینی plan ADM-08 (opus) دو مسئله پیدا کرد:
+  - سفارش `refunded` می‌توانست `refund_required` بعدی را پنهان کند.
+  - `paid_amount` گاهی NULL است (ریال بخش‌پذیر بر ۱۰ نیست).
+- تصمیم (کاربر):
+  1. اگر پرداخت دیگری از سفارش لغوشده `refunded` بعداً موفق شود، order payment به `refund_required` برمی‌گردد. انتقال جدید ADR-047: `refunded → refund_required`، با guard موجود «فقط سفارش cancelled». سفارش لغونشده تغییری نمی‌کند (تست).
+  2. وقتی `paid_amount` NULL است، ادمین مبلغ پرداخت‌شده را وارد می‌کند: عدد صحیح مثبت تومان و ≤ `grand_total` سفارش. با `refund_amount_source = admin_entered` در ردیف payment و audit ذخیره می‌شود. نبود مبلغ → 422 `amount_required`.
+- تصمیم‌های کم‌اثر (خودم؛ بازبینی opus):
+  - با `paid_amount` معلوم، ارسال `amount` → 422 `amount_not_allowed` (فقط بازپرداخت کامل). CHECK در DB: `gateway` ⇒ `refund_amount = paid_amount`.
+  - مبلغ بیش از جمع سفارش → 422 `amount_too_large`.
+  - order payment فقط وقتی `refunded` می‌شود که هیچ payment دیگری از همان سفارش `refund_required` نباشد.
+  - `refund_reference` با trim و بدون کاراکتر کنترلی ذخیره می‌شود و بین همه paymentها unique است (حساس به حروف). تکرار با همان reference → 200 بدون نوشتن؛ reference دیگر → 409.
+  - تابع جدا `RefundService`، چون `move_payment` برای `refunded` ممنوع است. `failure_reason` و `paid_amount` حفظ می‌شوند و actor ادمین است.
+  - downgrade migration `0027` با وجود ردیف refunded متوقف می‌شود.
+  - روی دیتابیس‌های موجود `python -m app.db.seed` برای `payments:refund` دوباره اجرا شود.
+- پیامدها: ADM-08، ADM-07 (ماتریس نقش)، ADM-04/05 (refunded فروش موفق نیست).
 
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).

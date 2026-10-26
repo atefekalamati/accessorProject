@@ -72,6 +72,9 @@ async def move_payment(
     ``reason`` is required for failed and refund_required; paid and refund_required
     record when the gateway took the money (``paid_at``) and how much (``paid_amount``).
     """
+    if new_status is PaymentStatus.REFUNDED:
+        # A refund keeps the reason and amount and has a staff actor (refunds.py).
+        raise ValueError("use RefundService to record a refund")
     old = payment.status
     if not can_move(old, new_status):
         raise RuntimeError(f"payment {payment.id}: {old} → {new_status} is not allowed")

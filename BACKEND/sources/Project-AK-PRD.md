@@ -2593,8 +2593,8 @@ Success:
 
 #### مدل داده و دیتابیس
 
-- Payment: id، orderId، gateway، gatewayReference (unique با gateway)، redirectUrl، gatewayExpiresAt، idempotencyKey، amount، paidAmount (مبلغ تأییدشده درگاه، تومان)، status (pending، paid، failed، refund_required)، failureReason (فقط در failed و refund_required: `gateway_error`، `request_lost`، `superseded`، `abandoned`، `amount_mismatch`، `duplicate_payment`، …)، rawEvent (redact‌شده)، createdAt، updatedAt، paidAt، verifiedAt
-  - انتقال‌های ردیف payment: `pending → paid | failed | refund_required` و `failed → paid | refund_required` (ADR-051).
+- Payment: id، orderId، gateway، gatewayReference (unique با gateway)، redirectUrl، gatewayExpiresAt، idempotencyKey، amount، paidAmount (مبلغ تأییدشده درگاه، تومان)، status (pending، paid، failed، refund_required، refunded)، failureReason (در failed، refund_required و refunded: `gateway_error`، `request_lost`، `superseded`، `abandoned`، `amount_mismatch`، `duplicate_payment`، …)، rawEvent (redact‌شده)، createdAt، updatedAt، paidAt، verifiedAt
+  - انتقال‌های ردیف payment: `pending → paid | failed | refund_required`، `failed → paid | refund_required` (ADR-051) و `refund_required → refunded` (ثبت بازپرداخت دستی، «مدیریت سفارش» ✓، ADR-054).
 - PaymentEvent: id، paymentId (nullable)، gateway، gatewayReference، kind (callback، verify؛ job تطبیق رویداد verify می‌نویسد)، ip، payload (redact‌شده)، createdAt
 
 #### دسترسی و امنیت
@@ -2632,7 +2632,7 @@ Success:
 - شماره سفارش قالب `ORD-YYYY-NNNNNN` دارد (شبیه موبایل نیست).
 - سه وضعیت مستقل:
   - order: `pending_payment → confirmed → completed`، و `pending_payment → cancelled`
-  - payment: `unpaid → pending`؛ `pending → paid | failed | refund_required`؛ `failed → pending | paid | refund_required` (ADR-047؛ `refund_required` طبق بخش «پرداخت»)
+  - payment: `unpaid → pending`؛ `pending → paid | failed | refund_required`؛ `failed → pending | paid | refund_required`؛ `refund_required → refunded`؛ `refunded → refund_required` فقط برای سفارش لغوشده (ADR-047، ADR-054؛ `refund_required` طبق بخش «پرداخت»)
   - shipment: `not_shipped → preparing → shipped → delivered`
   - انتقال نامعتبر → 422 `INVALID_STATE_TRANSITION`.
 - لغو توسط مشتری فقط در `pending_payment` و وقتی payment در جریان نیست (`unpaid` یا `failed`)؛ با payment `pending` (مشتری در درگاه است) → 409 `PAYMENT_IN_PROGRESS` (ADR-050). رزرو و redemption آزاد می‌شوند. لغو سفارش لغوشده 200 با وضعیت فعلی (idempotent). پاسخ: `id`، `order_number`، `status`، `payment_status`، `shipment_status`، `cancel_reason`، `updated_at`.
@@ -3986,9 +3986,13 @@ Success:
   - `PATCH /admin/orders/{id}/shipment`: `not_shipped → preparing → shipped → delivered`؛ `shipped` کد رهگیری (`tracking_code`) می‌خواهد؛ `delivered` سفارش را در همان تراکنش `completed` می‌کند.
   - `POST /admin/orders/{id}/cancel`: فقط سفارش پرداخت‌نشده (`pending_payment`، payment `unpaid` یا `failed`؛ با payment `pending` → 409 `PAYMENT_IN_PROGRESS`)؛ reason `admin`؛ رزرو و redemption آزاد می‌شوند. لغو سفارش پرداخت‌شده به مرجوعی (M6.4) موکول شد.
 - ثبت بازپرداخت دستی (D35): `POST /admin/payments/{id}/refund` با بدنه `refund_reference` (الزامی، unique) و `note` اختیاری:
-  - فقط از `refund_required` به `refunded`؛ فقط بازپرداخت کامل (مبلغ = `paid_amount`؛ بدنه مبلغ ندارد؛ بازپرداخت جزئی به بعد موکول شد).
+  - فقط از `refund_required` به `refunded`؛ فقط بازپرداخت کامل. بازپرداخت جزئی به بعد موکول شد.
+  - مبلغ (ADR-054):
+    - اگر درگاه مبلغ را تأیید کرده باشد، همان `paid_amount` بازپرداخت می‌شود (`amount_source = gateway`). ارسال `amount` → 422 `amount_not_allowed`.
+    - اگر `paid_amount` نامعلوم باشد (ریال بخش‌پذیر بر ۱۰ نیست)، `amount` اجباری است: عدد صحیح مثبت تومان و ≤ `grandTotal` سفارش (`amount_source = admin_entered`). نبود آن → 422 `amount_required`؛ بیشتر از جمع سفارش → 422 `amount_too_large`.
   - idempotent: همان payment با همان `refund_reference` دوباره → 200 با وضعیت فعلی بدون نوشتن؛ payment `refunded` با reference دیگر → 409 `CONFLICT`؛ reference تکراری روی payment دیگر → 409.
-  - order payment هم در همان تراکنش `refund_required → refunded` می‌شود (history)؛ audit `payment.refunded` (actor، مبلغ، reference).
+  - order payment در همان تراکنش `refund_required → refunded` می‌شود (history)، به شرطی که هیچ payment دیگری از همان سفارش هنوز `refund_required` نباشد. پرداخت تکراری روی سفارش paid فقط ردیف payment را عوض می‌کند. audit `payment.refunded` شامل actor، مبلغ، `amount_source`، reference و note است.
+  - اگر پرداخت دیگری از سفارش لغوشده `refunded` بعداً موفق شود، order payment به `refund_required` برمی‌گردد (ADR-054). این فقط برای سفارش لغوشده است؛ سفارش لغونشده هرگز `refunded` نمی‌شود.
 - Shipment: یک ردیف برای هر سفارش (روش و هزینه snapshot، `tracking_code`، `shipped_at`، `delivered_at`).
 - هر تغییر در AuditLog و OrderStatusHistory، با row lock سفارش (ترتیب ADR-048).
 - مجوزها: `orders:read` برای مشاهده (support، admin، super_admin)، `orders:update_status` برای ارسال و لغو، `payments:refund` (جدید؛ admin و super_admin) برای بازپرداخت.
@@ -3996,7 +4000,7 @@ Success:
 
 #### مدل داده و دیتابیس
 
-- Payment.status و Order.paymentStatus: افزودن `refunded` (فقط از `refund_required`). Payment: `refundReference` (unique)، `refundedAt`، `refundedBy`.
+- Payment.status و Order.paymentStatus: افزودن `refunded` (از `refund_required`؛ order payment `refunded → refund_required` فقط برای سفارش لغوشده). Payment: `refundReference` (unique)، `refundAmount`، `refundAmountSource` (`gateway`، `admin_entered`)، `refundedAt`، `refundedBy`. `failureReason` و `paidAmount` بعد از بازپرداخت می‌مانند.
 - Shipment: id، orderId (unique)، trackingCode، shippedAt، deliveredAt، createdAt، updatedAt.
 
 #### معیار پذیرش و تست

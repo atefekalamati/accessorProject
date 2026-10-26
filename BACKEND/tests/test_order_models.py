@@ -176,7 +176,7 @@ async def test_a_full_order_survives_later_catalog_changes(
     ("values", "constraint"),
     [
         ({"status": "shipped"}, "valid_status"),
-        ({"payment_status": "refunded"}, "valid_payment_status"),
+        ({"payment_status": "chargeback"}, "valid_payment_status"),
         ({"shipment_status": "lost"}, "valid_shipment_status"),
         ({"status": "cancelled"}, "cancelled_has_reason"),
         ({"cancel_reason": "customer"}, "cancelled_has_reason"),

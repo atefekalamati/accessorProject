@@ -36,9 +36,23 @@ MAX_REDIRECT_URL_LENGTH: Final = 2048
 GATEWAY_NAME_PATTERN: Final = r"^[a-z][a-z0-9_]*$"
 # Printable ASCII without spaces: refs come from the gateway (or a forged callback).
 GATEWAY_REFERENCE_PATTERN: Final = r"^[!-~]+$"
+# The bank or gateway reference of a manual refund (ADM-08): trimmed, no control chars.
+MAX_REFUND_REFERENCE_LENGTH: Final = 100
+# Explicit ranges (C0, DEL, C1, line/paragraph separators), the same as the API's, so
+# no input passes validation and then fails this CHECK (NUL cannot be stored at all).
+REFUND_REFERENCE_PATTERN: Final = r"^[^\x01-\x1f\x7f-\x9f\u2028\u2029]+$"
 # A payment row is never ``unpaid``: that is the order's status before any attempt.
 PAYMENT_ROW_STATUSES: Final = tuple(s for s in PaymentStatus if s is not PaymentStatus.UNPAID)
 _ROW_STATUSES_SQL: Final = ", ".join(f"'{status.value}'" for status in PAYMENT_ROW_STATUSES)
+
+
+class RefundAmountSource:
+    """Where a recorded refund amount came from (ADM-08, D35)."""
+
+    # The gateway confirmed what it took (``paid_amount``): the whole of it goes back.
+    GATEWAY: Final = "gateway"
+    # The gateway figure is unknown (not a whole toman): staff entered what they paid.
+    ADMIN_ENTERED: Final = "admin_entered"
 
 
 class PaymentEventKind:
@@ -70,17 +84,46 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         CheckConstraint("status <> 'paid' OR paid_at IS NOT NULL", name="paid_has_paid_at"),
         # A refund_required payment took money too (late, duplicate or wrong amount).
         CheckConstraint(
-            "paid_at IS NULL OR status IN ('paid', 'refund_required')", name="paid_at_when_paid"
+            "paid_at IS NULL OR status IN ('paid', 'refund_required', 'refunded')",
+            name="paid_at_when_paid",
         ),
         CheckConstraint(
-            "(status IN ('failed', 'refund_required')) = (failure_reason IS NOT NULL)",
+            # A refunded payment keeps why it had to be refunded.
+            "(status IN ('failed', 'refund_required', 'refunded')) = (failure_reason IS NOT NULL)",
             name="closed_has_reason",
         ),
         # Money was taken (late, duplicate or wrong amount): the refund needs its record.
         CheckConstraint(
-            "status <> 'refund_required' OR paid_at IS NOT NULL", name="refund_was_paid"
+            "status NOT IN ('refund_required', 'refunded') OR paid_at IS NOT NULL",
+            name="refund_was_paid",
         ),
         CheckConstraint("paid_amount IS NULL OR paid_amount >= 0", name="paid_amount_range"),
+        # The manual refund record (ADM-08): all of it exactly when refunded.
+        CheckConstraint(
+            "(status = 'refunded') = (refund_reference IS NOT NULL)"
+            " AND (refund_reference IS NULL) = (refund_amount IS NULL)"
+            " AND (refund_reference IS NULL) = (refund_amount_source IS NULL)"
+            " AND (refund_reference IS NULL) = (refunded_at IS NULL)"
+            " AND (refund_reference IS NULL) = (refunded_by IS NULL)",
+            name="refund_record_complete",
+        ),
+        CheckConstraint(
+            "refund_amount IS NULL OR refund_amount > 0", name="refund_amount_positive"
+        ),
+        CheckConstraint(
+            "refund_amount_source IS NULL OR refund_amount_source IN ('gateway', 'admin_entered')",
+            name="refund_amount_source_valid",
+        ),
+        # A gateway-sourced refund gives back exactly what the gateway confirmed.
+        CheckConstraint(
+            "refund_amount_source IS DISTINCT FROM 'gateway' OR refund_amount = paid_amount",
+            name="gateway_refund_is_paid_amount",
+        ),
+        CheckConstraint(
+            "refund_reference IS NULL OR (refund_reference = btrim(refund_reference)"
+            f" AND refund_reference ~ '{REFUND_REFERENCE_PATTERN}')",
+            name="refund_reference_format",
+        ),
         CheckConstraint(
             "(redirect_url IS NULL) = (gateway_reference IS NULL)", name="redirect_with_reference"
         ),
@@ -102,6 +145,13 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             postgresql_where=text("status = 'pending'"),
         ),
         Index("ix_payments_order_id", "order_id"),
+        # One bank reference records one refund (case-sensitive, as banks print it).
+        Index(
+            "uq_payments_refund_reference",
+            "refund_reference",
+            unique=True,
+            postgresql_where=text("refund_reference IS NOT NULL"),
+        ),
         Index(
             "ix_payments_pending_created_at",
             "created_at",
@@ -134,6 +184,14 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     raw_event: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # The manual refund (ADM-08, D35): bank reference, amount, its source, who and when.
+    refund_reference: Mapped[str | None] = mapped_column(String(MAX_REFUND_REFERENCE_LENGTH))
+    refund_amount: Mapped[int | None] = mapped_column(BigInteger)
+    refund_amount_source: Mapped[str | None] = mapped_column(String(16))
+    refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    refunded_by: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT")
+    )
 
 
 class PaymentEvent(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):

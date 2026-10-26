@@ -200,7 +200,7 @@
 | ADM-04 | Dashboard metrics | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-01 | metrics from backend |
 | ADM-05 | Sales reports | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-04 | integer Toman totals |
 | ADM-06 | Audit log viewer | COMPLETE | MEDIUM | MEDIUM | 3 | INF-05 | super_admin only |
-| ADM-08 | Manual refund record: `refund_required → refunded` (D35) | NOT_STARTED | HIGH | HIGH | 3 | ADM-01 | only from refund_required; idempotent; full refund; unique `refund_reference`; audited; opus review |
+| ADM-08 | Manual refund record: `refund_required → refunded` (D35) | COMPLETE | HIGH | HIGH | 3 | ADM-01 | only from refund_required; idempotent; full refund; unique `refund_reference`; audited; opus review |
 | ADM-07 | Role × endpoint matrix tests (5 roles) | NOT_STARTED | HIGH | MEDIUM | 4 | ADM-01…06, ADM-08 | every admin route checked |
 
 ### M4.3 Content & home page — PRD «صفحه اصلی» ✓ + «محتوا و بنرها»، «درباره برند»، «تماس با ما»، «سؤالات متداول»، «قوانین و حریم خصوصی» (قالبی)
