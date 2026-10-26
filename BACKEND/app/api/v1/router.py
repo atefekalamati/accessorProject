@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.modules.addresses.router import router as addresses_router
+from app.modules.admin.audit_logs import router as admin_audit_router
 from app.modules.admin.customers import router as admin_customers_router
 from app.modules.admin.router import router as admin_users_router
 from app.modules.auth.router import router as auth_router
@@ -32,6 +33,7 @@ api_router.include_router(auth_router)
 api_router.include_router(users_router)
 api_router.include_router(admin_users_router)
 api_router.include_router(admin_customers_router)
+api_router.include_router(admin_audit_router)
 api_router.include_router(categories_router)
 api_router.include_router(products_router)
 api_router.include_router(admin_categories_router)
