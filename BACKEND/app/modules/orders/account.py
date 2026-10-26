@@ -36,6 +36,7 @@ from app.modules.orders.schemas import (
     OrderSummaryResponse,
 )
 from app.modules.orders.service import order_fields
+from app.modules.orders.shipments import shipment_of
 from app.shared.pagination import Page, PageParams, paginate
 from app.shared.storage import FileStorage
 
@@ -149,6 +150,7 @@ class AccountOrderService:
                     .order_by(OrderStatusHistory.created_at, OrderStatusHistory.id)
                 )
             )
+            shipment = await shipment_of(self._session, order.id)
         if address is None or reservation is None:  # ORD-04 writes both with the order
             raise RuntimeError("order is missing its address or reservation snapshot")
         live = (
@@ -180,7 +182,7 @@ class AccountOrderService:
                     )
                     for row in history
                 ],
-                "shipment": None,
+                "shipment": shipment,
                 "payment_deadline": (
                     reservation.expires_at if order.status == OrderStatus.PENDING_PAYMENT else None
                 ),

@@ -7,27 +7,39 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
+from fastapi import Request
 from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import UnaryExpression
 
 from app.core.errors import NotFoundError
 from app.core.redaction import mask_phone
+from app.core.time import utc_now
 from app.db.models import (
     InventoryReservation,
     Order,
     OrderAddress,
     OrderItem,
+    OrderStatus,
     OrderStatusHistory,
     Payment,
+    Shipment,
+    ShipmentStatus,
+    StatusField,
 )
+from app.modules.auth.service import CurrentUser
 from app.modules.orders.admin_schemas import (
     AdminHistoryResponse,
     AdminOrderDetailResponse,
     AdminOrderSummaryResponse,
     AdminPaymentResponse,
+    UpdateShipmentRequest,
 )
+from app.modules.orders.cancel import lock_order, order_advisory_lock
 from app.modules.orders.service import order_fields
+from app.modules.orders.shipments import shipment_of
+from app.modules.orders.state_service import OrderStateService
+from app.shared.audit import record_audit
 from app.shared.pagination import Page, PageParams, escape_like, paginate
 from app.shared.search import TimeRange
 
@@ -74,6 +86,23 @@ def _payment(payment: Payment, order_number: str) -> AdminPaymentResponse:
         paid_at=payment.paid_at,
         verified_at=payment.verified_at,
     )
+
+
+# The only step into each status (ADR-047); the transition above already checked it.
+_PREVIOUS: dict[ShipmentStatus, ShipmentStatus] = {
+    ShipmentStatus.PREPARING: ShipmentStatus.NOT_SHIPPED,
+    ShipmentStatus.SHIPPED: ShipmentStatus.PREPARING,
+    ShipmentStatus.DELIVERED: ShipmentStatus.SHIPPED,
+}
+
+
+def _shipment_snapshot(shipment: Shipment, status: str) -> dict[str, Any]:
+    return {
+        "status": status,
+        "tracking_code": shipment.tracking_code,
+        "shipped_at": shipment.shipped_at,
+        "delivered_at": shipment.delivered_at,
+    }
 
 
 class AdminOrderService:
@@ -163,6 +192,7 @@ class AdminOrderService:
                     .order_by(OrderStatusHistory.created_at, OrderStatusHistory.id)
                 )
             )
+            shipment = await shipment_of(self._session, order.id)
         if address is None or expires_at is None:  # ORD-04 writes both with the order
             raise RuntimeError("order is missing its address or reservation snapshot")
         return AdminOrderDetailResponse.model_validate(
@@ -184,8 +214,78 @@ class AdminOrderService:
                     )
                     for row in history
                 ],
+                "shipment": shipment,
             }
         )
+
+    async def update_shipment(
+        self,
+        actor: CurrentUser,
+        order_id: UUID,
+        payload: UpdateShipmentRequest,
+        request: Request | None,
+    ) -> AdminOrderDetailResponse:
+        """Move the shipment one step (ADR-047); ``delivered`` also completes the order.
+
+        Lock order (ADR-048): the order's advisory lock, then its row. Cart, stock and
+        codes are not touched. An invalid or repeated move is 422 and changes nothing.
+        """
+        new_status = ShipmentStatus(payload.status)
+        async with self._session.begin():
+            if await self._session.scalar(select(Order.id).where(Order.id == order_id)) is None:
+                raise NotFoundError(message="Order not found")
+            await self._session.execute(order_advisory_lock(order_id))
+            if await lock_order(self._session, order_id) is None:
+                raise NotFoundError(message="Order not found")
+            states = OrderStateService(self._session)
+            await states.transition(
+                order_id,
+                StatusField.SHIPMENT,
+                new_status,
+                actor_user_id=actor.id,
+                request=request,
+            )
+            shipment = await self._session.scalar(
+                select(Shipment).where(Shipment.order_id == order_id).with_for_update()
+            )
+            if shipment is None:
+                # Preparing creates the row; a later step without one is a bug, not input.
+                if new_status is not ShipmentStatus.PREPARING:
+                    raise RuntimeError(f"order {order_id} has no shipment row")
+                shipment = Shipment(order_id=order_id)
+                self._session.add(shipment)
+                previous = ShipmentStatus.NOT_SHIPPED
+            else:
+                previous = _PREVIOUS[new_status]
+            before = _shipment_snapshot(shipment, previous)
+            # Taken after the locks, like every order write (ADR-048).
+            now = utc_now()
+            if new_status is ShipmentStatus.SHIPPED:
+                shipment.tracking_code = payload.tracking_code
+                shipment.shipped_at = now
+            elif new_status is ShipmentStatus.DELIVERED:
+                # Never before shipped_at, even with clock skew between instances.
+                shipment.delivered_at = max(now, shipment.shipped_at or now)
+                await states.transition(
+                    order_id,
+                    StatusField.ORDER,
+                    OrderStatus.COMPLETED,
+                    actor_user_id=actor.id,
+                    reason="delivered",
+                    request=request,
+                )
+            await self._session.flush()
+            await record_audit(
+                self._session,
+                actor_id=actor.id,
+                action="shipment.updated",
+                entity_type="order",
+                entity_id=order_id,
+                before=before,
+                after=_shipment_snapshot(shipment, new_status),
+                request=request,
+            )
+        return await self.detail(order_id)
 
     async def list_payments(
         self,

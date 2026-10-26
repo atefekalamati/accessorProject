@@ -42,6 +42,7 @@ from app.db.models.orders import (
     OrderStatus,
     OrderStatusHistory,
     PaymentStatus,
+    Shipment,
     ShipmentStatus,
     StatusField,
 )
@@ -98,6 +99,7 @@ __all__ = [
     "ReservationStatus",
     "Role",
     "RolePermission",
+    "Shipment",
     "ShipmentStatus",
     "ShippingMethod",
     "StatusField",

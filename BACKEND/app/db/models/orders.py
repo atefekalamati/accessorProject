@@ -377,3 +377,41 @@ class OrderStatusHistory(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         nullable=True,
     )
     reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
+# Carrier tracking codes are short; printable text, trimmed by the API.
+MAX_TRACKING_CODE_LENGTH: Final = 64
+
+
+class Shipment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """The delivery of one order (ADM-02, ADR-053): created when it starts preparing.
+
+    ``orders.shipment_status`` stays the source of the status; this row adds the carrier
+    tracking code and when the parcel was shipped and delivered.
+    """
+
+    __tablename__ = "shipments"
+    __table_args__ = (
+        CheckConstraint(
+            "tracking_code IS NULL"
+            " OR (tracking_code = btrim(tracking_code) AND tracking_code <> '')",
+            name="tracking_code_not_blank",
+        ),
+        CheckConstraint("shipped_at IS NULL OR tracking_code IS NOT NULL", name="shipped_has_code"),
+        CheckConstraint(
+            "delivered_at IS NULL OR (shipped_at IS NOT NULL AND delivered_at >= shipped_at)",
+            name="delivered_after_shipped",
+        ),
+    )
+
+    order_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True),
+        ForeignKey("orders.id", ondelete="RESTRICT"),
+        nullable=False,
+        unique=True,
+    )
+    tracking_code: Mapped[str | None] = mapped_column(
+        String(MAX_TRACKING_CODE_LENGTH), nullable=True
+    )
+    shipped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

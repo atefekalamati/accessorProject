@@ -35,6 +35,7 @@ from app.core.errors import (
 from app.core.phone import MOBILE_E164_PATTERN
 from app.core.time import utc_now
 from app.db.models import (
+    CancelReason,
     InventoryReservation,
     Order,
     OrderAddress,
@@ -186,19 +187,31 @@ class OrderService:
         return PlacedOrder(status_code=201, body=body, replayed=False)
 
     async def cancel(
-        self, user_id: UUID, order_id: UUID, request: Request | None = None
+        self,
+        user_id: UUID | None,
+        order_id: UUID,
+        request: Request | None = None,
+        *,
+        actor_id: UUID | None = None,
     ) -> OrderStatusResponse:
-        """Customer cancel (ORD-06, ADR-050): only the user's own ``pending_payment`` order.
+        """Cancel a ``pending_payment`` order (ORD-06, ADR-050; staff: ADM-02).
 
-        Idempotent: an order already cancelled (by the customer or by expiry) answers its
-        current state and changes nothing. A payment at the gateway (``pending``) is 409
-        ``PAYMENT_IN_PROGRESS``, so a customer cancel never ends in ``refund_required``.
+        ``user_id`` limits it to the customer's own order; None is a staff cancel by
+        ``actor_id`` (cancel reason ``admin``). Idempotent: an order already cancelled
+        answers its current state and changes nothing. A payment at the gateway
+        (``pending``) is 409 ``PAYMENT_IN_PROGRESS``, so a cancel never ends in
+        ``refund_required``; a paid order cannot be cancelled (422).
         """
+        staff = user_id is None
+        if staff == (actor_id is None):
+            raise ValueError("a staff cancel needs actor_id; a customer cancel must not pass it")
+        actor = actor_id if staff else user_id
         async with self._session.begin():
-            # Ownership before the advisory lock: no contention on other users' order keys.
-            owned = await self._session.scalar(
-                select(Order.id).where(Order.id == order_id, Order.user_id == user_id)
-            )
+            # Existence (and ownership) before the advisory lock: no contention on other keys.
+            criteria = [Order.id == order_id]
+            if user_id is not None:
+                criteria.append(Order.user_id == user_id)
+            owned = await self._session.scalar(select(Order.id).where(*criteria))
             if owned is None:
                 raise NotFoundError(message="Order not found")
             await self._session.execute(order_advisory_lock(order_id))
@@ -213,7 +226,12 @@ class OrderService:
                         code=ErrorCode.PAYMENT_IN_PROGRESS,
                         message="A payment for this order is in progress",
                     )
-                await cancellation.cancel_locked(order, actor_user_id=user_id, request=request)
+                await cancellation.cancel_locked(
+                    order,
+                    actor_user_id=actor,
+                    request=request,
+                    requested_reason=CancelReason.ADMIN if staff else CancelReason.CUSTOMER,
+                )
                 await self._session.flush()
                 await self._session.refresh(order)
             return OrderStatusResponse.model_validate(order, from_attributes=True)

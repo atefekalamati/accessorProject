@@ -52,6 +52,7 @@ from app.db.models import (
     ProductMedia,
     ProductStatus,
     ProductVariant,
+    Shipment,
     ShippingMethod,
     User,
     UserRole,
@@ -370,7 +371,7 @@ async def delete_orders(session: AsyncSession, order_ids: list[UUID]) -> None:
     await session.execute(
         delete(DiscountRedemption).where(DiscountRedemption.order_id.in_(order_ids))
     )
-    for model in (OrderStatusHistory, OrderItem, OrderPriceSnapshot, OrderAddress):
+    for model in (OrderStatusHistory, OrderItem, OrderPriceSnapshot, OrderAddress, Shipment):
         await session.execute(delete(model).where(model.order_id.in_(order_ids)))
     await session.execute(delete(Order).where(Order.id.in_(order_ids)))
 

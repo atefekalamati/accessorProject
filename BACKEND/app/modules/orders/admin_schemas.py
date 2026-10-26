@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Annotated, Literal, Self
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, StringConstraints, model_validator
 
-from app.modules.orders.schemas import OrderResponse
+from app.db.models.orders import MAX_TRACKING_CODE_LENGTH
+from app.modules.orders.schemas import OrderResponse, OrderShipmentResponse
 
 
 class AdminOrderSummaryResponse(BaseModel):
@@ -59,3 +61,31 @@ class AdminOrderDetailResponse(OrderResponse):
     updated_at: datetime
     payments: list[AdminPaymentResponse]
     history: list[AdminHistoryResponse]
+    shipment: OrderShipmentResponse | None
+
+
+TrackingCode = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        min_length=1,
+        max_length=MAX_TRACKING_CODE_LENGTH,
+        # Printable only: no control characters (a NUL would fail in PostgreSQL).
+        pattern=r"^[^\x00-\x1f\x7f]+$",
+    ),
+]
+
+
+class UpdateShipmentRequest(BaseModel):
+    """The next shipment status; ``shipped`` needs the carrier tracking code (ADM-02)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["preparing", "shipped", "delivered"]
+    tracking_code: TrackingCode | None = None
+
+    @model_validator(mode="after")
+    def check_tracking_code(self) -> Self:
+        if (self.status == "shipped") != (self.tracking_code is not None):
+            raise ValueError("tracking_code is required for, and only for, shipped")
+        return self

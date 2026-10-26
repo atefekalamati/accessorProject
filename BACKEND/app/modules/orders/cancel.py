@@ -50,6 +50,7 @@ from app.shared.audit import record_audit
 logger = logging.getLogger(__name__)
 
 CUSTOMER_REASON: Final = "cancelled by customer"
+ADMIN_REASON: Final = "cancelled by staff"
 EXPIRED_REASON: Final = "reservation expired"
 
 
@@ -96,18 +97,24 @@ class OrderCancellation:
         actor_user_id: UUID | None,
         request: Request | None = None,
         force_expired: bool = False,
+        requested_reason: CancelReason = CancelReason.CUSTOMER,
     ) -> Cancellation:
         """Cancel an order whose advisory lock and row the caller holds.
 
-        ``actor_user_id=None`` is the system (expiry job). ``force_expired`` cancels as an
+        ``actor_user_id=None`` is the system (expiry job); ``requested_reason`` says whether
+        the customer or staff (``admin``, ADM-02) asked. ``force_expired`` cancels as an
         expiry whatever the reservation shows (the job's orphan pass). The state is checked
         before any side effect, so a refused cancel changes nothing.
         """
         if not self._session.in_transaction():
             raise RuntimeError("OrderCancellation needs the caller's transaction")
         self.check(order)
-        expired = await self._free_stock(order.id, actor_user_id) or force_expired
-        cancel_reason = CancelReason.EXPIRED if expired else CancelReason.CUSTOMER
+        if requested_reason not in (CancelReason.CUSTOMER, CancelReason.ADMIN):
+            raise ValueError("requested_reason must be customer or admin; expiry is detected")
+        reason_text = ADMIN_REASON if requested_reason is CancelReason.ADMIN else CUSTOMER_REASON
+        expired = await self._free_stock(order.id, actor_user_id, reason_text) or force_expired
+        # An expiry wins over who asked: the stock was already free (ADR-050).
+        cancel_reason = CancelReason.EXPIRED if expired else requested_reason
         actor = None if expired else actor_user_id
         redemption = await RedemptionService(self._session).release(order.id)
         await OrderStateService(self._session).transition(
@@ -115,7 +122,7 @@ class OrderCancellation:
             StatusField.ORDER,
             OrderStatus.CANCELLED,
             actor_user_id=actor,
-            reason=EXPIRED_REASON if expired else CUSTOMER_REASON,
+            reason=EXPIRED_REASON if expired else reason_text,
             cancel_reason=cancel_reason,
             request=request,
         )
@@ -142,7 +149,7 @@ class OrderCancellation:
         )
         return Cancellation(order, cancel_reason, redemption)
 
-    async def _free_stock(self, order_id: UUID, actor_user_id: UUID | None) -> bool:
+    async def _free_stock(self, order_id: UUID, actor_user_id: UUID | None, reason: str) -> bool:
         """Release the order's active reservation; True if it had already expired."""
         reservation = await self._latest_reservation(order_id)
         if reservation is None:
@@ -158,7 +165,7 @@ class OrderCancellation:
             # already expired one is still released with the caller as actor (ADR-050); the
             # order is then cancelled as an expiry by the system.
             await ReservationService(self._session).release(
-                reservation.id, reason=CUSTOMER_REASON, actor_id=actor_user_id
+                reservation.id, reason=reason, actor_id=actor_user_id
             )
             await self._session.refresh(reservation)
         return _had_expired(reservation)

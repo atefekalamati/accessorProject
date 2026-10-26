@@ -6,7 +6,7 @@ import re
 from typing import Annotated, Any, Final
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import UnaryExpression
@@ -15,12 +15,16 @@ from app.db.models import OrderStatus, Payment, PaymentStatus, ShipmentStatus
 from app.db.models.orders import Order
 from app.db.session import get_db_session
 from app.modules.auth.dependencies import require_permission
+from app.modules.auth.service import CurrentUser
 from app.modules.orders.admin import AdminOrderService, OrderFilters, PaymentFilters
 from app.modules.orders.admin_schemas import (
     AdminOrderDetailResponse,
     AdminOrderSummaryResponse,
     AdminPaymentResponse,
+    UpdateShipmentRequest,
 )
+from app.modules.orders.schemas import OrderStatusResponse
+from app.modules.orders.service import OrderService
 from app.shared.idempotency import NO_STORE
 from app.shared.pagination import (
     Page,
@@ -123,6 +127,40 @@ async def get_order(
 ) -> JSONResponse:
     detail = await service.detail(order_id)
     return JSONResponse(content=detail.model_dump(mode="json"), headers=dict(NO_STORE))
+
+
+@orders_router.patch(
+    "/{order_id}/shipment",
+    response_model=AdminOrderDetailResponse,
+    summary="Move the shipment one step; shipped needs a tracking code, delivered completes",
+)
+async def update_shipment(
+    # Authorization first, then the path, query and body.
+    actor: Annotated[CurrentUser, Depends(require_permission("orders:update_status"))],
+    _: Annotated[None, Depends(allowed_query_params())],
+    order_id: UUID,
+    payload: UpdateShipmentRequest,
+    request: Request,
+    service: Annotated[AdminOrderService, Depends(get_admin_order_service)],
+) -> JSONResponse:
+    detail = await service.update_shipment(actor, order_id, payload, request)
+    return JSONResponse(content=detail.model_dump(mode="json"), headers=dict(NO_STORE))
+
+
+@orders_router.post(
+    "/{order_id}/cancel",
+    response_model=OrderStatusResponse,
+    summary="Cancel an unpaid order as staff: frees its stock and discount code use",
+)
+async def cancel_order(
+    actor: Annotated[CurrentUser, Depends(require_permission("orders:update_status"))],
+    _: Annotated[None, Depends(allowed_query_params())],
+    order_id: UUID,
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> JSONResponse:
+    cancelled = await OrderService(session).cancel(None, order_id, request, actor_id=actor.id)
+    return JSONResponse(content=cancelled.model_dump(mode="json"), headers=dict(NO_STORE))
 
 
 @payments_router.get(
