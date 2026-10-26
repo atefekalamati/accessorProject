@@ -13,6 +13,8 @@ from app.modules.checkout.router import router as checkout_router
 from app.modules.discounts.admin_router import router as admin_discounts_router
 from app.modules.inventory.admin_router import router as admin_inventory_router
 from app.modules.media.router import router as admin_media_router
+from app.modules.orders.admin_router import orders_router as admin_orders_router
+from app.modules.orders.admin_router import payments_router as admin_payments_router
 from app.modules.orders.router import router as orders_router
 from app.modules.payments.router import router as payments_router
 from app.modules.pricing.router import prices_router as admin_prices_router
@@ -43,4 +45,6 @@ api_router.include_router(shipping_router)
 api_router.include_router(admin_shipping_router)
 api_router.include_router(checkout_router)
 api_router.include_router(orders_router)
+api_router.include_router(admin_orders_router)
+api_router.include_router(admin_payments_router)
 api_router.include_router(payments_router)
