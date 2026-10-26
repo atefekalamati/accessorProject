@@ -16,7 +16,13 @@ from pydantic import (
     model_validator,
 )
 
-from app.db.models.catalog import SKU_PATTERN, SLUG_PATTERN, ProductStatus, VariantOptionKey
+from app.db.models.catalog import (
+    HEX_COLOR_PATTERN,
+    SKU_PATTERN,
+    SLUG_PATTERN,
+    ProductStatus,
+    VariantOptionKey,
+)
 from app.shared.money import MAX_PRICE_TOMAN
 
 MAX_PRODUCT_ATTRIBUTES: Final = 50
@@ -62,10 +68,15 @@ def _upper_sku(value: Any) -> Any:
     return value.strip().upper() if isinstance(value, str) else value
 
 
+def _upper_hex(value: Any) -> Any:
+    return value.strip().upper() if isinstance(value, str) else value
+
+
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 Slug = Annotated[str, StringConstraints(pattern=SLUG_PATTERN)]
 Description = Annotated[str, StringConstraints(max_length=10_000)]
 Sku = Annotated[str, BeforeValidator(_upper_sku), StringConstraints(pattern=SKU_PATTERN)]
+HexColor = Annotated[str, BeforeValidator(_upper_hex), StringConstraints(pattern=HEX_COLOR_PATTERN)]
 DisplayOrder = Annotated[int, Field(strict=True, ge=0, le=1_000_000)]
 Price = Annotated[int, Field(strict=True, ge=1, le=MAX_PRICE_TOMAN)]
 AttributeKey = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
@@ -158,8 +169,16 @@ class VariantOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     color: OptionValue | None = None
+    # The colour's swatch (#RRGGBB, any case; stored upper case); only with a colour (D42).
+    color_hex: HexColor | None = None
     size: OptionValue | None = None
     model: OptionValue | None = None
+
+    @model_validator(mode="after")
+    def check_color_hex(self) -> Self:
+        if self.color_hex is not None and self.color is None:
+            raise ValueError("color_hex requires color")
+        return self
 
     def as_dict(self) -> dict[str, str]:
         return {
@@ -288,6 +307,7 @@ class AdminVariantResponse(BaseModel):
     product_id: UUID
     sku: str
     options: dict[str, str]
+    color_hex: str | None
     display_order: int
     is_active: bool
     is_purchasable: bool

@@ -29,6 +29,8 @@ from app.shared.money import MAX_PRICE_TOMAN
 SLUG_PATTERN = "^[a-z0-9-]{3,120}$"
 # SKU (PRD «محصولات» ✓): stored normalized (trimmed, upper case); Latin letters, digits and '-'.
 SKU_PATTERN = "^[A-Z0-9-]{1,64}$"
+# Colour swatch (D42): stored normalized as #RRGGBB in upper case.
+HEX_COLOR_PATTERN = "^#[0-9A-F]{6}$"
 
 
 class VariantOptionKey(StrEnum):
@@ -253,6 +255,11 @@ class VariantOption(UUIDPrimaryKeyMixin, Base):
         UniqueConstraint("variant_id", "option_key"),
         CheckConstraint("option_key IN ('color', 'size', 'model')", name="valid_option_key"),
         CheckConstraint("length(trim(value)) > 0", name="value_not_blank"),
+        # A swatch colour, only on a colour option, stored as #RRGGBB (D42, CAT-18).
+        CheckConstraint(
+            f"hex IS NULL OR (option_key = 'color' AND hex ~ '{HEX_COLOR_PATTERN}')",
+            name="hex_only_on_color",
+        ),
         Index("ix_variant_options_option_key_value", "option_key", "value"),
     )
 
@@ -263,6 +270,7 @@ class VariantOption(UUIDPrimaryKeyMixin, Base):
     )
     option_key: Mapped[str] = mapped_column(String(20), nullable=False)
     value: Mapped[str] = mapped_column(String(50), nullable=False)
+    hex: Mapped[str | None] = mapped_column(String(7), nullable=True)
 
 
 class CategoryFilter(UUIDPrimaryKeyMixin, Base):

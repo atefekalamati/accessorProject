@@ -111,6 +111,8 @@ class Settings(BaseSettings):
     payment_event_retention_days: int = Field(default=90, ge=7, le=3650)
     # How long a fake gateway session accepts the customer.
     payment_fake_session_seconds: int = Field(default=900, ge=60, le=3600)
+    # Product cards show "new" for products created within this many days (D42).
+    product_new_days: int = Field(default=30, ge=1, le=365)
 
     @field_validator("database_url")
     @classmethod

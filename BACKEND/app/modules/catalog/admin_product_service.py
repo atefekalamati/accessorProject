@@ -142,9 +142,12 @@ def _product_snapshot(product: Product, attributes: Sequence[AttributeItem]) -> 
     return snapshot
 
 
-def _variant_snapshot(variant: ProductVariant, options: dict[str, str]) -> dict[str, Any]:
+def _variant_snapshot(
+    variant: ProductVariant, options: dict[str, str], color_hex: str | None
+) -> dict[str, Any]:
     snapshot = {field: getattr(variant, field) for field in _VARIANT_FIELDS}
     snapshot["options"] = dict(sorted(options.items()))
+    snapshot["color_hex"] = color_hex
     return snapshot
 
 
@@ -242,6 +245,7 @@ class AdminProductService:
         variants = await self._repository.variants_of(product.id)
         variant_ids = [variant.id for variant in variants]
         options = await self._repository.options_of(variant_ids)
+        hexes = await self._hexes_of(variant_ids)
         # Same stock view as the public pages: expired holds are free (ADR-036).
         levels = await self._repository.stock_levels_of(variant_ids, utc_now())
         media = await self._repository.media_of(product.id)
@@ -256,7 +260,9 @@ class AdminProductService:
             is_featured=product.is_featured,
             attributes=_attribute_items(attributes),
             variants=[
-                self._variant_response(variant, options[variant.id], levels[variant.id])
+                self._variant_response(
+                    variant, options[variant.id], hexes.get(variant.id), levels[variant.id]
+                )
                 for variant in variants
             ],
             media=[self._media_response(item, stored) for item, stored in media],
@@ -267,14 +273,23 @@ class AdminProductService:
             updated_at=product.updated_at,
         )
 
+    async def _hexes_of(self, variant_ids: list[UUID]) -> dict[UUID, str | None]:
+        colors = await self._repository.colors_of(variant_ids)
+        return {variant_id: hex_ for variant_id, (_value, hex_) in colors.items()}
+
     def _variant_response(
-        self, variant: ProductVariant, options: dict[str, str], level: StockLevel | None
+        self,
+        variant: ProductVariant,
+        options: dict[str, str],
+        color_hex: str | None,
+        level: StockLevel | None,
     ) -> AdminVariantResponse:
         return AdminVariantResponse(
             id=variant.id,
             product_id=variant.product_id,
             sku=variant.sku,
             options=options,
+            color_hex=color_hex,
             display_order=variant.display_order,
             is_active=variant.is_active,
             is_purchasable=variant.is_purchasable,
@@ -502,6 +517,7 @@ class AdminProductService:
         if payload.model_fields_set & PRICE_FIELDS and PRICING_PERMISSION not in actor.permissions:
             raise ForbiddenError(message="Setting a price requires pricing:update")
         options = payload.options.as_dict()
+        color_hex = payload.options.color_hex
         async with self._session.begin():
             product = await self._repository.lock(product_id)
             if product is None:
@@ -527,14 +543,14 @@ class AdminProductService:
             if variant.base_price is not None:
                 # The first price is a change from "no price" (PRD: every change in history).
                 await record_price_change(self._session, variant, before=None, actor_id=actor.id)
-            await self._repository.replace_options(variant.id, options)
+            await self._repository.replace_options(variant.id, options, color_hex=color_hex)
             await self._audit(
                 actor,
                 "product_variant.created",
                 "product_variant",
                 variant.id,
                 None,
-                _variant_snapshot(variant, options),
+                _variant_snapshot(variant, options, color_hex),
                 audit_request,
             )
             response = await self._variant_detail(variant)
@@ -551,6 +567,7 @@ class AdminProductService:
         async with self._session.begin():
             product, variant = await self._lock_variant(variant_id)
             current_options = (await self._repository.options_of([variant.id]))[variant.id]
+            current_hex = (await self._hexes_of([variant.id])).get(variant.id)
             fields = payload.model_fields_set
             changes = {
                 field: getattr(payload, field)
@@ -558,7 +575,9 @@ class AdminProductService:
                 if getattr(payload, field) != getattr(variant, field)
             }
             new_options = None if payload.options is None else payload.options.as_dict()
-            if new_options == current_options:
+            new_hex = None if payload.options is None else payload.options.color_hex
+            # Options are sent whole: the same values and swatch is no change.
+            if new_options == current_options and new_hex == current_hex:
                 new_options = None
             if not changes and new_options is None:
                 return await self._variant_detail(variant)
@@ -570,22 +589,27 @@ class AdminProductService:
                 changes["sku"], exclude_id=variant.id
             ):
                 raise _duplicate_sku()
-            if new_options is not None:
+            if new_options is not None and new_options != current_options:
                 await self._check_combination(product.id, new_options, exclude_id=variant.id)
 
-            before = _variant_snapshot(variant, current_options)
+            before = _variant_snapshot(variant, current_options, current_hex)
             for field, value in changes.items():
                 setattr(variant, field, value)
             await self._flush_variant()
             if new_options is not None:
-                await self._repository.replace_options(variant.id, new_options)
+                await self._repository.replace_options(variant.id, new_options, color_hex=new_hex)
+            after = (
+                _variant_snapshot(variant, current_options, current_hex)
+                if new_options is None
+                else _variant_snapshot(variant, new_options, new_hex)
+            )
             await self._audit(
                 actor,
                 "product_variant.updated",
                 "product_variant",
                 variant.id,
                 before,
-                _variant_snapshot(variant, current_options if new_options is None else new_options),
+                after,
                 audit_request,
             )
             response = await self._variant_detail(variant)
@@ -600,7 +624,8 @@ class AdminProductService:
             if variant.is_active:
                 await self._check_keeps_active_variant(product, variant)
             options = (await self._repository.options_of([variant.id]))[variant.id]
-            before = _variant_snapshot(variant, options)
+            color_hex = (await self._hexes_of([variant.id])).get(variant.id)
+            before = _variant_snapshot(variant, options, color_hex)
             variant.soft_delete()
             detached = await self._repository.detach_media(variant.id)
             before["media_ids"] = sorted(str(media_id) for media_id in detached)
@@ -648,8 +673,11 @@ class AdminProductService:
 
     async def _variant_detail(self, variant: ProductVariant) -> AdminVariantResponse:
         options = await self._repository.options_of([variant.id])
+        hexes = await self._hexes_of([variant.id])
         levels = await self._repository.stock_levels_of([variant.id], utc_now())
-        return self._variant_response(variant, options[variant.id], levels[variant.id])
+        return self._variant_response(
+            variant, options[variant.id], hexes.get(variant.id), levels[variant.id]
+        )
 
     # --- media -------------------------------------------------------------------------
 

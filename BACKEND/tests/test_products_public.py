@@ -55,6 +55,8 @@ async def test_published_product_contract(auth_client: AsyncClient, catalog: Cat
         "breadcrumb",
         "attributes",
         "options",
+        "color_swatches",
+        "is_new",
         "variants",
         "default_variant_id",
         "price_range",

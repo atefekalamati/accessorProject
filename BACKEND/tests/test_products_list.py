@@ -34,6 +34,8 @@ CARD_KEYS = {
     "price_range",
     "max_discount_percent",
     "availability",
+    "color_swatches",
+    "is_new",
     "quick_add_variant_id",
 }
 

@@ -33,6 +33,7 @@ from app.db.models import (
     Warehouse,
     WarehouseStatus,
 )
+from app.db.models.catalog import VariantOptionKey
 from app.db.models.common import not_deleted
 from app.modules.catalog.product_query import (
     ListingFilters,
@@ -288,13 +289,32 @@ class ProductRepository:
             options[variant_id][key] = value
         return options
 
-    async def replace_options(self, variant_id: UUID, options: dict[str, str]) -> None:
+    async def colors_of(self, variant_ids: Collection[UUID]) -> dict[UUID, tuple[str, str | None]]:
+        """Each variant's colour option and its swatch hex; variants without one are absent."""
+        if not variant_ids:
+            return {}
+        rows = await self._session.execute(
+            select(VariantOption.variant_id, VariantOption.value, VariantOption.hex).where(
+                VariantOption.variant_id.in_(variant_ids),
+                VariantOption.option_key == VariantOptionKey.COLOR.value,
+            )
+        )
+        return {variant_id: (value, hex_) for variant_id, value, hex_ in rows}
+
+    async def replace_options(
+        self, variant_id: UUID, options: dict[str, str], *, color_hex: str | None = None
+    ) -> None:
         await self._session.execute(
             delete(VariantOption).where(VariantOption.variant_id == variant_id)
         )
         await self._session.flush()
         self._session.add_all(
-            VariantOption(variant_id=variant_id, option_key=key, value=value)
+            VariantOption(
+                variant_id=variant_id,
+                option_key=key,
+                value=value,
+                hex=color_hex if key == VariantOptionKey.COLOR.value else None,
+            )
             for key, value in options.items()
         )
         await self._session.flush()

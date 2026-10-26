@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Final
 from uuid import UUID
 
@@ -27,6 +27,7 @@ from app.modules.catalog.product_repository import ProductRepository
 from app.modules.catalog.repository import CategoryRepository
 from app.modules.catalog.schemas import (
     BreadcrumbItem,
+    ColorSwatch,
     ProductAttributeOut,
     ProductAvailabilityResponse,
     ProductCard,
@@ -54,6 +55,8 @@ from app.shared.storage import FileStorage
 
 # Displayed prices never include tax; the display policy once tax is on is D11 (ADR-010).
 TAX_INCLUDED: Final = False
+# A product card shows at most this many colour swatches (D42).
+MAX_CARD_SWATCHES: Final = 5
 
 
 def _not_found() -> NotFoundError:
@@ -129,6 +132,25 @@ def _options(variants: list[tuple[ProductVariant, dict[str, str]]]) -> dict[str,
     return values
 
 
+def _swatches(
+    variants: list[ProductVariant],
+    colors: Mapping[UUID, tuple[str, str | None]],
+    limit: int | None = None,
+) -> list[ColorSwatch]:
+    """Distinct colours in variant order; the first variant's hex wins for a repeated colour."""
+    swatches: list[ColorSwatch] = []
+    seen: set[str] = set()
+    for variant in variants:
+        color = colors.get(variant.id)
+        if color is None or color[0] in seen:
+            continue
+        seen.add(color[0])
+        swatches.append(ColorSwatch(value=color[0], hex=color[1]))
+        if limit is not None and len(swatches) == limit:
+            break
+    return swatches
+
+
 class ProductService:
     def __init__(
         self,
@@ -136,11 +158,17 @@ class ProductService:
         repository: ProductRepository,
         categories: CategoryRepository,
         storage: FileStorage,
+        *,
+        new_days: int = 30,
     ) -> None:
         self._session = session
         self._repository = repository
         self._categories = categories
         self._storage = storage
+        self._new_days = new_days
+
+    def _is_new(self, product: Product, now: datetime) -> bool:
+        return product.created_at > now - timedelta(days=self._new_days)
 
     async def list_products(
         self,
@@ -173,11 +201,15 @@ class ProductService:
                 [variant.id for items in variants.values() for variant in items], now
             )
             images = await self._repository.main_image_keys(ids)
+            colors = await self._repository.colors_of(
+                [variant.id for items in variants.values() for variant in items]
+            )
 
         cards = [
             card
             for product in listed
-            if (card := self._card(product, variants[product.id], levels, images, now)) is not None
+            if (card := self._card(product, variants[product.id], levels, images, colors, now))
+            is not None
         ]
         return Page.build(cards, total=total, params=request.params)
 
@@ -282,6 +314,7 @@ class ProductService:
         variants: list[ProductVariant],
         levels: dict[UUID, StockLevel | None],
         images: dict[UUID, str],
+        colors: Mapping[UUID, tuple[str, str | None]],
         now: datetime,
     ) -> ProductCard | None:
         if not variants:  # its last variant went away between the two reads
@@ -305,6 +338,8 @@ class ProductService:
             availability=product_stock_status(
                 stock_status(levels[variant.id]) for variant in variants
             ),
+            color_swatches=_swatches(variants, colors, MAX_CARD_SWATCHES),
+            is_new=self._is_new(product, now),
             quick_add_variant_id=only.id if quick_add else None,
         )
 
@@ -321,11 +356,12 @@ class ProductService:
             variants = (await self._repository.public_variants_of([product.id]))[product.id]
             ids = [variant.id for variant in variants]
             options = await self._repository.options_of(ids)
+            colors = await self._repository.colors_of(ids)
             levels = await self._repository.stock_levels_of(ids, now)
             media = await self._repository.media_of(product.id)
 
         public_variants = [
-            self._variant(variant, options[variant.id], levels[variant.id], now)
+            self._variant(variant, options[variant.id], colors, levels[variant.id], now)
             for variant in variants
         ]
         purchasable = [variant for variant in public_variants if variant.purchasable]
@@ -344,6 +380,8 @@ class ProductService:
                 for item in attributes
             ],
             options=_options([(variant, options[variant.id]) for variant in variants]),
+            color_swatches=_swatches(variants, colors),
+            is_new=self._is_new(product, now),
             variants=public_variants,
             default_variant_id=None if default is None else default.id,
             price_range=PublicPriceRange(min=min(finals), max=max(finals)) if finals else None,
@@ -358,14 +396,17 @@ class ProductService:
         self,
         variant: ProductVariant,
         options: dict[str, str],
+        colors: Mapping[UUID, tuple[str, str | None]],
         level: StockLevel | None,
         now: datetime,
     ) -> PublicVariant:
         unit = _unit(variant, now)
+        color = colors.get(variant.id)
         return PublicVariant(
             id=variant.id,
             sku=variant.sku,
             options=options,
+            color_hex=None if color is None else color[1],
             price=_price_out(unit),
             availability=stock_status(level),
             purchasable=_purchasable(variant, unit, level),

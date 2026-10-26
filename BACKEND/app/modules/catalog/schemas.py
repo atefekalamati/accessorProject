@@ -83,10 +83,18 @@ class VariantPriceOut(BaseModel):
     discount_percent: int
 
 
+class ColorSwatch(BaseModel):
+    """A colour option and its swatch (#RRGGBB, or null when the admin set none; D42)."""
+
+    value: str
+    hex: str | None
+
+
 class PublicVariant(BaseModel):
     id: UUID
     sku: str
     options: dict[str, str]
+    color_hex: str | None
     price: VariantPriceOut
     availability: str
     purchasable: bool
@@ -118,6 +126,9 @@ class ProductDetailResponse(BaseModel):
     breadcrumb: list[BreadcrumbItem]
     attributes: list[ProductAttributeOut]
     options: dict[str, list[str]]
+    # Every distinct colour of the public variants, in variant order (D42).
+    color_swatches: list[ColorSwatch]
+    is_new: bool
     variants: list[PublicVariant]
     default_variant_id: UUID | None
     price_range: PublicPriceRange | None
@@ -143,6 +154,10 @@ class ProductCard(BaseModel):
     # Highest current discount among the variants (display only, floored).
     max_discount_percent: int
     availability: str
+    # Up to MAX_CARD_SWATCHES distinct colours of the public variants, in variant order.
+    color_swatches: list[ColorSwatch]
+    # Created within PRODUCT_NEW_DAYS days (D42).
+    is_new: bool
     # The only variant, when the product has exactly one and it can be bought now;
     # otherwise null and the client opens the product page to pick a variant.
     quick_add_variant_id: UUID | None

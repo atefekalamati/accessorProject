@@ -4,21 +4,25 @@
 
 ## Current / Next
 - **Phase › Milestone:** 4 Account & admin › M4.1 Customer account
-- **Current Task:** batch 2: CAT-18 (نمونه رنگ و `is_new`؛ migration)، ACC-01، ACC-02. ACC-00، ADM-00 و CNT-00 COMPLETE (2026-10-26، ADR-053).
+- **Current Task:** batch 2: ACC-01، ACC-02. CAT-18 COMPLETE. ACC-00، ADM-00 و CNT-00 COMPLETE (2026-10-26، ADR-053).
 - **Status:** فازهای ۱ تا ۳ در `master` merge شده‌اند. فاز ۳: PR #6، merge `09da5ac`، git tag `phase-3`، image `ghcr.io/atefekalamati/accessorproject-api:phase-3` (هم‌digest با tag `<sha>`). فاز ۴ شروع شد.
-- **Progress:** 105/151 task COMPLETE · وزنی 66.6% (288.5h / 433h) · MVP 100%
+- **Progress:** 106/151 task COMPLETE · وزنی 67.3% (291.5h / 433h) · MVP 100%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** فاز ۴ با `/phase`.
   - ترتیب: M4.1 (CAT-18، ACC-01، ACC-02) → M4.2 (ADM-01، ADM-03، ADM-06؛ ADM-02؛ ADM-08؛ ADM-04، ADM-05؛ ADM-07) → M4.3 (CNT-01..07).
   - دستور کاربر (2026-10-25): plan milestoneها برای تأیید متوقف نمی‌شود؛ فقط استثناهای استاندارد AUTOPILOT متوقف می‌شوند.
   - taskهای وضعیت سفارش و بازپرداخت (ADM-02 و هر task `refund_required`) بازبین opus دارند. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-4-account-admin` (از `master` در `09da5ac`). شاخه فاز ۳ کاملاً merge شده است.
+- **Repo layout:** monorepo از 2026-10-26 (commit `ebcfbd5`).
+  - بک‌اند در `BACKEND/` و فرانت در `FRONTEND/` است. CI در `.github/` ریشه است و داخل `BACKEND/` اجرا می‌شود.
+  - جلسه بک‌اند از `BACKEND/` باز شود.
+  - فایل‌های طراحی و HANDOFF کاربر در ریشه commit نمی‌شوند.
 - **Stale branch:** `backend` (local و `origin/backend`، commit `48f1542`) قدیمی است و کاملاً در `master` merge شده (commit اضافه‌ای ندارد). طبق دستور کاربر دست‌نخورده می‌ماند و روی آن کار نمی‌کنیم.
 
 ---
 
 ## Overall Progress
-**66.6%** = 288.5h COMPLETE / 433h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**67.3%** = 291.5h COMPLETE / 433h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -26,13 +30,13 @@
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
-| 4 Account & admin | IN_PROGRESS | 67h | 8h | 11.9% | 2027-02-24 |
+| 4 Account & admin | IN_PROGRESS | 67h | 11h | 16.4% | 2027-02-24 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2027-04-13 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 144.5h ≈ ۹٫۶ هفته. MVP کامل است.
+- باقی‌مانده: 141.5h ≈ ۹٫۴ هفته. MVP کامل است.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -236,6 +240,11 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-10-26 — CAT-18 COMPLETE؛ monorepo
+- نمونه رنگ hex (migration `0025`) و `is_new` در کارت و جزئیات محصول (D42).
+- کاربر پروژه را به `BACKEND/` منتقل کرد. `.github` به ریشه رفت و `defaults.run.working-directory: BACKEND` شد. CI سبز شد (`ebcfbd5`).
+- `name: atk` در compose ثابت شد تا volume `atk_postgres_data` حفظ شود.
+- pytest 2026 سبز.
 ### 2026-10-25 — دروازه فاز ۳ کامل
 - PR #6 توسط کاربر merge شد (`09da5ac`).
 - CD (run 40235262109) image را با tagهای `09da5ac…` و `phase-3` و digest یکسان `sha256:8211…fa71` در GHCR منتشر کرد.

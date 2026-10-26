@@ -494,6 +494,7 @@ class Catalog:
         *,
         options: dict[str, str] | None = None,
         stock: tuple[int, int, int] | None = None,
+        color_hex: str | None = None,
         **fields: Any,
     ) -> ProductVariant:
         values: dict[str, Any] = {"base_price": 100_000, "is_active": True} | fields
@@ -504,7 +505,12 @@ class Catalog:
             session.add(variant)
             await session.flush()
             session.add_all(
-                VariantOption(variant_id=variant.id, option_key=key, value=value)
+                VariantOption(
+                    variant_id=variant.id,
+                    option_key=key,
+                    value=value,
+                    hex=color_hex if key == "color" else None,
+                )
                 for key, value in (options or {}).items()
             )
             if stock is not None:

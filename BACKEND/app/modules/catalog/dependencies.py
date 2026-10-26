@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import Settings, get_app_settings
 from app.db.session import get_db_session
 from app.modules.catalog.admin_product_service import AdminProductService
 from app.modules.catalog.admin_service import AdminCategoryService
@@ -39,5 +40,12 @@ def get_admin_product_service(
 def get_product_service(
     session: Annotated[AsyncSession, Depends(get_db_session)],
     storage: Annotated[FileStorage, Depends(get_file_storage)],
+    settings: Annotated[Settings, Depends(get_app_settings)],
 ) -> ProductService:
-    return ProductService(session, ProductRepository(session), CategoryRepository(session), storage)
+    return ProductService(
+        session,
+        ProductRepository(session),
+        CategoryRepository(session),
+        storage,
+        new_days=settings.product_new_days,
+    )

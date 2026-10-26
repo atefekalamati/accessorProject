@@ -11870,6 +11870,17 @@
             "type": "object",
             "title": "Options"
           },
+          "color_hex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color Hex"
+          },
           "display_order": {
             "type": "integer",
             "title": "Display Order"
@@ -11956,6 +11967,7 @@
           "product_id",
           "sku",
           "options",
+          "color_hex",
           "display_order",
           "is_active",
           "is_purchasable",
@@ -12777,6 +12789,32 @@
         ],
         "title": "CheckoutRequest",
         "description": "Only ids: every amount comes from the server (CLAUDE.md §8)."
+      },
+      "ColorSwatch": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "hex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hex"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "hex"
+        ],
+        "title": "ColorSwatch",
+        "description": "A colour option and its swatch (#RRGGBB, or null when the admin set none; D42)."
       },
       "CreateAddressRequest": {
         "properties": {
@@ -15008,6 +15046,17 @@
             "type": "string",
             "title": "Availability"
           },
+          "color_swatches": {
+            "items": {
+              "$ref": "#/components/schemas/ColorSwatch"
+            },
+            "type": "array",
+            "title": "Color Swatches"
+          },
+          "is_new": {
+            "type": "boolean",
+            "title": "Is New"
+          },
           "quick_add_variant_id": {
             "anyOf": [
               {
@@ -15032,6 +15081,8 @@
           "price_range",
           "max_discount_percent",
           "availability",
+          "color_swatches",
+          "is_new",
           "quick_add_variant_id"
         ],
         "title": "ProductCard",
@@ -15099,6 +15150,17 @@
             "type": "object",
             "title": "Options"
           },
+          "color_swatches": {
+            "items": {
+              "$ref": "#/components/schemas/ColorSwatch"
+            },
+            "type": "array",
+            "title": "Color Swatches"
+          },
+          "is_new": {
+            "type": "boolean",
+            "title": "Is New"
+          },
           "variants": {
             "items": {
               "$ref": "#/components/schemas/PublicVariant"
@@ -15154,6 +15216,8 @@
           "breadcrumb",
           "attributes",
           "options",
+          "color_swatches",
+          "is_new",
           "variants",
           "default_variant_id",
           "price_range",
@@ -15461,6 +15525,17 @@
             "type": "object",
             "title": "Options"
           },
+          "color_hex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color Hex"
+          },
           "price": {
             "$ref": "#/components/schemas/VariantPriceOut"
           },
@@ -15478,6 +15553,7 @@
           "id",
           "sku",
           "options",
+          "color_hex",
           "price",
           "availability",
           "purchasable"
@@ -16927,6 +17003,17 @@
               }
             ],
             "title": "Color"
+          },
+          "color_hex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color Hex"
           },
           "size": {
             "anyOf": [
