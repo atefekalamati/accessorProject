@@ -2260,6 +2260,122 @@
         }
       }
     },
+    "/api/v1/admin/dashboard": {
+      "get": {
+        "tags": [
+          "admin-reports"
+        ],
+        "summary": "Sales for today, 7 and 30 Tehran days, plus the open work queues and stock alerts",
+        "operationId": "get_dashboard_api_v1_admin_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (see Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/categories": {
       "get": {
         "tags": [
@@ -15977,6 +16093,108 @@
           "created_at"
         ],
         "title": "CustomerOrderResponse"
+      },
+      "DashboardPeriodResponse": {
+        "properties": {
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Starts At"
+          },
+          "sales_count": {
+            "type": "integer",
+            "title": "Sales Count"
+          },
+          "sales_amount": {
+            "type": "integer",
+            "title": "Sales Amount"
+          },
+          "average_order_amount": {
+            "type": "integer",
+            "title": "Average Order Amount"
+          },
+          "new_customers": {
+            "type": "integer",
+            "title": "New Customers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "starts_at",
+          "sales_count",
+          "sales_amount",
+          "average_order_amount",
+          "new_customers"
+        ],
+        "title": "DashboardPeriodResponse"
+      },
+      "DashboardPeriodsResponse": {
+        "properties": {
+          "today": {
+            "$ref": "#/components/schemas/DashboardPeriodResponse"
+          },
+          "last_7_days": {
+            "$ref": "#/components/schemas/DashboardPeriodResponse"
+          },
+          "last_30_days": {
+            "$ref": "#/components/schemas/DashboardPeriodResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "today",
+          "last_7_days",
+          "last_30_days"
+        ],
+        "title": "DashboardPeriodsResponse"
+      },
+      "DashboardResponse": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "periods": {
+            "$ref": "#/components/schemas/DashboardPeriodsResponse"
+          },
+          "pending_payment_orders": {
+            "type": "integer",
+            "title": "Pending Payment Orders"
+          },
+          "refund_required_payments": {
+            "type": "integer",
+            "title": "Refund Required Payments"
+          },
+          "orders_to_ship": {
+            "type": "integer",
+            "title": "Orders To Ship"
+          },
+          "low_stock_variants": {
+            "type": "integer",
+            "title": "Low Stock Variants"
+          },
+          "out_of_stock_variants": {
+            "type": "integer",
+            "title": "Out Of Stock Variants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated_at",
+          "timezone",
+          "periods",
+          "pending_payment_orders",
+          "refund_required_payments",
+          "orders_to_ship",
+          "low_stock_variants",
+          "out_of_stock_variants"
+        ],
+        "title": "DashboardResponse"
       },
       "DatabaseReadinessResponse": {
         "properties": {

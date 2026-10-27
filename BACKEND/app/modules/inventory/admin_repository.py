@@ -71,7 +71,7 @@ class InventoryFilters:
     stock_status: StockStatus | None = None
 
 
-def _stock(now: datetime) -> tuple[Any, StockColumns]:
+def stock_columns(now: datetime) -> tuple[Any, StockColumns]:
     held = func.greatest(
         InventoryItem.reserved_quantity - expired_hold_sum(InventoryItem.id, now), 0
     )
@@ -93,7 +93,7 @@ class AdminInventoryRepository:
         self._session = session
 
     def _rows(self, now: datetime) -> tuple[Any, StockColumns]:
-        items, stock = _stock(now)
+        items, stock = stock_columns(now)
         statement = (
             select(
                 ProductVariant.id.label("variant_id"),
