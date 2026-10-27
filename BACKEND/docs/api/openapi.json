@@ -2376,6 +2376,441 @@
         ]
       }
     },
+    "/api/v1/admin/reports/sales": {
+      "get": {
+        "tags": [
+          "admin-reports"
+        ],
+        "summary": "Successful sales per Tehran day, Saturday week or Jalali month, with totals",
+        "operationId": "sales_report_api_v1_admin_reports_sales_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          },
+          {
+            "name": "group_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GroupBy",
+              "default": "day"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesReportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (see Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reports/products": {
+      "get": {
+        "tags": [
+          "admin-reports"
+        ],
+        "summary": "Units and line totals sold per product, largest amount first",
+        "operationId": "products_report_api_v1_admin_reports_products_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineSalesReportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (see Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reports/categories": {
+      "get": {
+        "tags": [
+          "admin-reports"
+        ],
+        "summary": "Units and line totals sold per product category, largest amount first",
+        "operationId": "categories_report_api_v1_admin_reports_categories_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineSalesReportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (see Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/categories": {
       "get": {
         "tags": [
@@ -16563,6 +16998,15 @@
         ],
         "title": "FilterValue"
       },
+      "GroupBy": {
+        "type": "string",
+        "enum": [
+          "day",
+          "week",
+          "month"
+        ],
+        "title": "GroupBy"
+      },
       "HealthResponse": {
         "properties": {
           "status": {
@@ -16693,6 +17137,90 @@
           "final"
         ],
         "title": "LinePrice"
+      },
+      "LineSalesReportResponse": {
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date",
+            "title": "From"
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "title": "To"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LineSalesResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/LineTotalsResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "timezone",
+          "items",
+          "totals"
+        ],
+        "title": "LineSalesReportResponse"
+      },
+      "LineSalesResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "units_sold": {
+            "type": "integer",
+            "title": "Units Sold"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "units_sold",
+          "amount"
+        ],
+        "title": "LineSalesResponse"
+      },
+      "LineTotalsResponse": {
+        "properties": {
+          "units_sold": {
+            "type": "integer",
+            "title": "Units Sold"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "units_sold",
+          "amount"
+        ],
+        "title": "LineTotalsResponse"
       },
       "MediaResponse": {
         "properties": {
@@ -19361,6 +19889,156 @@
           "nearest"
         ],
         "title": "RoundingMode"
+      },
+      "SalesBucketResponse": {
+        "properties": {
+          "order_count": {
+            "type": "integer",
+            "title": "Order Count"
+          },
+          "subtotal": {
+            "type": "integer",
+            "title": "Subtotal"
+          },
+          "product_discount_total": {
+            "type": "integer",
+            "title": "Product Discount Total"
+          },
+          "discount_code_amount": {
+            "type": "integer",
+            "title": "Discount Code Amount"
+          },
+          "tax_amount": {
+            "type": "integer",
+            "title": "Tax Amount"
+          },
+          "shipping_amount": {
+            "type": "integer",
+            "title": "Shipping Amount"
+          },
+          "grand_total": {
+            "type": "integer",
+            "title": "Grand Total"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "starts_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Starts On"
+          },
+          "ends_before": {
+            "type": "string",
+            "format": "date",
+            "title": "Ends Before"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_count",
+          "subtotal",
+          "product_discount_total",
+          "discount_code_amount",
+          "tax_amount",
+          "shipping_amount",
+          "grand_total",
+          "label",
+          "starts_on",
+          "ends_before"
+        ],
+        "title": "SalesBucketResponse"
+      },
+      "SalesFigures": {
+        "properties": {
+          "order_count": {
+            "type": "integer",
+            "title": "Order Count"
+          },
+          "subtotal": {
+            "type": "integer",
+            "title": "Subtotal"
+          },
+          "product_discount_total": {
+            "type": "integer",
+            "title": "Product Discount Total"
+          },
+          "discount_code_amount": {
+            "type": "integer",
+            "title": "Discount Code Amount"
+          },
+          "tax_amount": {
+            "type": "integer",
+            "title": "Tax Amount"
+          },
+          "shipping_amount": {
+            "type": "integer",
+            "title": "Shipping Amount"
+          },
+          "grand_total": {
+            "type": "integer",
+            "title": "Grand Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_count",
+          "subtotal",
+          "product_discount_total",
+          "discount_code_amount",
+          "tax_amount",
+          "shipping_amount",
+          "grand_total"
+        ],
+        "title": "SalesFigures"
+      },
+      "SalesReportResponse": {
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date",
+            "title": "From"
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "title": "To"
+          },
+          "group_by": {
+            "type": "string",
+            "title": "Group By"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "calendar": {
+            "type": "string",
+            "title": "Calendar"
+          },
+          "buckets": {
+            "items": {
+              "$ref": "#/components/schemas/SalesBucketResponse"
+            },
+            "type": "array",
+            "title": "Buckets"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/SalesFigures"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "group_by",
+          "timezone",
+          "calendar",
+          "buckets",
+          "totals"
+        ],
+        "title": "SalesReportResponse"
       },
       "ShipmentStatus": {
         "type": "string",

@@ -7,15 +7,30 @@ by the successful payment's ``paid_at`` (D39, ADR-055).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import Any
+from uuid import UUID
 
-from sqlalchemy import ColumnElement, Subquery, and_, exists, func, select
+from sqlalchemy import (
+    ColumnElement,
+    Date,
+    DateTime,
+    Subquery,
+    and_,
+    cast,
+    exists,
+    func,
+    literal,
+    select,
+)
+from sqlalchemy.dialects.postgresql import aggregate_order_by
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import (
+    Category,
     InventoryReservation,
     Order,
+    OrderItem,
     OrderStatus,
     Payment,
     PaymentStatus,
@@ -32,23 +47,31 @@ from app.modules.auth.service import CUSTOMER_ROLE
 from app.modules.inventory.admin_repository import stock_columns
 from app.modules.inventory.stock import StockStatus
 from app.modules.orders.sales import successful_order
-from app.modules.reports.periods import DAYS_BEFORE_TODAY, DashboardPeriod, day_start
+from app.modules.reports.periods import (
+    DAYS_BEFORE_TODAY,
+    DashboardPeriod,
+    day_start,
+    from_local_time,
+    local_time,
+)
 
 
-def paid_at_by_order(since: ColumnElement[datetime]) -> Subquery:
+def paid_at_by_order(
+    since: ColumnElement[datetime], until: ColumnElement[datetime] | None = None
+) -> Subquery:
     """``(order_id, paid_at)``: the first successful payment, one row per order.
 
     An order may have several ``paid`` rows; the earliest dates it. ``since`` goes in HAVING,
-    not WHERE, so a later duplicate payment never re-dates an older order.
+    not WHERE, so a later duplicate payment never re-dates an older order. ``until``
+    (exclusive) is safe in WHERE: a payment after it never changes an earlier minimum.
     """
     first_paid = func.min(Payment.paid_at)
-    return (
-        select(Payment.order_id.label("order_id"), first_paid.label("paid_at"))
-        .where(Payment.status == PaymentStatus.PAID)
-        .group_by(Payment.order_id)
-        .having(first_paid >= since)
-        .subquery("paid")
+    statement = select(Payment.order_id.label("order_id"), first_paid.label("paid_at")).where(
+        Payment.status == PaymentStatus.PAID
     )
+    if until is not None:
+        statement = statement.where(Payment.paid_at < until)
+    return statement.group_by(Payment.order_id).having(first_paid >= since).subquery("paid")
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,6 +90,35 @@ class DashboardFigures:
     orders_to_ship: int
     low_stock_variants: int
     out_of_stock_variants: int
+
+
+@dataclass(frozen=True, slots=True)
+class DaySales:
+    """Successful orders paid on one Tehran day, from the order snapshots."""
+
+    day: date
+    order_count: int
+    subtotal: int
+    product_discount_total: int
+    discount_code_amount: int
+    tax_amount: int
+    shipping_amount: int
+    grand_total: int
+
+
+@dataclass(frozen=True, slots=True)
+class LineSales:
+    """Units and ``final_line_total`` of the lines of successful orders, per group."""
+
+    group_id: UUID
+    title: str
+    units_sold: int
+    amount: int
+
+
+def _midnight(day: date) -> ColumnElement[datetime]:
+    """The UTC instant of Tehran midnight starting ``day``."""
+    return from_local_time(literal(datetime.combine(day, time()), DateTime()))
 
 
 def _count(criteria: ColumnElement[bool]) -> ColumnElement[int]:
@@ -181,3 +233,108 @@ class ReportRepository:
             low_stock_variants=int(stock_counts.low),
             out_of_stock_variants=int(stock_counts.out),
         )
+
+    def _paid_between(self, start: date, end: date) -> tuple[Subquery, ColumnElement[bool]]:
+        """Paid orders of Tehran days ``[start, end)``: the subquery and its join filter."""
+        paid = paid_at_by_order(_midnight(start), _midnight(end))
+        return paid, successful_order()
+
+    async def sales_by_day(self, start: date, end: date) -> list[DaySales]:
+        paid, criteria = self._paid_between(start, end)
+        day = cast(local_time(paid.c.paid_at), Date).label("day")
+        rows = await self._session.execute(
+            select(
+                day,
+                func.count().label("order_count"),
+                *(
+                    func.sum(column).label(column.key)
+                    for column in (
+                        Order.subtotal,
+                        Order.product_discount_total,
+                        Order.discount_code_amount,
+                        Order.tax_amount,
+                        Order.shipping_amount,
+                        Order.grand_total,
+                    )
+                ),
+            )
+            .select_from(Order)
+            .join(paid, paid.c.order_id == Order.id)
+            .where(criteria)
+            .group_by(day)
+            .order_by(day)
+        )
+        return [
+            DaySales(
+                day=row.day,
+                order_count=int(row.order_count),
+                subtotal=int(row.subtotal),
+                product_discount_total=int(row.product_discount_total),
+                discount_code_amount=int(row.discount_code_amount),
+                tax_amount=int(row.tax_amount),
+                shipping_amount=int(row.shipping_amount),
+                grand_total=int(row.grand_total),
+            )
+            for row in rows
+        ]
+
+    async def sales_by_product(self, start: date, end: date) -> list[LineSales]:
+        """Per product, most recent title snapshot; a deleted product is still listed."""
+        paid, criteria = self._paid_between(start, end)
+        title = func.array_agg(
+            aggregate_order_by(
+                OrderItem.product_title, paid.c.paid_at.desc(), OrderItem.order_id.desc()
+            )
+        )[1]
+        statement = (
+            select(
+                OrderItem.product_id.label("group_id"),
+                title.label("title"),
+                func.sum(OrderItem.quantity).label("units_sold"),
+                func.sum(OrderItem.final_line_total).label("amount"),
+            )
+            .select_from(OrderItem)
+            .join(Order, Order.id == OrderItem.order_id)
+            .join(paid, paid.c.order_id == Order.id)
+            .where(criteria)
+            .group_by(OrderItem.product_id)
+        )
+        return _line_sales(await self._session.execute(statement))
+
+    async def sales_by_category(self, start: date, end: date) -> list[LineSales]:
+        """Per the product's current category (lines keep no category snapshot).
+
+        Inner joins: products are only ever soft deleted, so every line finds its product
+        and category, and the category totals equal the product totals.
+        """
+        paid, criteria = self._paid_between(start, end)
+        statement = (
+            select(
+                Category.id.label("group_id"),
+                Category.title.label("title"),
+                func.sum(OrderItem.quantity).label("units_sold"),
+                func.sum(OrderItem.final_line_total).label("amount"),
+            )
+            .select_from(OrderItem)
+            .join(Order, Order.id == OrderItem.order_id)
+            .join(paid, paid.c.order_id == Order.id)
+            .join(Product, Product.id == OrderItem.product_id)
+            .join(Category, Category.id == Product.category_id)
+            .where(criteria)
+            .group_by(Category.id, Category.title)
+        )
+        return _line_sales(await self._session.execute(statement))
+
+
+def _line_sales(rows: Any) -> list[LineSales]:
+    """Largest amount first; ties by id so the order is stable."""
+    sales = [
+        LineSales(
+            group_id=row.group_id,
+            title=row.title,
+            units_sold=int(row.units_sold),
+            amount=int(row.amount),
+        )
+        for row in rows
+    ]
+    return sorted(sales, key=lambda item: (-item.amount, str(item.group_id)))

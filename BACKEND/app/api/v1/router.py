@@ -22,6 +22,7 @@ from app.modules.payments.router import router as payments_router
 from app.modules.pricing.router import prices_router as admin_prices_router
 from app.modules.pricing.router import router as admin_pricing_router
 from app.modules.reports.router import dashboard_router as admin_dashboard_router
+from app.modules.reports.router import reports_router as admin_reports_router
 from app.modules.shipping.admin_router import router as admin_shipping_router
 from app.modules.shipping.router import router as shipping_router
 from app.shared.database.router import readiness_router
@@ -36,6 +37,7 @@ api_router.include_router(admin_users_router)
 api_router.include_router(admin_customers_router)
 api_router.include_router(admin_audit_router)
 api_router.include_router(admin_dashboard_router)
+api_router.include_router(admin_reports_router)
 api_router.include_router(categories_router)
 api_router.include_router(products_router)
 api_router.include_router(admin_categories_router)
