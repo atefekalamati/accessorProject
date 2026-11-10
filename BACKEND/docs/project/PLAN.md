@@ -197,20 +197,20 @@
 | ADM-01 | Admin order list/detail/filter | COMPLETE | HIGH | MEDIUM | 4 | ADM-00, ORD-05 | paginated, permission-checked |
 | ADM-02 | Order status change + shipment tracking + AuditLog | COMPLETE | HIGH | HIGH | 4 | ADM-01 | valid transitions only; audited |
 | ADM-03 | Customer list/detail (admin, support) | COMPLETE | MEDIUM | MEDIUM | 3 | ADM-00 | no secrets exposed |
-| ADM-04 | Dashboard metrics | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-01 | metrics from backend |
-| ADM-05 | Sales reports | NOT_STARTED | MEDIUM | HIGH | 4 | ADM-04 | integer Toman totals |
+| ADM-04 | Dashboard metrics | COMPLETE | MEDIUM | HIGH | 4 | ADM-01 | metrics from backend |
+| ADM-05 | Sales reports | COMPLETE | MEDIUM | HIGH | 4 | ADM-04 | integer Toman totals |
 | ADM-06 | Audit log viewer | COMPLETE | MEDIUM | MEDIUM | 3 | INF-05 | super_admin only |
 | ADM-08 | Manual refund record: `refund_required → refunded` (D35) | COMPLETE | HIGH | HIGH | 3 | ADM-01 | only from refund_required; idempotent; full refund; unique `refund_reference`; audited; opus review |
-| ADM-07 | Role × endpoint matrix tests (5 roles) | NOT_STARTED | HIGH | MEDIUM | 4 | ADM-01…06, ADM-08 | every admin route checked |
+| ADM-07 | Role × endpoint matrix tests (5 roles) | COMPLETE | HIGH | MEDIUM | 4 | ADM-01…06, ADM-08 | every admin route checked |
 
 ### M4.3 Content & home page — PRD «صفحه اصلی» ✓ + «محتوا و بنرها»، «درباره برند»، «تماس با ما»، «سؤالات متداول»، «قوانین و حریم خصوصی» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | CNT-00 | Rewrite content requirements | COMPLETE | MEDIUM | HIGH | 3 | — | PRD sections ✓ بازبینی‌شده + approved |
-| CNT-01 | HomeSection/items + GET /home | NOT_STARTED | HIGH | MEDIUM | 5 | CAT-08 | only published, in-window content; SD rule (test) |
+| CNT-01 | HomeSection/items + GET /home | NOT_STARTED | HIGH | MEDIUM | 5 | CAT-08, CNT-04 | only published, in-window content; SD rule (test) |
 | CNT-02 | Admin home sections CRUD (content_manager) | NOT_STARTED | MEDIUM | MEDIUM | 3 | CNT-01, AUTH-10 | ordering controllable; audited; SD rule (test) |
-| CNT-03 | Banner model + admin | NOT_STARTED | MEDIUM | MEDIUM | 3 | CNT-00, CAT-05 | schedule respected |
-| CNT-04 | Static pages (about, terms, privacy) | NOT_STARTED | LOW | LOW | 3 | CNT-00 | published only |
+| CNT-03 | Banner model + admin | NOT_STARTED | MEDIUM | MEDIUM | 3 | CNT-00, CAT-05, CNT-01 | schedule respected |
+| CNT-04 | Static pages (about, terms, privacy) | COMPLETE | LOW | LOW | 3 | CNT-00 | published only |
 | CNT-05 | FAQ | NOT_STARTED | LOW | LOW | 2 | CNT-00 | ordered, published only |
 | CNT-06 | Contact form / tickets | NOT_STARTED | LOW | MEDIUM | 4 | CNT-00 | rate-limited |
 | CNT-07 | Content tests | NOT_STARTED | MEDIUM | LOW | 2 | CNT-01…06 | public/admin split covered |

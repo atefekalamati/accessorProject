@@ -13,6 +13,7 @@ from app.db.models.catalog import (
     VariantOption,
     VariantOptionKey,
 )
+from app.db.models.content import PageStatus, StaticPage
 from app.db.models.discounts import (
     DiscountAttempt,
     DiscountCode,
@@ -82,6 +83,7 @@ __all__ = [
     "OrderItem",
     "OrderPriceSnapshot",
     "Payment",
+    "PageStatus",
     "PaymentEvent",
     "OrderStatus",
     "OrderStatusHistory",
@@ -102,6 +104,7 @@ __all__ = [
     "Shipment",
     "ShipmentStatus",
     "ShippingMethod",
+    "StaticPage",
     "StatusField",
     "User",
     "UserRole",

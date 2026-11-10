@@ -1,12 +1,12 @@
 # PROGRESS — منبع واحد «کجاییم؟»
 
-**Last Updated:** 2026-10-27
+**Last Updated:** 2026-11-10
 
 ## Current / Next
 - **Phase › Milestone:** 4 Account & admin › M4.2 Admin panel
-- **Current Task:** M4.2 کامل شد. بعدی: M4.3 (CNT-01..07، محتوا). سپس دروازه فاز ۴.
+- **Current Task:** CNT-04 کامل شد. بعدی: CNT-05 (FAQ) و CNT-06 (تماس)، سپس CNT-01، CNT-02، CNT-03 و CNT-07. سپس دروازه فاز ۴.
 - **Status:** فازهای ۱ تا ۳ در `master` merge شده‌اند. فاز ۳: PR #6، merge `09da5ac`، git tag `phase-3`، image `ghcr.io/atefekalamati/accessorproject-api:phase-3` (هم‌digest با tag `<sha>`). فاز ۴ شروع شد.
-- **Progress:** 116/151 task COMPLETE · وزنی 75.2% (325.5h / 433h) · MVP 100%
+- **Progress:** 117/151 task COMPLETE · وزنی 75.9% (328.5h / 433h) · MVP 100%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** فاز ۴ با `/phase`.
   - ترتیب: M4.1 (CAT-18، ACC-01، ACC-02) → M4.2 (ADM-01، ADM-03، ADM-06؛ ADM-02؛ ADM-08؛ ADM-04، ADM-05؛ ADM-07) → M4.3 (CNT-01..07).
@@ -22,7 +22,7 @@
 ---
 
 ## Overall Progress
-**75.2%** = 325.5h COMPLETE / 433h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**75.9%** = 328.5h COMPLETE / 433h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -30,16 +30,17 @@
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
-| 4 Account & admin | IN_PROGRESS | 67h | 45h | 67.2% | 2027-02-24 |
+| 4 Account & admin | IN_PROGRESS | 67h | 48h | 71.6% | 2027-02-24 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2027-04-13 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 107.5h ≈ 7.2 هفته. MVP کامل است.
+- باقی‌مانده: 104.5h ≈ 7.0 هفته. MVP کامل است.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-11-10: CNT-04 (صفحه ایستا با Markdown بدون HTML خام: GET /pages/{slug} فقط منتشرشده، CRUD ادمین با content:manage، slug ثابت و 409 تکراری، audit؛ migration 0028).
 - 2026-10-27: ADM-07 (ماتریس ۵ نقش × ۵۴ route ادمین با کشف route از OpenAPI؛ تطبیق seed و دیتابیس). M4.2 کامل شد.
 - 2026-10-27: ADM-05 (گزارش فروش زمانی روز/هفته شنبه/ماه جلالی به وقت تهران، به تفکیک محصول و دسته از snapshot خطوط؛ بازه ≤ ۳۶۶ روز؛ ADR-055).
 - 2026-10-26: ADM-04 (`GET /admin/dashboard`: فروش موفق امروز/۷/۳۰ روز تهران با مبنای `paid_at`، صف‌های کار، هشدار موجودی، مشتری جدید؛ query ثابت؛ ADR-055).
@@ -139,6 +140,9 @@
 ---
 
 ## Plan changes
+### 2026-11-10 — ترتیب M4.3 (AUTOPILOT)
+مقصد `page` در سکشن و بنر به StaticPage نیاز دارد، پس ترتیب M4.3 شد: CNT-04، CNT-05، CNT-06 → CNT-01، CNT-02، CNT-03 → CNT-07. وابستگی CNT-01 به CNT-04 و CNT-03 به CNT-01 در PLAN.md اضافه شد. وضعیت کهنه ADM-04، ADM-05 و ADM-07 در PLAN.md به COMPLETE اصلاح شد.
+
 ### 2026-10-26 — نیازمندی‌های فاز ۴ (تصمیم کاربر، ADR-053)
 - ACC-00، ADM-00 و CNT-00 تأیید و COMPLETE شدند (D35–D42).
 - task جدید ADM-08 (بازپرداخت دستی، HIGH، 3h، opus).
@@ -243,6 +247,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-11-10 — CNT-04 COMPLETE
+صفحه ایستا با Markdown بدون HTML خام: GET /pages/{slug} فقط منتشرشده، CRUD ادمین با content:manage، slug ثابت و 409 تکراری، audit؛ migration 0028.
+
 ### 2026-10-26 — ADM-08 COMPLETE
 - ثبت بازپرداخت دستی، migration `0027` و ADR-054:
   - بازگشت `refund_required` روی سفارش لغوشده.
