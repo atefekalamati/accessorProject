@@ -13,7 +13,7 @@ from app.db.models.catalog import (
     VariantOption,
     VariantOptionKey,
 )
-from app.db.models.content import PageStatus, StaticPage
+from app.db.models.content import FaqItem, PageStatus, StaticPage
 from app.db.models.discounts import (
     DiscountAttempt,
     DiscountCode,
@@ -70,6 +70,7 @@ __all__ = [
     "DiscountRedemption",
     "DiscountType",
     "FakeGatewaySession",
+    "FaqItem",
     "IdempotencyKey",
     "InventoryItem",
     "InventoryMovement",

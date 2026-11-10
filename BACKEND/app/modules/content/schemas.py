@@ -1,4 +1,4 @@
-"""Content API shapes (CNT-04).
+"""Content API shapes (CNT-04, CNT-05).
 
 Server-owned fields a client echoes back are dropped, never applied; any other unknown
 field is 400.
@@ -14,12 +14,14 @@ from pydantic import (
     AfterValidator,
     BaseModel,
     ConfigDict,
+    Field,
+    StrictBool,
     StringConstraints,
     model_validator,
 )
 
 from app.db.models.catalog import SLUG_PATTERN
-from app.db.models.content import MAX_PAGE_BODY_LENGTH, PageStatus
+from app.db.models.content import MAX_FAQ_ANSWER_LENGTH, MAX_PAGE_BODY_LENGTH, PageStatus
 from app.modules.content.markdown import check_markdown
 
 _SYSTEM_FIELDS: Final = frozenset(
@@ -109,3 +111,85 @@ class PublicPageResponse(BaseModel):
     title: str
     body: str
     updated_at: datetime
+
+
+# --- FAQ (CNT-05) ------------------------------------------------------------------------
+
+
+MAX_DISPLAY_ORDER: Final = 1_000_000
+
+DisplayOrder = Annotated[int, Field(strict=True, ge=0, le=MAX_DISPLAY_ORDER)]
+FaqGroup = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100, pattern=_NO_CONTROL)
+]
+FaqQuestion = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500, pattern=_NO_CONTROL)
+]
+FaqAnswer = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_FAQ_ANSWER_LENGTH),
+    AfterValidator(check_markdown),
+]
+
+
+class CreateFaqRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    group_title: FaqGroup
+    question: FaqQuestion
+    answer: FaqAnswer
+    display_order: DisplayOrder = 0
+    is_published: StrictBool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def _system_fields(cls, data: Any) -> Any:
+        return drop_system_fields(data)
+
+
+class UpdateFaqRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    group_title: FaqGroup | None = None
+    question: FaqQuestion | None = None
+    answer: FaqAnswer | None = None
+    display_order: DisplayOrder | None = None
+    is_published: StrictBool | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _system_fields(cls, data: Any) -> Any:
+        return drop_system_fields(data)
+
+    @model_validator(mode="after")
+    def _fields(self) -> UpdateFaqRequest:
+        require_some_non_null(self)
+        return self
+
+
+class AdminFaqResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    group_title: str
+    question: str
+    answer: str
+    display_order: int
+    is_published: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class PublicFaqItem(BaseModel):
+    id: UUID
+    question: str
+    answer: str
+
+
+class PublicFaqGroup(BaseModel):
+    title: str
+    items: list[PublicFaqItem]
+
+
+class PublicFaqResponse(BaseModel):
+    groups: list[PublicFaqGroup]

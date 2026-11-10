@@ -1,4 +1,4 @@
-"""Store content: static pages (CNT-04, PRD «درباره برند» ✓, D40)."""
+"""Store content: static pages (CNT-04) and FAQ items (CNT-05); PRD ✓ sections, D40."""
 
 from __future__ import annotations
 
@@ -7,7 +7,17 @@ from enum import StrEnum
 from typing import Final
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text, text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,6 +26,7 @@ from app.db.models.catalog import SLUG_PATTERN
 from app.db.models.common import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 MAX_PAGE_BODY_LENGTH: Final = 50_000
+MAX_FAQ_ANSWER_LENGTH: Final = 5_000
 
 
 class PageStatus(StrEnum):
@@ -53,6 +64,39 @@ class StaticPage(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     )
     # The first publication; kept when the page goes back to draft.
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_by: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    updated_by: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+
+class FaqItem(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
+    """A question under a short group title; the answer is Markdown without raw HTML."""
+
+    __tablename__ = "faq_items"
+    __table_args__ = (
+        CheckConstraint(
+            "group_title = btrim(group_title) AND group_title <> ''", name="group_format"
+        ),
+        CheckConstraint("question = btrim(question) AND question <> ''", name="question_format"),
+        CheckConstraint(
+            f"char_length(answer) BETWEEN 1 AND {MAX_FAQ_ANSWER_LENGTH}", name="answer_length"
+        ),
+        CheckConstraint("display_order >= 0", name="display_order_non_negative"),
+        Index("ix_faq_items_public_order", "display_order", "id"),
+    )
+
+    group_title: Mapped[str] = mapped_column(String(100), nullable=False)
+    question: Mapped[str] = mapped_column(String(500), nullable=False)
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
+    display_order: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    is_published: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     created_by: Mapped[UUID | None] = mapped_column(
         PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

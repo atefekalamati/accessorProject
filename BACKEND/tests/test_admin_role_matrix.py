@@ -101,6 +101,11 @@ MATRIX: Final[dict[tuple[str, str], frozenset[str]]] = {
     ("POST", "/admin/pages"): _one("content:manage"),
     ("PATCH", "/admin/pages/{page_id}"): _one("content:manage"),
     ("DELETE", "/admin/pages/{page_id}"): _one("content:manage"),
+    # FAQ (CNT-05)
+    ("GET", "/admin/faq"): _one("content:manage"),
+    ("POST", "/admin/faq"): _one("content:manage"),
+    ("PATCH", "/admin/faq/{item_id}"): _one("content:manage"),
+    ("DELETE", "/admin/faq/{item_id}"): _one("content:manage"),
 }
 
 # The seed mapping, written out independently (PRD «هویت و دسترسی» ✓, ADR-019, D35).
