@@ -14,6 +14,7 @@ from app.db.models.catalog import (
     VariantOptionKey,
 )
 from app.db.models.content import (
+    Banner,
     ContactMessage,
     ContactStatus,
     FaqItem,
@@ -69,6 +70,7 @@ __all__ = [
     "Address",
     "AppSetting",
     "AuditLog",
+    "Banner",
     "CancelReason",
     "Cart",
     "CartItem",

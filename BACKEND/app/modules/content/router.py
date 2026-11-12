@@ -15,24 +15,28 @@ from app.modules.auth.service import CurrentUser
 from app.modules.catalog.dependencies import get_product_service
 from app.modules.catalog.product_service import ProductService
 from app.modules.catalog.repository import CategoryRepository
+from app.modules.content.banners import BannerService
 from app.modules.content.contact import ContactFilters, ContactService
 from app.modules.content.faq import FaqService
 from app.modules.content.home import HomeService
 from app.modules.content.home_admin import AdminHomeService
 from app.modules.content.pages import PageFilters, PageService
 from app.modules.content.schemas import (
+    AdminBannerResponse,
     AdminContactDetail,
     AdminContactSummary,
     AdminFaqResponse,
     AdminPageResponse,
     AdminSectionResponse,
     ContactRequest,
+    CreateBannerRequest,
     CreateFaqRequest,
     CreatePageRequest,
     CreateSectionRequest,
     HomeResponse,
     PublicFaqResponse,
     PublicPageResponse,
+    UpdateBannerRequest,
     UpdateContactRequest,
     UpdateFaqRequest,
     UpdatePageRequest,
@@ -48,6 +52,7 @@ faq_router = APIRouter(prefix="/faq", tags=["content"])
 admin_faq_router = APIRouter(prefix="/admin/faq", tags=["admin-content"])
 contact_router = APIRouter(prefix="/contact", tags=["content"])
 home_router = APIRouter(prefix="/home", tags=["content"])
+admin_banners_router = APIRouter(prefix="/admin/banners", tags=["admin-content"])
 admin_home_router = APIRouter(prefix="/admin/home/sections", tags=["admin-content"])
 admin_contact_router = APIRouter(prefix="/admin/contact-messages", tags=["admin-content"])
 
@@ -374,4 +379,74 @@ async def delete_section(
     section_id: UUID, request: Request, actor: Manager, service: AdminHome
 ) -> Response:
     await service.delete(actor, section_id, request)
+    return Response(status_code=status.HTTP_204_NO_CONTENT, headers=_NO_STORE)
+
+
+# --- banners (CNT-03) ---------------------------------------------------------------------
+
+
+def get_banner_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    storage: Annotated[FileStorage, Depends(get_file_storage)],
+) -> BannerService:
+    return BannerService(session, CategoryRepository(session), storage)
+
+
+Banners = Annotated[BannerService, Depends(get_banner_service)]
+
+
+@admin_banners_router.get(
+    "",
+    response_model=Page[AdminBannerResponse],
+    summary="Live banners, inactive and scheduled ones included, in display order",
+    dependencies=[Depends(_MANAGER), Depends(allowed_query_params("page", "limit"))],
+)
+async def list_banners(
+    response: Response,
+    paging: Annotated[PageParams, Depends(admin_page_params)],
+    service: Banners,
+) -> Page[AdminBannerResponse]:
+    response.headers.update(_NO_STORE)
+    return await service.list_banners(paging)
+
+
+@admin_banners_router.post(
+    "",
+    response_model=AdminBannerResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a banner; its images and link are checked when saved",
+)
+async def create_banner(
+    payload: CreateBannerRequest,
+    request: Request,
+    response: Response,
+    actor: Manager,
+    service: Banners,
+) -> AdminBannerResponse:
+    response.headers.update(_NO_STORE)
+    return await service.create(actor, payload, request)
+
+
+@admin_banners_router.patch(
+    "/{banner_id}", response_model=AdminBannerResponse, summary="Change a banner"
+)
+async def update_banner(
+    banner_id: UUID,
+    payload: UpdateBannerRequest,
+    request: Request,
+    response: Response,
+    actor: Manager,
+    service: Banners,
+) -> AdminBannerResponse:
+    response.headers.update(_NO_STORE)
+    return await service.update(actor, banner_id, payload, request)
+
+
+@admin_banners_router.delete(
+    "/{banner_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Soft delete a banner"
+)
+async def delete_banner(
+    banner_id: UUID, request: Request, actor: Manager, service: Banners
+) -> Response:
+    await service.delete(actor, banner_id, request)
     return Response(status_code=status.HTTP_204_NO_CONTENT, headers=_NO_STORE)

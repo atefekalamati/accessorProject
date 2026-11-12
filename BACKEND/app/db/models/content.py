@@ -1,4 +1,4 @@
-"""Store content: pages, FAQ, contact messages, home sections (CNT-01..06); PRD ✓."""
+"""Store content: pages, FAQ, contact, home sections, banners (CNT-01..06); PRD ✓."""
 
 from __future__ import annotations
 
@@ -293,4 +293,52 @@ class HomeSectionItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
+    )
+
+
+class Banner(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
+    """A scheduled home banner (CNT-03, PRD «محتوا و بنرها» ✓, ADR-028, D41).
+
+    Shown by ``hero`` sections. Its link is internal only; ``target_id`` has no foreign key,
+    so the public read checks that the target is still public.
+    """
+
+    __tablename__ = "banners"
+    __table_args__ = (
+        CheckConstraint("title = btrim(title) AND title <> ''", name="title_format"),
+        CheckConstraint(f"target_type IN ({_sql_values(TargetType)})", name="valid_target_type"),
+        CheckConstraint("(target_type = 'none') = (target_id IS NULL)", name="target_complete"),
+        CheckConstraint(
+            "starts_at IS NULL OR ends_at IS NULL OR starts_at < ends_at", name="valid_window"
+        ),
+        CheckConstraint("display_order >= 0", name="display_order_non_negative"),
+        Index("ix_banners_display_order", "display_order", "id"),
+    )
+
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    subtitle: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    image_media_id: Mapped[UUID] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("media.id", ondelete="RESTRICT"), nullable=False
+    )
+    # Shown on small screens instead of the desktop image (replaces deviceType, D36).
+    mobile_image_media_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("media.id", ondelete="RESTRICT"), nullable=True
+    )
+    target_type: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=TargetType.NONE, server_default="none"
+    )
+    target_id: Mapped[UUID | None] = mapped_column(PostgreSQLUUID(as_uuid=True), nullable=True)
+    display_order: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_by: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    updated_by: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

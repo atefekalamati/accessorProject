@@ -22,22 +22,17 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import BadRequestError, BusinessRuleError, ConflictError, NotFoundError
+from app.core.errors import BadRequestError, ConflictError, NotFoundError
 from app.db.models import (
-    Category,
     HomeSection,
     HomeSectionItem,
-    Media,
-    PageStatus,
-    Product,
     ProductSource,
-    ProductStatus,
     SectionType,
-    StaticPage,
     TargetType,
 )
 from app.modules.auth.service import CurrentUser
-from app.modules.catalog.repository import CategoryRepository, is_product_media
+from app.modules.catalog.repository import CategoryRepository
+from app.modules.content.references import ReferenceChecker
 from app.modules.content.schemas import (
     AdminSectionItem,
     AdminSectionResponse,
@@ -146,10 +141,6 @@ def _response(section: HomeSection, items: Sequence[HomeSectionItem]) -> AdminSe
 
 def _not_found(message: str) -> NotFoundError:
     return NotFoundError(message=message)
-
-
-def _not_public(message: str) -> BusinessRuleError:
-    return BusinessRuleError(message=message)
 
 
 class AdminHomeService:
@@ -330,62 +321,17 @@ class AdminHomeService:
         self, spec: _Spec, *, target: bool, source: bool, items: bool
     ) -> None:
         values = spec.values
-        visible: set[UUID] | None = None
-
-        async def visible_ids() -> set[UUID]:
-            nonlocal visible
-            if visible is None:
-                visible = {category.id for category in await self._categories.list_visible()}
-            return visible
-
-        async def check_category(category_id: UUID) -> None:
-            exists = await self._session.scalar(
-                select(Category.id).where(Category.id == category_id, Category.deleted_at.is_(None))
-            )
-            if exists is None:
-                raise _not_found("Category not found")
-            if category_id not in await visible_ids():
-                raise _not_public("Category is not public")
-
-        async def check_product(product_id: UUID) -> None:
-            status = await self._session.scalar(
-                select(Product.status).where(Product.id == product_id, Product.deleted_at.is_(None))
-            )
-            if status is None:
-                raise _not_found("Product not found")
-            if status != ProductStatus.PUBLISHED:
-                raise _not_public("Product is not published")
-
-        if target and values["target_id"] is not None:
-            target_id: UUID = values["target_id"]
-            if values["target_type"] == TargetType.PRODUCT:
-                await check_product(target_id)
-            elif values["target_type"] == TargetType.CATEGORY:
-                await check_category(target_id)
-            elif values["target_type"] == TargetType.PAGE:
-                status = await self._session.scalar(
-                    select(StaticPage.status).where(
-                        StaticPage.id == target_id, StaticPage.deleted_at.is_(None)
-                    )
-                )
-                if status is None:
-                    raise _not_found("Page not found")
-                if status != PageStatus.PUBLISHED:
-                    raise _not_public("Page is not published")
+        check = ReferenceChecker(self._session, self._categories)
+        if target:
+            await check.target(values["target_type"], values["target_id"])
         if source and values["source_category_id"] is not None:
-            await check_category(values["source_category_id"])
+            await check.category(values["source_category_id"])
         if not items:
             return
         for item in spec.items:
             if item.get("product_id") is not None:
-                await check_product(item["product_id"])
+                await check.product(item["product_id"])
             if item.get("category_id") is not None:
-                await check_category(item["category_id"])
-            media_id = item.get("image_media_id")
-            if media_id is not None:
-                found = await self._session.scalar(select(Media.id).where(Media.id == media_id))
-                if found is None:
-                    raise _not_found("Image media not found")
-                # A product image is deleted with its product media (CAT-11).
-                if await is_product_media(self._session, media_id):
-                    raise _not_public("Image media belongs to a product")
+                await check.category(item["category_id"])
+            if item.get("image_media_id") is not None:
+                await check.media(item["image_media_id"])

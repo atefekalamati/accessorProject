@@ -1,4 +1,4 @@
-"""Content API shapes (CNT-01, CNT-02, CNT-04..06).
+"""Content API shapes (CNT-01..06).
 
 Server-owned fields a client echoes back are dropped, never applied; any other unknown
 field is 400.
@@ -42,7 +42,18 @@ from app.modules.catalog.schemas import CategorySummary, ProductCard
 from app.modules.content.markdown import check_markdown
 
 _SYSTEM_FIELDS: Final = frozenset(
-    {"id", "created_at", "updated_at", "deleted_at", "published_at", "created_by", "updated_by"}
+    {
+        "id",
+        "created_at",
+        "updated_at",
+        "deleted_at",
+        "published_at",
+        "created_by",
+        "updated_by",
+        # Built by the server from the media ids.
+        "image_url",
+        "mobile_image_url",
+    }
 )
 # Printable only: no control characters (a NUL would fail in PostgreSQL).
 _NO_CONTROL: Final = r"^[^\x00-\x1f\x7f]+$"
@@ -317,12 +328,18 @@ class HomeTarget(BaseModel):
 
 
 class HomeItem(BaseModel):
-    """One entry; ``product`` is the listing card, ``category`` the category summary."""
+    """One entry; ``product`` is the listing card, ``category`` the category summary.
+
+    A banner (hero sections) also has ``subtitle``, ``mobile_image_url`` and ``target``.
+    """
 
     title: str | None = None
+    subtitle: str | None = None
     body: str | None = None
     icon_key: str | None = None
     image_url: str | None = None
+    mobile_image_url: str | None = None
+    target: HomeTarget | None = None
     product: ProductCard | None = None
     category: CategorySummary | None = None
 
@@ -483,3 +500,76 @@ class AdminSectionResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     items: list[AdminSectionItem]
+
+
+# --- banners (CNT-03) ---------------------------------------------------------------------
+
+
+_BANNER_NULLABLE: Final = frozenset(
+    {"subtitle", "mobile_image_media_id", "target_id", "starts_at", "ends_at"}
+)
+
+
+class CreateBannerRequest(BaseModel):
+    """Links are internal only (D41): a URL field or another target type is a 400."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: SectionTitle
+    subtitle: SectionSubtitle | None = None
+    image_media_id: UUID
+    mobile_image_media_id: UUID | None = None
+    target_type: TargetType = TargetType.NONE
+    target_id: UUID | None = None
+    display_order: DisplayOrder = 0
+    is_active: StrictBool = True
+    starts_at: AwareDatetime | None = None
+    ends_at: AwareDatetime | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _system_fields(cls, data: Any) -> Any:
+        return drop_system_fields(data)
+
+
+class UpdateBannerRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: SectionTitle | None = None
+    subtitle: SectionSubtitle | None = None
+    image_media_id: UUID | None = None
+    mobile_image_media_id: UUID | None = None
+    target_type: TargetType | None = None
+    target_id: UUID | None = None
+    display_order: DisplayOrder | None = None
+    is_active: StrictBool | None = None
+    starts_at: AwareDatetime | None = None
+    ends_at: AwareDatetime | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _system_fields(cls, data: Any) -> Any:
+        return drop_system_fields(data)
+
+    @model_validator(mode="after")
+    def _fields(self) -> UpdateBannerRequest:
+        require_some_non_null(self, _BANNER_NULLABLE)
+        return self
+
+
+class AdminBannerResponse(BaseModel):
+    id: UUID
+    title: str
+    subtitle: str | None
+    image_media_id: UUID
+    image_url: str | None
+    mobile_image_media_id: UUID | None
+    mobile_image_url: str | None
+    target_type: str
+    target_id: UUID | None
+    display_order: int
+    is_active: bool
+    starts_at: datetime | None
+    ends_at: datetime | None
+    created_at: datetime
+    updated_at: datetime

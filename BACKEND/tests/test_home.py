@@ -106,9 +106,12 @@ async def test_only_live_active_sections_in_their_window_in_order(
     assert body["sections"][0]["items"] == [
         {
             "title": "Fast",
+            "subtitle": None,
             "body": "Two days",
             "icon_key": None,
             "image_url": None,
+            "mobile_image_url": None,
+            "target": None,
             "product": None,
             "category": None,
         }

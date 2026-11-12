@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.time import utc_now
 from app.db.models import (
+    Banner,
     Category,
     HomeSection,
     HomeSectionItem,
@@ -44,6 +45,7 @@ from app.shared.storage import FileStorage
 logger = logging.getLogger("app.content")
 
 DEFAULT_LIMIT: Final = 12
+DEFAULT_HERO_TITLE: Final = "ویترین"
 DEFAULT_CATEGORIES_TITLE: Final = "دسته‌بندی‌ها"
 DEFAULT_NEWEST_TITLE: Final = "جدیدترین‌ها"
 
@@ -65,6 +67,7 @@ class _Snapshot:
     media_urls: dict[UUID, str]
     product_slugs: dict[UUID, str]
     page_slugs: dict[UUID, str]
+    banners: list[Banner]
 
 
 def active_window(model: Any, now: datetime) -> list[ColumnElement[bool]]:
@@ -127,17 +130,27 @@ class HomeService:
                 )
                 for item in rows:
                     items[item.section_id].append(item)
+            banners = list(
+                await self._session.scalars(
+                    select(Banner)
+                    .where(*active_window(Banner, now))
+                    .order_by(Banner.display_order, Banner.id)
+                )
+            )
             categories = {
                 category.id: category for category in await self._categories.list_visible()
             }
             media_ids = [item.image_media_id for rows in items.values() for item in rows]
             media_ids += [category.image_media_id for category in categories.values()]
+            media_ids += [banner.image_media_id for banner in banners]
+            media_ids += [banner.mobile_image_media_id for banner in banners]
+            linked: list[HomeSection | Banner] = [*sections, *banners]
             keys = await media_storage_keys(self._session, media_ids)
             product_slugs = await self._published_products(
-                [s.target_id for s in sections if s.target_type == TargetType.PRODUCT]
+                [row.target_id for row in linked if row.target_type == TargetType.PRODUCT]
             )
             page_slugs = await self._published_pages(
-                [s.target_id for s in sections if s.target_type == TargetType.PAGE]
+                [row.target_id for row in linked if row.target_type == TargetType.PAGE]
             )
         return _Snapshot(
             sections=sections,
@@ -146,6 +159,7 @@ class HomeService:
             media_urls={media_id: self._storage.url(key) for media_id, key in keys.items()},
             product_slugs=product_slugs,
             page_slugs=page_slugs,
+            banners=banners,
         )
 
     async def _published_products(self, ids: Sequence[UUID | None]) -> dict[UUID, str]:
@@ -174,21 +188,41 @@ class HomeService:
         )
         return {row.id: row.slug for row in rows}
 
-    def _target(self, section: HomeSection, snapshot: _Snapshot) -> tuple[bool, HomeTarget | None]:
-        """``(public, target)``; a section whose target is not public is not shown."""
-        if section.target_type == TargetType.NONE or section.target_id is None:
+    def _target(
+        self, row: HomeSection | Banner, snapshot: _Snapshot
+    ) -> tuple[bool, HomeTarget | None]:
+        """``(public, target)``; a section or banner whose target is not public is hidden."""
+        if row.target_type == TargetType.NONE or row.target_id is None:
             return True, None
         slug: str | None = None
-        if section.target_type == TargetType.PRODUCT:
-            slug = snapshot.product_slugs.get(section.target_id)
-        elif section.target_type == TargetType.CATEGORY:
-            category = snapshot.categories.get(section.target_id)
+        if row.target_type == TargetType.PRODUCT:
+            slug = snapshot.product_slugs.get(row.target_id)
+        elif row.target_type == TargetType.CATEGORY:
+            category = snapshot.categories.get(row.target_id)
             slug = None if category is None else category.slug
-        elif section.target_type == TargetType.PAGE:
-            slug = snapshot.page_slugs.get(section.target_id)
+        elif row.target_type == TargetType.PAGE:
+            slug = snapshot.page_slugs.get(row.target_id)
         if slug is None:
             return False, None
-        return True, HomeTarget(type=section.target_type, slug=slug)
+        return True, HomeTarget(type=row.target_type, slug=slug)
+
+    def _banner_items(self, snapshot: _Snapshot) -> list[HomeItem]:
+        items: list[HomeItem] = []
+        for banner in snapshot.banners:
+            public, target = self._target(banner, snapshot)
+            image = self._image(banner.image_media_id, snapshot)
+            if not public or image is None:
+                continue
+            items.append(
+                HomeItem(
+                    title=banner.title,
+                    subtitle=banner.subtitle,
+                    image_url=image,
+                    mobile_image_url=self._image(banner.mobile_image_media_id, snapshot),
+                    target=target,
+                )
+            )
+        return items
 
     async def _render(
         self, section: HomeSection, snapshot: _Snapshot, now: datetime
@@ -204,8 +238,8 @@ class HomeService:
             items = await self._carousel(section, rows, snapshot, now)
         elif section.type in (SectionType.BENEFITS, SectionType.EDITORIAL):
             items = [self._text_item(item, snapshot) for item in rows]
-        else:  # hero: banners come with CNT-03
-            items = []
+        else:  # hero: the banners
+            items = self._banner_items(snapshot)
         if not items:
             return None
         return HomeSectionOut(
@@ -308,8 +342,21 @@ class HomeService:
         return [HomeItem(title=titles[card.id], product=card) for card in cards]
 
     async def _default_layout(self, snapshot: _Snapshot, now: datetime) -> list[HomeSectionOut]:
-        """The main categories and the newest products, each only when it has items."""
+        """Banners, the main categories and the newest products, each when it has items."""
         sections: list[HomeSectionOut] = []
+        banners = self._banner_items(snapshot)
+        if banners:
+            sections.append(
+                HomeSectionOut(
+                    id=None,
+                    type=SectionType.HERO,
+                    title=DEFAULT_HERO_TITLE,
+                    subtitle=None,
+                    layout_variant=None,
+                    target=None,
+                    items=banners,
+                )
+            )
         roots = [c for c in snapshot.categories.values() if c.parent_id is None][:DEFAULT_LIMIT]
         if roots:
             sections.append(
