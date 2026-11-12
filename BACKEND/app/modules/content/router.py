@@ -5,30 +5,39 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import Settings, get_app_settings
 from app.core.errors import NotFoundError
-from app.db.models import PageStatus
+from app.db.models import ContactStatus, PageStatus
 from app.db.models.catalog import SLUG_PATTERN
 from app.db.session import get_db_session
-from app.modules.auth.dependencies import require_permission
+from app.modules.auth.dependencies import get_optional_user, require_permission
 from app.modules.auth.service import CurrentUser
+from app.modules.content.contact import ContactFilters, ContactService
 from app.modules.content.faq import FaqService
 from app.modules.content.pages import PageFilters, PageService
 from app.modules.content.schemas import (
+    AdminContactDetail,
+    AdminContactSummary,
     AdminFaqResponse,
     AdminPageResponse,
+    ContactRequest,
     CreateFaqRequest,
     CreatePageRequest,
     PublicFaqResponse,
     PublicPageResponse,
+    UpdateContactRequest,
     UpdateFaqRequest,
     UpdatePageRequest,
 )
+from app.shared.audit import client_ip
 from app.shared.pagination import Page, PageParams, admin_page_params, allowed_query_params
 
 pages_router = APIRouter(prefix="/pages", tags=["content"])
 admin_pages_router = APIRouter(prefix="/admin/pages", tags=["admin-content"])
 faq_router = APIRouter(prefix="/faq", tags=["content"])
 admin_faq_router = APIRouter(prefix="/admin/faq", tags=["admin-content"])
+contact_router = APIRouter(prefix="/contact", tags=["content"])
+admin_contact_router = APIRouter(prefix="/admin/contact-messages", tags=["admin-content"])
 
 _MANAGER = require_permission("content:manage")
 Manager = Annotated[CurrentUser, Depends(_MANAGER)]
@@ -184,3 +193,79 @@ async def update_faq(
 async def delete_faq(item_id: UUID, request: Request, actor: Manager, service: Faq) -> Response:
     await service.delete(actor, item_id, request)
     return Response(status_code=status.HTTP_204_NO_CONTENT, headers=_NO_STORE)
+
+
+# --- contact form (CNT-06) ----------------------------------------------------------------
+
+
+def get_contact_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    settings: Annotated[Settings, Depends(get_app_settings)],
+) -> ContactService:
+    return ContactService(session, settings)
+
+
+Contact = Annotated[ContactService, Depends(get_contact_service)]
+_CONTACT_MANAGER = require_permission("contact_messages:manage")
+ContactManager = Annotated[CurrentUser, Depends(_CONTACT_MANAGER)]
+
+
+@contact_router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    summary="Send a message to the store; limited per IP and per mobile (429)",
+)
+async def submit_contact(
+    payload: ContactRequest,
+    request: Request,
+    user: Annotated[CurrentUser | None, Depends(get_optional_user)],
+    service: Contact,
+) -> Response:
+    await service.submit(payload, user_id=None if user is None else user.id, ip=client_ip(request))
+    return Response(status_code=status.HTTP_201_CREATED, headers=_NO_STORE)
+
+
+@admin_contact_router.get(
+    "",
+    response_model=Page[AdminContactSummary],
+    summary="Contact messages, newest first, optionally by status",
+    dependencies=[
+        Depends(_CONTACT_MANAGER),
+        Depends(allowed_query_params("page", "limit", "status")),
+    ],
+)
+async def list_contact_messages(
+    response: Response,
+    paging: Annotated[PageParams, Depends(admin_page_params)],
+    service: Contact,
+    message_status: Annotated[ContactStatus | None, Query(alias="status")] = None,
+) -> Page[AdminContactSummary]:
+    response.headers.update(_NO_STORE)
+    return await service.list_messages(ContactFilters(status=message_status), paging)
+
+
+@admin_contact_router.get(
+    "/{message_id}", response_model=AdminContactDetail, summary="One contact message"
+)
+async def get_contact_message(
+    message_id: UUID, response: Response, _actor: ContactManager, service: Contact
+) -> AdminContactDetail:
+    response.headers.update(_NO_STORE)
+    return await service.get(message_id)
+
+
+@admin_contact_router.patch(
+    "/{message_id}",
+    response_model=AdminContactDetail,
+    summary="Move a message along new → in_progress → closed, or edit its internal note",
+)
+async def update_contact_message(
+    message_id: UUID,
+    payload: UpdateContactRequest,
+    request: Request,
+    response: Response,
+    actor: ContactManager,
+    service: Contact,
+) -> AdminContactDetail:
+    response.headers.update(_NO_STORE)
+    return await service.update(actor, message_id, payload, request)

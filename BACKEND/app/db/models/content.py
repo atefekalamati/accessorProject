@@ -1,4 +1,4 @@
-"""Store content: static pages (CNT-04) and FAQ items (CNT-05); PRD ✓ sections, D40."""
+"""Store content: static pages, FAQ items, contact messages (CNT-04..06); PRD ✓, D40."""
 
 from __future__ import annotations
 
@@ -18,15 +18,18 @@ from sqlalchemy import (
     Text,
     text,
 )
+from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.phone import MOBILE_E164_PATTERN
 from app.db.base import Base
 from app.db.models.catalog import SLUG_PATTERN
 from app.db.models.common import SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 MAX_PAGE_BODY_LENGTH: Final = 50_000
 MAX_FAQ_ANSWER_LENGTH: Final = 5_000
+MAX_CONTACT_TEXT_LENGTH: Final = 2_000
 
 
 class PageStatus(StrEnum):
@@ -101,5 +104,49 @@ class FaqItem(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
         PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     updated_by: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+
+class ContactStatus(StrEnum):
+    NEW = "new"
+    IN_PROGRESS = "in_progress"
+    CLOSED = "closed"
+
+
+class ContactMessage(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """A message from the contact form; it holds personal data and is never logged."""
+
+    __tablename__ = "contact_messages"
+    __table_args__ = (
+        CheckConstraint(f"phone ~ '{MOBILE_E164_PATTERN}'", name="phone_format"),
+        CheckConstraint(
+            f"char_length(message) BETWEEN 1 AND {MAX_CONTACT_TEXT_LENGTH}", name="message_length"
+        ),
+        CheckConstraint(
+            f"internal_note IS NULL OR char_length(internal_note)"
+            f" BETWEEN 1 AND {MAX_CONTACT_TEXT_LENGTH}",
+            name="note_length",
+        ),
+        CheckConstraint("status IN ('new', 'in_progress', 'closed')", name="valid_status"),
+        Index("ix_contact_messages_ip_created_at", "ip", "created_at"),
+        Index("ix_contact_messages_phone_created_at", "phone", "created_at"),
+        Index("ix_contact_messages_status_created_at", "status", "created_at"),
+    )
+
+    user_id: Mapped[UUID | None] = mapped_column(
+        PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(254), nullable=True)
+    subject: Mapped[str] = mapped_column(String(200), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=ContactStatus.NEW, server_default="new"
+    )
+    internal_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ip: Mapped[str | None] = mapped_column(INET, nullable=True)
+    handled_by: Mapped[UUID | None] = mapped_column(
         PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

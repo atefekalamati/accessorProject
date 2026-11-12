@@ -13,8 +13,10 @@ from app.modules.catalog.router import products_router
 from app.modules.catalog.router import router as categories_router
 from app.modules.checkout.router import router as checkout_router
 from app.modules.content.router import (
+    admin_contact_router,
     admin_faq_router,
     admin_pages_router,
+    contact_router,
     faq_router,
     pages_router,
 )
@@ -66,3 +68,5 @@ api_router.include_router(pages_router)
 api_router.include_router(admin_pages_router)
 api_router.include_router(faq_router)
 api_router.include_router(admin_faq_router)
+api_router.include_router(contact_router)
+api_router.include_router(admin_contact_router)

@@ -56,6 +56,7 @@ PERMISSIONS: tuple[PermissionSeed, ...] = (
     PermissionSeed("payments:refund", "Record a manual refund of a payment (ADM-08)"),
     PermissionSeed("customers:read", "View customers"),
     PermissionSeed("content:manage", "Manage banners, sections and static content"),
+    PermissionSeed("contact_messages:manage", "Read and handle contact messages"),
     PermissionSeed("users:read", "View users"),
     PermissionSeed("users:manage", "Activate, deactivate or block users"),
     PermissionSeed("users:manage_roles", "Change user roles"),
@@ -74,7 +75,7 @@ _ADMIN_EXCLUDED: frozenset[str] = frozenset(
 # Customers have no permissions; their access is enforced by ownership checks.
 ROLE_PERMISSIONS: Mapping[str, frozenset[str]] = {
     "customer": frozenset(),
-    "support": frozenset({"orders:read", "customers:read"}),
+    "support": frozenset({"orders:read", "customers:read", "contact_messages:manage"}),
     "content_manager": frozenset({"content:manage", "categories:edit_content"}),
     "admin": ALL_PERMISSION_KEYS - _ADMIN_EXCLUDED,
     "super_admin": ALL_PERMISSION_KEYS,

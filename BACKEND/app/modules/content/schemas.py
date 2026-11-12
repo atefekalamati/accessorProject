@@ -1,4 +1,4 @@
-"""Content API shapes (CNT-04, CNT-05).
+"""Content API shapes (CNT-04..06).
 
 Server-owned fields a client echoes back are dropped, never applied; any other unknown
 field is 400.
@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Annotated, Any, Final
 from uuid import UUID
 
+from email_validator import EmailNotValidError, validate_email
 from pydantic import (
     AfterValidator,
     BaseModel,
@@ -17,11 +18,20 @@ from pydantic import (
     Field,
     StrictBool,
     StringConstraints,
+    field_validator,
     model_validator,
 )
 
+from app.core.phone import normalize_phone
 from app.db.models.catalog import SLUG_PATTERN
-from app.db.models.content import MAX_FAQ_ANSWER_LENGTH, MAX_PAGE_BODY_LENGTH, PageStatus
+from app.db.models.content import (
+    MAX_CONTACT_TEXT_LENGTH,
+    MAX_FAQ_ANSWER_LENGTH,
+    MAX_PAGE_BODY_LENGTH,
+    ContactStatus,
+    PageStatus,
+)
+from app.modules.auth.schemas import EMAIL_MAX_LENGTH
 from app.modules.content.markdown import check_markdown
 
 _SYSTEM_FIELDS: Final = frozenset(
@@ -193,3 +203,99 @@ class PublicFaqGroup(BaseModel):
 
 class PublicFaqResponse(BaseModel):
     groups: list[PublicFaqGroup]
+
+
+# --- contact form (CNT-06) ----------------------------------------------------------------
+
+
+_CONTACT_SYSTEM_FIELDS: Final = frozenset(
+    {"id", "status", "user_id", "ip", "handled_by", "internal_note", "created_at", "updated_at"}
+)
+# Newlines are text; every other control character is refused.
+_MULTILINE: Final = r"^[^\x00-\x08\x0b\x0c\x0e-\x1f\x7f]+$"
+
+ContactName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100, pattern=_NO_CONTROL)
+]
+ContactSubject = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200, pattern=_NO_CONTROL)
+]
+ContactText = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True, min_length=1, max_length=MAX_CONTACT_TEXT_LENGTH, pattern=_MULTILINE
+    ),
+]
+
+
+class ContactRequest(BaseModel):
+    """Plain text, shown as text; server-owned fields a client sends are dropped."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: ContactName
+    mobile: str = Field(min_length=1, max_length=32)
+    email: str | None = None
+    subject: ContactSubject
+    message: ContactText
+
+    @model_validator(mode="before")
+    @classmethod
+    def _system_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if k not in _CONTACT_SYSTEM_FIELDS}
+        return data
+
+    @field_validator("mobile")
+    @classmethod
+    def _normalize_mobile(cls, value: str) -> str:
+        # InvalidPhoneError is a ValueError, so an invalid number becomes a 400.
+        return normalize_phone(value)
+
+    @field_validator("email")
+    @classmethod
+    def _normalize_email(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        email = value.strip()
+        if len(email) > EMAIL_MAX_LENGTH:
+            raise ValueError(f"must be at most {EMAIL_MAX_LENGTH} characters")
+        try:
+            normalized = validate_email(email, check_deliverability=False).normalized
+        except EmailNotValidError as exc:
+            raise ValueError("must be a valid email address") from exc
+        return normalized.lower()
+
+
+class UpdateContactRequest(BaseModel):
+    """Null clears the internal note; the status moves only along the allowed transitions."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: ContactStatus | None = None
+    internal_note: ContactText | None = None
+
+    @model_validator(mode="after")
+    def _fields(self) -> UpdateContactRequest:
+        require_some_non_null(self, frozenset({"internal_note"}))
+        return self
+
+
+class AdminContactSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    mobile: str = Field(validation_alias="phone")
+    subject: str
+    status: str
+    created_at: datetime
+
+
+class AdminContactDetail(AdminContactSummary):
+    user_id: UUID | None
+    email: str | None
+    message: str
+    internal_note: str | None
+    handled_by: UUID | None
+    updated_at: datetime

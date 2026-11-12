@@ -113,6 +113,11 @@ class Settings(BaseSettings):
     payment_fake_session_seconds: int = Field(default=900, ge=60, le=3600)
     # Product cards show "new" for products created within this many days (D42).
     product_new_days: int = Field(default=30, ge=1, le=365)
+    # Contact form (CNT-06): per client IP and per mobile over a rolling window; reaching a
+    # cap gives 429. Behind a reverse proxy the IP cap needs the setup of OPS-04.
+    contact_window_seconds: int = Field(default=3600, ge=60, le=86_400)
+    contact_max_per_ip: int = Field(default=5, ge=1)
+    contact_max_per_phone: int = Field(default=3, ge=1)
 
     @field_validator("database_url")
     @classmethod
