@@ -669,8 +669,30 @@
   - uv و buildx ابزار CI هستند، نه dependency برنامه. uv از قبل در lock dev بود (`scripts/lock.py`).
 - پیامد: commit فقط-سند (مثلاً به‌روزرسانی PROGRESS و task به‌تنهایی) CI ندارد. commitهای task همیشه کد هم دارند، پس CI می‌گیرند.
 
+### ADR-058 — موکول شدن D8، D9، D10 و D13؛ production مسدود (تصمیم کاربر)
+- تاریخ: 2026-11-13
+- تصمیم (کاربر): انتخاب درگاه پرداخت واقعی (D8)، SMS provider (D9)، file storage (D10) و محیط production (D13) به بعد موکول شد. بقیه فاز ۵ انجام می‌شود.
+  - وضعیت جدید `DEFERRED`: PAY-07، OPS-04، OPS-05، OPS-07 و DEC-08، DEC-09، DEC-10، DEC-13 (جمعاً 17h). از درصد و forecast حذف می‌شوند (مثل CANCELLED)، ولی در PLAN می‌مانند.
+  - دروازه فاز ۵ وقتی همه taskهای غیر-DEFERRED آن COMPLETE باشند بسته می‌شود. خروجی آن یک image آماده staging (`phase-5`) است، نه انتشار production.
+  - **production go-live مسدود است** تا هر چهار تصمیم گرفته شود و PAY-07، OPS-04، OPS-05 و OPS-07 COMPLETE شوند. کد همین الان fail-closed است:
+    - درگاه: `build_payment_gateway` در production خطا می‌دهد. با job تطبیق (پیش‌فرض روشن) برنامه اصلاً بالا نمی‌آید، و بدون آن هر endpoint پرداخت 503 `PAYMENT_GATEWAY_UNAVAILABLE` می‌دهد (ADR-049).
+    - SMS: `build_sms_sender` در production خطا می‌دهد، پس هیچ OTPی ارسال نمی‌شود.
+    - storage: `MEDIA_STORAGE=memory` در production با خطای `Settings` رد می‌شود. `local` مجاز است، ولی انتخاب نهایی D10 است.
+    - OPS-10 این سه رفتار را با تست قرارداد قفل می‌کند.
+  - providerها پشت interface با پیاده‌سازی fake یا dev می‌مانند (ADR-009): `PaymentGateway` و `FakeGateway`، `SmsSender` و `FakeSmsSender`، `FileStorage` با `LocalFileStorage` و `InMemoryFileStorage`. OPS-10 یک suite قرارداد مشترک اضافه می‌کند تا adapter واقعی آینده فقط با پاس کردن همان suite وارد شود.
+- پیامدها: PLAN، ROADMAP، PROGRESS (forecast از 2026-11-13)، OPS-10، دروازه فاز ۵.
+
+### ADR-059 — audit_logs فقط-افزودنی در دیتابیس (SEC-04)
+- تاریخ: 2026-11-13
+- تصمیم (خودم؛ بازبین مستقل plan را تأیید کرد):
+  - migration `0033` برای UPDATE و TRUNCATE روی `audit_logs` trigger اضافه می‌کند. DELETE از `0001` رد می‌شد. هر سه با SQLSTATE `23000` رد می‌شوند.
+  - تنها UPDATE مجاز، `ON DELETE SET NULL` کلید `actor_user_id` است، وقتی کاربری hard delete شود. trigger بررسی می‌کند که به‌جز همان ستون هیچ چیز دیگری عوض نشده باشد. این عمداً اجازه پاک شدن هویت actor (PII) با حذف کاربر را می‌دهد (ADR-046)، ولی متن audit دست نمی‌خورد.
+  - هر سه trigger با `ENABLE ALWAYS` فعال‌اند، پس `session_replication_role = replica` هم آن‌ها را دور نمی‌زند.
+- ریسک باقی‌مانده: مالک جدول یا superuser می‌تواند trigger را disable یا drop کند. الان در compose و staging، برنامه با همان نقشی اجرا می‌شود که migrationها را اجرا می‌کند و مالک جدول است. راه‌حل این است که در production برنامه با نقش غیرمالک اجرا شود و migration با نقش مالک جدا. این در OPS-04 (DEFERRED، ADR-058) انجام می‌شود و پیش‌شرط production است.
+- پیامدها: SEC-04، OPS-04.
+
 ### تصمیم‌های deferred
-- **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
+- **D8، D9، D10، D13:** به تصمیم کاربر موکول شدند (ADR-058). production تا آن موقع مسدود است.
 
 ## PRD changes
 

@@ -1,7 +1,7 @@
 # PLAN — فهرست فازها، milestoneها و taskها
 
 - جزئیات هر task در `tasks/phase-0N/<ID>-<slug>.md` است. ستون «فایل» با ✓ یعنی فایل task وجود دارد.
-- وضعیت‌ها: `NOT_STARTED` · `IN_PROGRESS` · `BLOCKED` (منتظر تصمیم باز) · `COMPLETE` · `CANCELLED`.
+- وضعیت‌ها: `NOT_STARTED` · `IN_PROGRESS` · `BLOCKED` (منتظر تصمیم باز) · `COMPLETE` · `CANCELLED` · `DEFERRED` (کاربر به بعد موکول کرد؛ از درصد و forecast حذف می‌شود، ADR-058).
 - **همه برآوردها (h) تخمین هستند.** ددلاین‌ها **پیش‌بینی (forecast)** هستند، نه تعهد. فرض: کار تنها و پاره‌وقت، ۱۵ ساعت در هفته، شروع 2026-09-29، بدون buffer. پیش‌بینی فقط در سطح فاز است.
 - ستون **Level** (LOW/MEDIUM/HIGH) سطح ریسک task است، نه اولویت (Pri). plan هر task با Level=HIGH باید ریسک‌ها، مراحل rollback و تست‌های اضافه را هم فهرست کند (CLAUDE.md بخش ۱۱).
 - **قاعده soft delete (SD rule):** هر read عمومی (list یا detail) رکورد soft-deleted را برنمی‌گرداند و detail آن → 404 `NOT_FOUND`. هر write که به entity ارجاع می‌دهد (افزودن به سبد، `POST /checkout/validate`، `POST /orders` و...) ارجاع به رکورد soft-deleted را رد می‌کند، با همان خطای ارجاع به entity ناموجود. taskهایی که «SD rule (test)» دارند باید برای آن تست داشته باشند. فیلد unique روی مدل soft-deletable طبق ADR-015 partial unique index با شرط `WHERE deleted_at IS NULL` است و تصمیم هر مدل در task خودش گرفته می‌شود.
@@ -219,7 +219,9 @@
 
 ---
 
-## Phase 5 — Release · forecast: 2027-03-12
+## Phase 5 — Release · forecast: 2026-11-27
+
+D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). taskهای وابسته `DEFERRED` هستند، دروازه فاز ۵ با بقیه taskها بسته می‌شود و **استقرار production تا آن تصمیم‌ها مسدود است**.
 
 ### M5.1 Security — PRD «امنیت»، «تست و پذیرش»، «حالت‌های رابط» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -228,25 +230,27 @@
 | SEC-01 | Global rate limiting | NOT_STARTED | HIGH | HIGH | 3 | SEC-00 | 429 on abuse |
 | SEC-02 | Security headers + request size limit | NOT_STARTED | HIGH | HIGH | 2 | SEC-00 | headers tested |
 | SEC-03 | Security review & tests (authz, IDOR, tampering) | NOT_STARTED | HIGH | HIGH | 5 | Phase 3 | findings fixed or tracked |
-| SEC-04 | DB-level append-only audit_logs (trigger blocks UPDATE; DELETE trigger exists since FND-04) | NOT_STARTED | HIGH | HIGH | 2 | INF-05 | UPDATE/DELETE rejected by DB (integration test) |
+| SEC-04 | DB-level append-only audit_logs (trigger blocks UPDATE; DELETE trigger exists since FND-04) | COMPLETE | HIGH | HIGH | 2 | INF-05 | UPDATE/DELETE rejected by DB (integration test) |
 
 ### M5.2 Operations — PRD «پایش و رخدادها» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| DEC-08 | Choose real payment gateway (D8) | NOT_STARTED | HIGH | HIGH | 0.5 | — | ADR written |
-| DEC-09 | Choose real SMS provider (D9) | NOT_STARTED | HIGH | LOW | 0.5 | — | ADR written |
-| DEC-10 | Choose real file storage (D10) | NOT_STARTED | HIGH | LOW | 0.5 | — | ADR written |
-| DEC-13 | Production target (D13) | NOT_STARTED | HIGH | LOW | 0.5 | — | ADR written |
-| OPS-01 | Metrics + error-tracking adapter | NOT_STARTED | MEDIUM | MEDIUM | 4 | — | metrics endpoint |
+| OPS-00 | Rewrite monitoring & incidents requirements | NOT_STARTED | MEDIUM | HIGH | 1 | — | PRD section ✓ بازبینی‌شده + approved |
+| DEC-08 | Choose real payment gateway (D8) | DEFERRED | HIGH | HIGH | 0.5 | — | ADR written |
+| DEC-09 | Choose real SMS provider (D9) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
+| DEC-10 | Choose real file storage (D10) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
+| DEC-13 | Production target (D13) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
+| OPS-01 | Metrics + error-tracking adapter | NOT_STARTED | MEDIUM | MEDIUM | 4 | OPS-00 | metrics endpoint |
 | OPS-02 | Monitoring & alerts | NOT_STARTED | MEDIUM | MEDIUM | 3 | OPS-01 | alerts defined |
 | OPS-03 | Backup/restore runbook | NOT_STARTED | HIGH | HIGH | 3 | — | restore rehearsed |
-| OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | BLOCKED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies; if `ENVIRONMENT=production`, `TRUSTED_PROXIES` must be explicitly set (empty value = explicit "none"), unset → startup fails |
-| OPS-05 | Real SMS provider adapter | BLOCKED | HIGH | HIGH | 3 | AUTH-04, D9 | works behind interface |
+| OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | DEFERRED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies; if `ENVIRONMENT=production`, `TRUSTED_PROXIES` must be explicitly set (empty value = explicit "none"), unset → startup fails |
+| OPS-05 | Real SMS provider adapter | DEFERRED | HIGH | HIGH | 3 | AUTH-04, D9 | works behind interface |
 | OPS-06 | OpenAPI export & versioning | NOT_STARTED | MEDIUM | LOW | 2 | HANDOFF-01 | versioned file |
-| OPS-07 | Real file storage adapter | BLOCKED | HIGH | MEDIUM | 3 | CAT-05, D10 | works behind interface |
-| PAY-07 | Real payment gateway adapter (Toman→Rial here) | BLOCKED | HIGH | HIGH | 5 | PAY-01, D8 | verify + callback on sandbox |
+| OPS-10 | Provider contract tests (payment, SMS, storage) | COMPLETE | HIGH | MEDIUM | 2 | PAY-01, AUTH-04, CAT-05 | one suite every adapter must pass; fakes pass it; production fails closed |
+| OPS-07 | Real file storage adapter | DEFERRED | HIGH | MEDIUM | 3 | CAT-05, D10 | works behind interface |
+| PAY-07 | Real payment gateway adapter (Toman→Rial here) | DEFERRED | HIGH | HIGH | 5 | PAY-01, D8 | verify + callback on sandbox |
 
-**Phase 5:** 43h
+**Phase 5:** 46h (فعال 29h؛ DEFERRED 17h)
 
 ---
 

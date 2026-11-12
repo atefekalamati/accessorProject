@@ -3,7 +3,7 @@
 فایل‌ها در `tasks/phase-0N/<ID>-<short-slug>.md` قرار دارند. فهرست کامل همه taskها (با یا بدون فایل) در `docs/project/PLAN.md` است.
 
 - **پیشوندها:** FND · INF · AUTH · CAT · INV · PRC · CART · DSC · ADDR · ORD · PAY · ACC · ADM · CNT · SEC · OPS · DEC (task تصمیم؛ `DEC-NN` هم‌شماره `DNN` است).
-- **وضعیت‌ها:** `NOT_STARTED` · `IN_PROGRESS` · `BLOCKED` (منتظر تصمیم باز) · `COMPLETE` · `CANCELLED` (با ذکر دلیل؛ هرگز حذف نمی‌شود).
+- **وضعیت‌ها:** `NOT_STARTED` · `IN_PROGRESS` · `BLOCKED` (منتظر تصمیم باز) · `COMPLETE` · `CANCELLED` (با ذکر دلیل؛ هرگز حذف نمی‌شود) · `DEFERRED` (کاربر به بعد موکول کرد؛ ADR-058).
 
 ## قالب
 

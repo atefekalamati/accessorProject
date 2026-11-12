@@ -3,16 +3,16 @@
 **Last Updated:** 2026-11-13
 
 ## Current / Next
-- **Phase › Milestone:** 4 Account & admin › M4.3 Content & home page — فاز ۴ COMPLETE
-- **Current Task:** M4.3 و فاز ۴ کامل شد. بعدی: دروازه فاز ۴ (PR به master، release notes، منتظر merge کاربر).
-- **Status:** فازهای ۱ تا ۳ در `master` merge شده‌اند. فاز ۳: PR #6، merge `09da5ac`، git tag `phase-3`، image `ghcr.io/atefekalamati/accessorproject-api:phase-3` (هم‌digest با tag `<sha>`). فاز ۴ کامل شد (CI `57d180d` سبز). دروازه فاز ۴: PR به `master`، منتظر merge کاربر.
-- **Progress:** 123/151 task COMPLETE · وزنی 80.3% (347.5h / 433h) · MVP 100%
-- **Blockers:** فاز ۴ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
-- **Next Action:** دروازه فاز ۴ (ADR-037): PR، CI و staging smoke، merge فقط توسط کاربر، سپس تأیید image `phase-4` در GHCR، git tag `phase-4` و شاخه `feat/phase-5-release`. بعد از استقرار، `python -m app.db.seed` دوباره اجرا شود (مجوزهای `payments:refund` و `contact_messages:manage`).
+- **Phase › Milestone:** 5 Release › M5.1 Security / M5.2 Operations
+- **Current Task:** batch ۱ فاز ۵: OPS-06 (نسخه‌بندی OpenAPI).
+- **Status:** فازهای ۱ تا ۴ در `master` merge شده‌اند. فاز ۴: PR #7، merge `094587d`، git tag `phase-4`، image `ghcr.io/atefekalamati/accessorproject-api:phase-4` (هم‌digest با tag `<sha>`، `sha256:7b90b5cc…`). فاز ۵ شروع شد.
+- **Progress:** 125/145 task فعال COMPLETE · وزنی 83.9% (351.5h / 419h؛ 8 task و 17h DEFERRED جدا) · MVP 100%
+- **Blockers:** هیچ مانعی برای فاز ۵ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058).
+- **Next Action:** فاز ۵ با `/phase`. ترتیب: batch ۱ (OPS-10، SEC-04، OPS-06) → plan نیازمندی SEC-00 و OPS-00 (تغییر PRD، منتظر تأیید کاربر) → batch ۲ (SEC-03، OPS-03) → بعد از تأیید: SEC-01، SEC-02، OPS-01، OPS-02 → دروازه فاز ۵.
   - ترتیب: M4.1 (CAT-18، ACC-01، ACC-02) → M4.2 (ADM-01، ADM-03، ADM-06؛ ADM-02؛ ADM-08؛ ADM-04، ADM-05؛ ADM-07) → M4.3 (CNT-01..07).
   - دستور کاربر (2026-10-25): plan milestoneها برای تأیید متوقف نمی‌شود؛ فقط استثناهای استاندارد AUTOPILOT متوقف می‌شوند.
   - taskهای وضعیت سفارش و بازپرداخت (ADM-02 و هر task `refund_required`) بازبین opus دارند. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
-- **Branch:** `feat/phase-4-account-admin` (از `master` در `09da5ac`). شاخه فاز ۳ کاملاً merge شده است.
+- **Branch:** `feat/phase-5-release` (از `master` در `094587d`). شاخه فاز ۴ کاملاً merge شده است.
 - **Repo layout:** monorepo از 2026-10-26 (commit `ebcfbd5`).
   - بک‌اند در `BACKEND/` و فرانت در `FRONTEND/` است. CI در `.github/` ریشه است و داخل `BACKEND/` اجرا می‌شود.
   - جلسه بک‌اند از `BACKEND/` باز شود.
@@ -22,7 +22,7 @@
 ---
 
 ## Overall Progress
-**80.3%** = 347.5h COMPLETE / 433h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**83.9%** = 351.5h COMPLETE / 419h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED و DEFERRED حذف می‌شوند؛ 17h DEFERRED، ADR-058).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -30,16 +30,18 @@
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
-| 4 Account & admin | COMPLETE | 67h | 67h | 100.0% | 2027-02-24 |
-| 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
-| 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2027-04-13 |
+| 4 Account & admin | COMPLETE | 67h | 67h | 100% | 2026-11-13 (واقعی) |
+| 5 Release | IN_PROGRESS | 29h (+17h DEFERRED) | 4h | 13.8% | 2026-11-27 |
+| 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2026-12-18 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 85.5h ≈ 5.7 هفته. MVP کامل است.
+- باقی‌مانده: 67.5h فعال ≈ 4.5 هفته از 2026-11-13. MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-11-13: SEC-04 (audit_logs فقط-افزودنی در دیتابیس: migration 0033 با trigger برای UPDATE و TRUNCATE (DELETE از 0001)، همه ENABLE ALWAYS؛ تنها استثنا SET NULL کلید actor_user_id با حذف کاربر؛ ۱۲ تست integration با SQLSTATE 23000، حالت replica و چرخه migration؛ بازبین مستقل (sonnet) plan و diff را تأیید کرد (رفع دو مورد minor در تست)؛ ریسک نقش مالک جدول به OPS-04 (ADR-059)).
+- 2026-11-13: OPS-10 (تست قرارداد مشترک providerها: storage (Local، InMemory)، SMS (Fake) و درگاه (Fake) پشت یک suite؛ adapter واقعی آینده فقط به فهرست اضافه می‌شود؛ قفل fail-closed در production (درگاه و SMS ساخته نمی‌شوند، startup با job تطبیق شکست می‌خورد، storage حافظه‌ای رد می‌شود)؛ بدون تغییر کد برنامه، چون interface و fake از قبل بودند).
 - 2026-11-13: CNT-07 (تست end-to-end تفکیک عمومی و ادمین: content_manager صفحه، FAQ، بنر و همه نوع سکشن را از API می‌سازد و مهمان بدون ورود فقط منتشرشده‌ها را بدون هیچ فیلد داخلی می‌بیند؛ پیش‌نویس 404؛ محصول ناموجود بدون خرید سریع؛ route‌های عمومی بدون ورود؛ همه route‌های ادمین محتوا در ماتریس نقش‌ها (ADM-07)).
 - 2026-11-12: CNT-03 (بنر زمان‌بندی‌شده: CRUD ادمین با content:manage، تصویر دسکتاپ و موبایل از Media (تصویر محصول 422)، مقصد فقط داخلی (400/404/422)، URL ساخته سرور، بازه [starts_at, ends_at)، نمایش در سکشن hero و چیدمان پیش‌فرض GET /home، پنهان شدن بنر با مقصد غیرعمومی، audit؛ migration 0032؛ بررسی مقصد مشترک با سکشن‌ها (references.py)).
 - 2026-11-11: CNT-02 (CRUD ادمین سکشن‌ها با content:manage: قواعد هر نوع سکشن و پنجره زمانی (400)، مقصد فقط داخلی (لینک بیرونی 400، ناموجود یا حذف‌شده 404، غیرعمومی 422)، محصول، دسته و رسانه آیتم هنگام ذخیره بررسی می‌شوند، display_order تکراری 409 (همزمان هم)، items ارسالی جایگزین می‌شوند، audit با آیتم‌ها؛ اثر روی GET /home تست شد).
@@ -138,14 +140,18 @@
 ## Blockers
 | Blocked task | Cause |
 |---|---|
-| PAY-07 | D8 — انتخاب درگاه واقعی (قبل از فاز ۵) |
-| OPS-05 | D9 — انتخاب SMS provider (قبل از فاز ۵) |
-| OPS-07 | D10 — انتخاب file storage (قبل از فاز ۵) |
-| OPS-04 | D13 — محیط production (deferred به فاز ۵) |
+| PAY-07 | DEFERRED — D8 درگاه واقعی (ADR-058) |
+| OPS-05 | DEFERRED — D9 SMS provider (ADR-058) |
+| OPS-07 | DEFERRED — D10 file storage (ADR-058) |
+| OPS-04 | DEFERRED — D13 محیط production (ADR-058) |
+| production go-live | تا تصمیم D8، D9، D10، D13 و اتمام چهار task بالا (ADR-058) |
 
 ---
 
 ## Plan changes
+### 2026-11-13 — scope فاز ۵ (تصمیم کاربر، ADR-058)
+D8، D9، D10 و D13 موکول شدند. PAY-07، OPS-04، OPS-05، OPS-07 و DEC-08، DEC-09، DEC-10، DEC-13 `DEFERRED` شدند (17h، از درصد و forecast حذف). task جدید OPS-10 (تست قرارداد providerها) و OPS-00 (نیازمندی «پایش و رخدادها» قالبی، طبق قاعده `-00`). forecast از 2026-11-13 دوباره حساب شد: فاز ۵ 2026-11-27 و فاز ۶ 2026-12-18 (پیش‌بینی).
+
 ### 2026-11-13 — CI گیر کرده و سرعت CI (تصمیم کاربر، ADR-057)
 دو run (`7d25afd`، `c19d2e9`) حدود ۱۲ ساعت بدون job در صف GitHub ماندند و نه cancel شدند نه rerun. طبق دستور کاربر دست‌نخورده ماندند و یک commit خالی `ci: retrigger` (`7d87d0e`) همان کد را دوباره اجرا کرد. سپس uv، cache لایه docker و `paths-ignore` روی push اعمال شد. suite کامل و staging-smoke روی هر push باقی ماند.
 
@@ -256,6 +262,12 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-11-13 — SEC-04 COMPLETE
+audit_logs فقط-افزودنی در دیتابیس: migration 0033 با trigger برای UPDATE و TRUNCATE (DELETE از 0001)، همه ENABLE ALWAYS؛ تنها استثنا SET NULL کلید actor_user_id با حذف کاربر؛ ۱۲ تست integration با SQLSTATE 23000، حالت replica و چرخه migration؛ بازبین مستقل (sonnet) plan و diff را تأیید کرد (رفع دو مورد minor در تست)؛ ریسک نقش مالک جدول به OPS-04 (ADR-059).
+
+### 2026-11-13 — OPS-10 COMPLETE
+تست قرارداد مشترک providerها: storage (Local، InMemory)، SMS (Fake) و درگاه (Fake) پشت یک suite؛ adapter واقعی آینده فقط به فهرست اضافه می‌شود؛ قفل fail-closed در production (درگاه و SMS ساخته نمی‌شوند، startup با job تطبیق شکست می‌خورد، storage حافظه‌ای رد می‌شود)؛ بدون تغییر کد برنامه، چون interface و fake از قبل بودند.
+
 ### 2026-11-13 — CNT-07 COMPLETE
 تست end-to-end تفکیک عمومی و ادمین: content_manager صفحه، FAQ، بنر و همه نوع سکشن را از API می‌سازد و مهمان بدون ورود فقط منتشرشده‌ها را بدون هیچ فیلد داخلی می‌بیند؛ پیش‌نویس 404؛ محصول ناموجود بدون خرید سریع؛ route‌های عمومی بدون ورود؛ همه route‌های ادمین محتوا در ماتریس نقش‌ها (ADM-07).
 
