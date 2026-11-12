@@ -213,6 +213,40 @@ class ProductService:
         ]
         return Page.build(cards, total=total, params=request.params)
 
+    async def cards(
+        self,
+        *,
+        sort: ProductSort,
+        limit: int,
+        at: datetime,
+        product_ids: frozenset[UUID] | None = None,
+        category_id: UUID | None = None,
+        has_discount: bool = False,
+    ) -> list[ProductCard]:
+        """Up to ``limit`` public product cards, like one listing page (home page, CNT-01).
+
+        The same visibility (SD rule) and card as the listing; ``product_ids`` narrows to
+        those products, in ``sort`` order.
+        """
+        filters = ListingFilters(
+            category_id=category_id, has_discount=has_discount, product_ids=product_ids
+        )
+        params = PageParams(page=1, limit=limit)
+        async with self._session.begin():
+            listed, _total = await self._repository.list_public(filters, sort, at, params)
+            ids = [product.id for product in listed]
+            variants = await self._repository.public_variants_of(ids)
+            variant_ids = [variant.id for items in variants.values() for variant in items]
+            levels = await self._repository.stock_levels_of(variant_ids, at)
+            images = await self._repository.main_image_keys(ids)
+            colors = await self._repository.colors_of(variant_ids)
+        return [
+            card
+            for product in listed
+            if (card := self._card(product, variants[product.id], levels, images, colors, at))
+            is not None
+        ]
+
     async def pricing(
         self, product_id: UUID, *, variant_id: UUID | None = None, at: datetime | None = None
     ) -> ProductPricingResponse:

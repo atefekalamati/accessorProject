@@ -207,7 +207,7 @@
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | CNT-00 | Rewrite content requirements | COMPLETE | MEDIUM | HIGH | 3 | — | PRD sections ✓ بازبینی‌شده + approved |
-| CNT-01 | HomeSection/items + GET /home | NOT_STARTED | HIGH | MEDIUM | 5 | CAT-08, CNT-04 | only published, in-window content; SD rule (test) |
+| CNT-01 | HomeSection/items + GET /home | COMPLETE | HIGH | MEDIUM | 5 | CAT-08, CNT-04 | only published, in-window content; SD rule (test) |
 | CNT-02 | Admin home sections CRUD (content_manager) | NOT_STARTED | MEDIUM | MEDIUM | 3 | CNT-01, AUTH-10 | ordering controllable; audited; SD rule (test) |
 | CNT-03 | Banner model + admin | NOT_STARTED | MEDIUM | MEDIUM | 3 | CNT-00, CAT-05, CNT-01 | schedule respected |
 | CNT-04 | Static pages (about, terms, privacy) | COMPLETE | LOW | LOW | 3 | CNT-00 | published only |

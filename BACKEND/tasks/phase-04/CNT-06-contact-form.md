@@ -26,4 +26,4 @@ python -m ruff check . ; python -m ruff format --check . ; python -m mypy app te
 ```
 
 ## Log
-- 2026-11-10: فرم تماس: POST /contact برای مهمان و کاربر (201 بدون داده)، سقف دقیق ۵/ساعت IP و ۳/ساعت موبایل با advisory lock و Retry-After، صف ادمین با مجوز جدید contact_messages:manage (support، admin، super_admin)، انتقال new→in_progress→closed، audit بدون متن پیام؛ migration 0030؛ ADR-056. COMPLETE.
+- 2026-11-11: فرم تماس: POST /contact برای مهمان و کاربر (201 بدون داده)، سقف دقیق ۵/ساعت IP و ۳/ساعت موبایل با advisory lock و Retry-After، صف ادمین با مجوز جدید contact_messages:manage (support، admin، super_admin)، انتقال new→in_progress→closed، audit بدون متن پیام؛ migration 0030؛ ADR-056. COMPLETE.

@@ -60,6 +60,8 @@ class ListingFilters:
     max_price: int | None = None
     in_stock: bool = False
     has_discount: bool = False
+    # Only these products (the home page's hand-picked carousel items).
+    product_ids: frozenset[UUID] | None = None
     # Filter key (variant option key or product attribute key) → accepted values.
     # Values of one key are OR-ed; different keys are AND-ed.
     values: Mapping[str, frozenset[str]] = field(default_factory=dict)
@@ -152,6 +154,8 @@ def public_products(filters: ListingFilters, sort: ProductSort, now: datetime) -
     ]
     if filters.category_id is not None:
         criteria.append(Product.category_id == filters.category_id)
+    if filters.product_ids is not None:
+        criteria.append(Product.id.in_(sorted(filters.product_ids)))
     if filters.in_stock:
         criteria.append(_has_free_stock(now))
     for key, values in sorted(filters.values.items()):

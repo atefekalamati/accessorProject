@@ -1,4 +1,4 @@
-"""Content API shapes (CNT-04..06).
+"""Content API shapes (CNT-01, CNT-04..06).
 
 Server-owned fields a client echoes back are dropped, never applied; any other unknown
 field is 400.
@@ -32,6 +32,7 @@ from app.db.models.content import (
     PageStatus,
 )
 from app.modules.auth.schemas import EMAIL_MAX_LENGTH
+from app.modules.catalog.schemas import CategorySummary, ProductCard
 from app.modules.content.markdown import check_markdown
 
 _SYSTEM_FIELDS: Final = frozenset(
@@ -299,3 +300,38 @@ class AdminContactDetail(AdminContactSummary):
     internal_note: str | None
     handled_by: UUID | None
     updated_at: datetime
+
+
+# --- home page (CNT-01) -------------------------------------------------------------------
+
+
+class HomeTarget(BaseModel):
+    type: str
+    slug: str
+
+
+class HomeItem(BaseModel):
+    """One entry; ``product`` is the listing card, ``category`` the category summary."""
+
+    title: str | None = None
+    body: str | None = None
+    icon_key: str | None = None
+    image_url: str | None = None
+    product: ProductCard | None = None
+    category: CategorySummary | None = None
+
+
+class HomeSectionOut(BaseModel):
+    # Null for the default layout shown when no section is active.
+    id: UUID | None
+    type: str
+    title: str
+    subtitle: str | None
+    layout_variant: str | None
+    target: HomeTarget | None
+    items: list[HomeItem]
+
+
+class HomeResponse(BaseModel):
+    sections: list[HomeSectionOut]
+    generated_at: datetime

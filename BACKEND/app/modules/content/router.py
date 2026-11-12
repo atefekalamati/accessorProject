@@ -12,8 +12,12 @@ from app.db.models.catalog import SLUG_PATTERN
 from app.db.session import get_db_session
 from app.modules.auth.dependencies import get_optional_user, require_permission
 from app.modules.auth.service import CurrentUser
+from app.modules.catalog.dependencies import get_product_service
+from app.modules.catalog.product_service import ProductService
+from app.modules.catalog.repository import CategoryRepository
 from app.modules.content.contact import ContactFilters, ContactService
 from app.modules.content.faq import FaqService
+from app.modules.content.home import HomeService
 from app.modules.content.pages import PageFilters, PageService
 from app.modules.content.schemas import (
     AdminContactDetail,
@@ -23,6 +27,7 @@ from app.modules.content.schemas import (
     ContactRequest,
     CreateFaqRequest,
     CreatePageRequest,
+    HomeResponse,
     PublicFaqResponse,
     PublicPageResponse,
     UpdateContactRequest,
@@ -31,12 +36,14 @@ from app.modules.content.schemas import (
 )
 from app.shared.audit import client_ip
 from app.shared.pagination import Page, PageParams, admin_page_params, allowed_query_params
+from app.shared.storage import FileStorage, get_file_storage
 
 pages_router = APIRouter(prefix="/pages", tags=["content"])
 admin_pages_router = APIRouter(prefix="/admin/pages", tags=["admin-content"])
 faq_router = APIRouter(prefix="/faq", tags=["content"])
 admin_faq_router = APIRouter(prefix="/admin/faq", tags=["admin-content"])
 contact_router = APIRouter(prefix="/contact", tags=["content"])
+home_router = APIRouter(prefix="/home", tags=["content"])
 admin_contact_router = APIRouter(prefix="/admin/contact-messages", tags=["admin-content"])
 
 _MANAGER = require_permission("content:manage")
@@ -269,3 +276,26 @@ async def update_contact_message(
 ) -> AdminContactDetail:
     response.headers.update(_NO_STORE)
     return await service.update(actor, message_id, payload, request)
+
+
+# --- home page (CNT-01) -------------------------------------------------------------------
+
+
+def get_home_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    products: Annotated[ProductService, Depends(get_product_service)],
+    storage: Annotated[FileStorage, Depends(get_file_storage)],
+) -> HomeService:
+    return HomeService(session, products, CategoryRepository(session), storage)
+
+
+@home_router.get(
+    "",
+    response_model=HomeResponse,
+    summary="The whole home page: active sections in order, with fresh prices and stock",
+)
+async def get_home(
+    response: Response, service: Annotated[HomeService, Depends(get_home_service)]
+) -> HomeResponse:
+    response.headers.update(_NO_STORE)
+    return await service.home()

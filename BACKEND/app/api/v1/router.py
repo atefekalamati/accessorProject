@@ -18,6 +18,7 @@ from app.modules.content.router import (
     admin_pages_router,
     contact_router,
     faq_router,
+    home_router,
     pages_router,
 )
 from app.modules.discounts.admin_router import router as admin_discounts_router
@@ -70,3 +71,4 @@ api_router.include_router(faq_router)
 api_router.include_router(admin_faq_router)
 api_router.include_router(contact_router)
 api_router.include_router(admin_contact_router)
+api_router.include_router(home_router)
