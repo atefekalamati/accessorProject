@@ -18,21 +18,25 @@ from app.modules.catalog.repository import CategoryRepository
 from app.modules.content.contact import ContactFilters, ContactService
 from app.modules.content.faq import FaqService
 from app.modules.content.home import HomeService
+from app.modules.content.home_admin import AdminHomeService
 from app.modules.content.pages import PageFilters, PageService
 from app.modules.content.schemas import (
     AdminContactDetail,
     AdminContactSummary,
     AdminFaqResponse,
     AdminPageResponse,
+    AdminSectionResponse,
     ContactRequest,
     CreateFaqRequest,
     CreatePageRequest,
+    CreateSectionRequest,
     HomeResponse,
     PublicFaqResponse,
     PublicPageResponse,
     UpdateContactRequest,
     UpdateFaqRequest,
     UpdatePageRequest,
+    UpdateSectionRequest,
 )
 from app.shared.audit import client_ip
 from app.shared.pagination import Page, PageParams, admin_page_params, allowed_query_params
@@ -44,6 +48,7 @@ faq_router = APIRouter(prefix="/faq", tags=["content"])
 admin_faq_router = APIRouter(prefix="/admin/faq", tags=["admin-content"])
 contact_router = APIRouter(prefix="/contact", tags=["content"])
 home_router = APIRouter(prefix="/home", tags=["content"])
+admin_home_router = APIRouter(prefix="/admin/home/sections", tags=["admin-content"])
 admin_contact_router = APIRouter(prefix="/admin/contact-messages", tags=["admin-content"])
 
 _MANAGER = require_permission("content:manage")
@@ -299,3 +304,74 @@ async def get_home(
 ) -> HomeResponse:
     response.headers.update(_NO_STORE)
     return await service.home()
+
+
+# --- admin home sections (CNT-02) ---------------------------------------------------------
+
+
+def get_admin_home_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> AdminHomeService:
+    return AdminHomeService(session, CategoryRepository(session))
+
+
+AdminHome = Annotated[AdminHomeService, Depends(get_admin_home_service)]
+
+
+@admin_home_router.get(
+    "",
+    response_model=Page[AdminSectionResponse],
+    summary="Live home sections with their items, in display order",
+    dependencies=[Depends(_MANAGER), Depends(allowed_query_params("page", "limit"))],
+)
+async def list_sections(
+    response: Response,
+    paging: Annotated[PageParams, Depends(admin_page_params)],
+    service: AdminHome,
+) -> Page[AdminSectionResponse]:
+    response.headers.update(_NO_STORE)
+    return await service.list_sections(paging)
+
+
+@admin_home_router.post(
+    "",
+    response_model=AdminSectionResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a home section; links and items are checked when saved",
+)
+async def create_section(
+    payload: CreateSectionRequest,
+    request: Request,
+    response: Response,
+    actor: Manager,
+    service: AdminHome,
+) -> AdminSectionResponse:
+    response.headers.update(_NO_STORE)
+    return await service.create(actor, payload, request)
+
+
+@admin_home_router.patch(
+    "/{section_id}",
+    response_model=AdminSectionResponse,
+    summary="Change a home section; sent items replace the list",
+)
+async def update_section(
+    section_id: UUID,
+    payload: UpdateSectionRequest,
+    request: Request,
+    response: Response,
+    actor: Manager,
+    service: AdminHome,
+) -> AdminSectionResponse:
+    response.headers.update(_NO_STORE)
+    return await service.update(actor, section_id, payload, request)
+
+
+@admin_home_router.delete(
+    "/{section_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Soft delete a home section"
+)
+async def delete_section(
+    section_id: UUID, request: Request, actor: Manager, service: AdminHome
+) -> Response:
+    await service.delete(actor, section_id, request)
+    return Response(status_code=status.HTTP_204_NO_CONTENT, headers=_NO_STORE)

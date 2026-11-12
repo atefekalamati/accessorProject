@@ -15,6 +15,7 @@ from app.modules.checkout.router import router as checkout_router
 from app.modules.content.router import (
     admin_contact_router,
     admin_faq_router,
+    admin_home_router,
     admin_pages_router,
     contact_router,
     faq_router,
@@ -72,3 +73,4 @@ api_router.include_router(admin_faq_router)
 api_router.include_router(contact_router)
 api_router.include_router(admin_contact_router)
 api_router.include_router(home_router)
+api_router.include_router(admin_home_router)

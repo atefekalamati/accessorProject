@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 4 Account & admin › M4.2 Admin panel
-- **Current Task:** CNT-01 کامل شد. بعدی: CNT-02 (CRUD ادمین سکشن‌ها)، CNT-03 (بنر)، سپس CNT-07 و دروازه فاز ۴.
+- **Current Task:** CNT-02 کامل شد. بعدی: CNT-03 (بنر)، سپس CNT-07 و دروازه فاز ۴.
 - **Status:** فازهای ۱ تا ۳ در `master` merge شده‌اند. فاز ۳: PR #6، merge `09da5ac`، git tag `phase-3`، image `ghcr.io/atefekalamati/accessorproject-api:phase-3` (هم‌digest با tag `<sha>`). فاز ۴ شروع شد.
-- **Progress:** 120/151 task COMPLETE · وزنی 78.4% (339.5h / 433h) · MVP 100%
+- **Progress:** 121/151 task COMPLETE · وزنی 79.1% (342.5h / 433h) · MVP 100%
 - **Blockers:** فاز ۳ مانعی ندارد. در فاز ۵: D8، D9، D10 (انتخاب provider واقعی) و D13.
 - **Next Action:** فاز ۴ با `/phase`.
   - ترتیب: M4.1 (CAT-18، ACC-01، ACC-02) → M4.2 (ADM-01، ADM-03، ADM-06؛ ADM-02؛ ADM-08؛ ADM-04، ADM-05؛ ADM-07) → M4.3 (CNT-01..07).
@@ -22,7 +22,7 @@
 ---
 
 ## Overall Progress
-**78.4%** = 339.5h COMPLETE / 433h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
+**79.1%** = 342.5h COMPLETE / 433h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED حذف می‌شود).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -30,16 +30,17 @@
 | 1 Foundation | COMPLETE | 37h | 37h | 100% | 2026-10-09 |
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
-| 4 Account & admin | IN_PROGRESS | 67h | 59h | 88.1% | 2027-02-24 |
+| 4 Account & admin | IN_PROGRESS | 67h | 62h | 92.5% | 2027-02-24 |
 | 5 Release | NOT_STARTED | 43h | 0 | 0% | 2027-03-12 |
 | 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2027-04-13 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 93.5h ≈ 6.2 هفته. MVP کامل است.
+- باقی‌مانده: 90.5h ≈ 6.0 هفته. MVP کامل است.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-11-11: CNT-02 (CRUD ادمین سکشن‌ها با content:manage: قواعد هر نوع سکشن و پنجره زمانی (400)، مقصد فقط داخلی (لینک بیرونی 400، ناموجود یا حذف‌شده 404، غیرعمومی 422)، محصول، دسته و رسانه آیتم هنگام ذخیره بررسی می‌شوند، display_order تکراری 409 (همزمان هم)، items ارسالی جایگزین می‌شوند، audit با آیتم‌ها؛ اثر روی GET /home تست شد).
 - 2026-11-11: CNT-01 (GET /home: سکشن‌های فعال در بازه به ترتیب display_order؛ carousel با اولویت آیتم دستی و پرکردن از منبع (newest، best_selling، discount، category)، حداکثر ۲۰ با کارت لیست؛ SD rule برای محصول، دسته و صفحه؛ سکشن خالی یا با مقصد غیرعمومی پنهان؛ خطای یک سکشن جداشده؛ چیدمان پیش‌فرض؛ migration 0031).
 - 2026-11-11: CNT-06 (فرم تماس: POST /contact برای مهمان و کاربر (201 بدون داده)، سقف دقیق ۵/ساعت IP و ۳/ساعت موبایل با advisory lock و Retry-After، صف ادمین با مجوز جدید contact_messages:manage (support، admin، super_admin)، انتقال new→in_progress→closed، audit بدون متن پیام؛ migration 0030؛ ADR-056).
 - 2026-11-10: CNT-05 (پرسش‌های متداول: GET /faq گروه‌بندی‌شده با ترتیب پایدار، فقط منتشرشده، CRUD ادمین با content:manage، رد HTML خام، audit؛ migration 0029).
@@ -250,6 +251,9 @@
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-11-11 — CNT-02 COMPLETE
+CRUD ادمین سکشن‌ها با content:manage: قواعد هر نوع سکشن و پنجره زمانی (400)، مقصد فقط داخلی (لینک بیرونی 400، ناموجود یا حذف‌شده 404، غیرعمومی 422)، محصول، دسته و رسانه آیتم هنگام ذخیره بررسی می‌شوند، display_order تکراری 409 (همزمان هم)، items ارسالی جایگزین می‌شوند، audit با آیتم‌ها؛ اثر روی GET /home تست شد.
+
 ### 2026-11-11 — CNT-01 COMPLETE
 GET /home: سکشن‌های فعال در بازه به ترتیب display_order؛ carousel با اولویت آیتم دستی و پرکردن از منبع (newest، best_selling، discount، category)، حداکثر ۲۰ با کارت لیست؛ SD rule برای محصول، دسته و صفحه؛ سکشن خالی یا با مقصد غیرعمومی پنهان؛ خطای یک سکشن جداشده؛ چیدمان پیش‌فرض؛ migration 0031.
 

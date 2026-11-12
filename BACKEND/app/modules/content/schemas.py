@@ -1,4 +1,4 @@
-"""Content API shapes (CNT-01, CNT-04..06).
+"""Content API shapes (CNT-01, CNT-02, CNT-04..06).
 
 Server-owned fields a client echoes back are dropped, never applied; any other unknown
 field is 400.
@@ -13,6 +13,7 @@ from uuid import UUID
 from email_validator import EmailNotValidError, validate_email
 from pydantic import (
     AfterValidator,
+    AwareDatetime,
     BaseModel,
     ConfigDict,
     Field,
@@ -28,8 +29,13 @@ from app.db.models.content import (
     MAX_CONTACT_TEXT_LENGTH,
     MAX_FAQ_ANSWER_LENGTH,
     MAX_PAGE_BODY_LENGTH,
+    MAX_SECTION_PRODUCTS,
+    MAX_SECTION_TEXT_LENGTH,
     ContactStatus,
     PageStatus,
+    ProductSource,
+    SectionType,
+    TargetType,
 )
 from app.modules.auth.schemas import EMAIL_MAX_LENGTH
 from app.modules.catalog.schemas import CategorySummary, ProductCard
@@ -335,3 +341,145 @@ class HomeSectionOut(BaseModel):
 class HomeResponse(BaseModel):
     sections: list[HomeSectionOut]
     generated_at: datetime
+
+
+# --- admin home sections (CNT-02) ---------------------------------------------------------
+
+
+MAX_SECTION_ITEMS: Final = 50
+
+SectionTitle = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200, pattern=_NO_CONTROL)
+]
+SectionSubtitle = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300, pattern=_NO_CONTROL)
+]
+ShortKey = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50, pattern=_NO_CONTROL)
+]
+SectionText = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_SECTION_TEXT_LENGTH),
+    AfterValidator(check_markdown),
+]
+ProductLimit = Annotated[int, Field(strict=True, ge=1, le=MAX_SECTION_PRODUCTS)]
+_SECTION_NULLABLE: Final = frozenset(
+    {
+        "subtitle",
+        "layout_variant",
+        "starts_at",
+        "ends_at",
+        "target_id",
+        "product_source",
+        "source_category_id",
+    }
+)
+
+
+class SectionItemIn(BaseModel):
+    """What an item holds depends on the section type (checked with the whole section)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    product_id: UUID | None = None
+    category_id: UUID | None = None
+    title_override: SectionTitle | None = None
+    body: SectionText | None = None
+    image_media_id: UUID | None = None
+    icon_key: ShortKey | None = None
+    is_active: StrictBool = True
+
+    @model_validator(mode="before")
+    @classmethod
+    def _system_fields(cls, data: Any) -> Any:
+        return drop_system_fields(data)
+
+
+class CreateSectionRequest(BaseModel):
+    """Links are internal only (D41): a URL field or another target type is a 400."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: SectionType
+    title: SectionTitle
+    subtitle: SectionSubtitle | None = None
+    layout_variant: ShortKey | None = None
+    display_order: DisplayOrder
+    is_active: StrictBool = True
+    starts_at: AwareDatetime | None = None
+    ends_at: AwareDatetime | None = None
+    target_type: TargetType = TargetType.NONE
+    target_id: UUID | None = None
+    product_source: ProductSource | None = None
+    source_category_id: UUID | None = None
+    product_limit: ProductLimit = 12
+    items: list[SectionItemIn] = Field(default_factory=list, max_length=MAX_SECTION_ITEMS)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _system_fields(cls, data: Any) -> Any:
+        return drop_system_fields(data)
+
+
+class UpdateSectionRequest(BaseModel):
+    """Sent fields change; sent ``items`` replace the whole list."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: SectionType | None = None
+    title: SectionTitle | None = None
+    subtitle: SectionSubtitle | None = None
+    layout_variant: ShortKey | None = None
+    display_order: DisplayOrder | None = None
+    is_active: StrictBool | None = None
+    starts_at: AwareDatetime | None = None
+    ends_at: AwareDatetime | None = None
+    target_type: TargetType | None = None
+    target_id: UUID | None = None
+    product_source: ProductSource | None = None
+    source_category_id: UUID | None = None
+    product_limit: ProductLimit | None = None
+    items: list[SectionItemIn] | None = Field(default=None, max_length=MAX_SECTION_ITEMS)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _system_fields(cls, data: Any) -> Any:
+        return drop_system_fields(data)
+
+    @model_validator(mode="after")
+    def _fields(self) -> UpdateSectionRequest:
+        require_some_non_null(self, _SECTION_NULLABLE)
+        return self
+
+
+class AdminSectionItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    product_id: UUID | None
+    category_id: UUID | None
+    title_override: str | None
+    body: str | None
+    image_media_id: UUID | None
+    icon_key: str | None
+    is_active: bool
+
+
+class AdminSectionResponse(BaseModel):
+    id: UUID
+    type: str
+    title: str
+    subtitle: str | None
+    layout_variant: str | None
+    display_order: int
+    is_active: bool
+    starts_at: datetime | None
+    ends_at: datetime | None
+    target_type: str
+    target_id: UUID | None
+    product_source: str | None
+    source_category_id: UUID | None
+    product_limit: int
+    created_at: datetime
+    updated_at: datetime
+    items: list[AdminSectionItem]

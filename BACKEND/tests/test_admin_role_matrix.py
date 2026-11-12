@@ -106,6 +106,11 @@ MATRIX: Final[dict[tuple[str, str], frozenset[str]]] = {
     ("POST", "/admin/faq"): _one("content:manage"),
     ("PATCH", "/admin/faq/{item_id}"): _one("content:manage"),
     ("DELETE", "/admin/faq/{item_id}"): _one("content:manage"),
+    # home sections (CNT-02)
+    ("GET", "/admin/home/sections"): _one("content:manage"),
+    ("POST", "/admin/home/sections"): _one("content:manage"),
+    ("PATCH", "/admin/home/sections/{section_id}"): _one("content:manage"),
+    ("DELETE", "/admin/home/sections/{section_id}"): _one("content:manage"),
     # contact messages (CNT-06)
     ("GET", "/admin/contact-messages"): _one("contact_messages:manage"),
     ("GET", "/admin/contact-messages/{message_id}"): _one("contact_messages:manage"),
