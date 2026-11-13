@@ -52,4 +52,4 @@ class CallbackResponse(BaseModel):
     outcome is returned. The order itself is read with a token (ADR-061, SEC-08).
     """
 
-    outcome: str
+    outcome: Literal["success", "failed", "pending"]

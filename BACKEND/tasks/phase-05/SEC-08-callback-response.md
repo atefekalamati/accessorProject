@@ -1,4 +1,4 @@
-# SEC-08 — Payment callback response: outcome only (SECURITY-REVIEW F4)
+# SEC-08 — Payment callback response: outcome only, three public values (SECURITY-REVIEW F4)
 
 **Status:** COMPLETE · **Priority:** MEDIUM · **Estimate:** 1h (estimate) · **Deadline:** — · **Dependencies:** SEC-03 · **Level:** HIGH
 
@@ -13,6 +13,7 @@
 - [x] رفتار callback (verify، اعمال در یک تراکنش، idempotency، metrics، no-store، 400/404/429/503) بدون تغییر است.
 - [x] تست‌های موجود و smoke staging وضعیت سفارش را از `GET /orders/{order_number}` با token یا از دیتابیس می‌خوانند.
 - [x] FRONTEND.md §۷ قرارداد جدید را دارد: شماره سفارش از init یا `POST /orders` نگه داشته می‌شود و وضعیت با token خوانده می‌شود.
+- [x] (تصمیم دوم کاربر) `outcome` عمومی فقط `success`، `failed` یا `pending` است، با نگاشت خالص `public_outcome` و unit test برای هر ترکیب (outcome داخلی × payment_status سفارش). کاربر واردنشده: ورود، سپس بازگشت به همان سفارش. PRD «پرداخت» و ADR-051 به‌روز شدند.
 - [x] ADR-061 ثبت شد، F4 در SECURITY-REVIEW.md بسته شد، PLAN.md و PROGRESS.md به‌روز شدند.
 
 ## Plan
@@ -36,3 +37,6 @@ python -m ruff check . ; python -m ruff format --check . ; python -m mypy app te
 - 2026-11-13: بازبین opus (plan): approve with changes؛ رفع شد: بازتولید docs/api/openapi.json، assert no-store در محافظ شکل پاسخ، جریان refresh سمت client و sessionStorage و fallbackها در FRONTEND.md §۷، ثبت ریسک پذیرفته‌شده در ADR-061.
 - 2026-11-13: پیاده‌سازی؛ pytest کامل ۲۳۵۲ سبز، ruff و mypy سبز.
 - 2026-11-13: بازبین opus (diff نهایی): approve؛ هیچ یافته blocker یا major نبود؛ دو مورد minor (Log و PROGRESS) انجام شده بود. COMPLETE.
+- 2026-11-13: تصمیم دوم کاربر: `outcome` عمومی سه‌مقداری (`success|failed|pending`)، نگاشت بر اساس payment_status سفارش (گزینه پیشنهادی). نتیجه داخلی در متریک، log و audit ماند. assertهای تست به مقدار عمومی نگاشت شدند و تست همزمانی حالا یک audit `payment.paid` را می‌شمارد. ADR-051 (یادداشت)، ADR-061، PRD «پرداخت»، FRONTEND.md §۷ و openapi.json به‌روز شدند.
+- 2026-11-13: بازبین opus (diff سه‌مقداری): approve with fixes؛ نگاشت در همه ترکیب‌های قابل دسترس درست است. رفع شد: snapshot فاز ۵ دوباره با enum فریز شد، header تکراری جدول FRONTEND.md حذف شد، ردیف‌های pending، لغوشده و «هر حالت دیگر» اضافه شد، assert «پرداخت paid و بدون failure_reason» در تست replay و تست reconcile (جلوگیری از طبقه‌بندی اشتباه به duplicate)، دو ترکیب (AMOUNT_MISMATCH، PAID) و (PENDING، PAID) در unit test. تست API متریک outcome داخلی (اختیاری) انجام نشد، چون متریک قبلاً در OPS-01 تست شده و router تغییری در آن نداده است.
+- 2026-11-13: suite کامل ۲۳۶۴ تست: ۲۳۶۳ سبز و یک fail با علت روشن. تست «شکست دیرهنگام بعد از موفقیت پرداخت دیگر» هنوز `failed` انتظار داشت، در حالی که طبق قاعده (وضعیت سفارش برنده است) سفارش paid مانده و پاسخ `success` است. انتظار تست اصلاح شد و ۷ فایل تست مرتبط دوباره اجرا شدند (۷۸ سبز). ruff و mypy سبز. COMPLETE.

@@ -155,7 +155,7 @@ async def test_a_callback_first_commits_expired_itself(
     response = await callback
 
     assert skipped.skipped >= 1
-    assert response.json()["outcome"] == "refund_required"
+    assert response.json()["outcome"] == "failed"
     await _refunded(db_engine, variant, order_id)
 
 
@@ -168,7 +168,7 @@ async def test_a_success_racing_a_live_reservation_sweep_is_sold(
         _callback(auth_client, payment.gateway_reference), sweep_expired_reservations(db_engine)
     )
 
-    assert callback.json()["outcome"] == "paid" and swept.failed == 0
+    assert callback.json()["outcome"] == "success" and swept.failed == 0
     await _sold(db_engine, variant, order_id)
 
 
@@ -204,7 +204,7 @@ async def test_a_late_success_against_a_customer_cancel(
             _callback(auth_client, payment.gateway_reference),
             _cancel(ready, order_id),
         )
-        assert callback.json()["outcome"] == "paid"
+        assert callback.json()["outcome"] == "success"
         _error(cancelled, 422, "INVALID_STATE_TRANSITION")
         await _sold(db_engine, variant, order_id)
     else:
@@ -215,7 +215,7 @@ async def test_a_late_success_against_a_customer_cancel(
             _callback(auth_client, payment.gateway_reference),
         )
         assert cancelled.status_code == 200, cancelled.text
-        assert callback.json()["outcome"] == "refund_required"
+        assert callback.json()["outcome"] == "failed"
         await _refunded(
             db_engine, variant, order_id, reason="order_cancelled", reservation="released"
         )
@@ -232,7 +232,7 @@ async def test_a_cancel_while_the_customer_is_at_the_gateway_is_refused(
 
     # Pending payment: 409; once paid: 422. Either way the sale stands.
     assert cancelled.json()["error"]["code"] in ("PAYMENT_IN_PROGRESS", "INVALID_STATE_TRANSITION")
-    assert callback.json()["outcome"] == "paid"
+    assert callback.json()["outcome"] == "success"
     await _sold(db_engine, variant, order_id)
 
 
@@ -251,7 +251,7 @@ async def test_a_success_racing_a_new_order_of_the_same_customer(
         ready.order(fingerprint="0" * 64),
     )
 
-    assert callback.json()["outcome"] == "paid"
+    assert callback.json()["outcome"] == "success"
     error = again.json()["error"]
     # Before the payment: the live pending order. After it: the ordered lines left the
     # cart, which is now empty (checked before the fingerprint).
@@ -273,7 +273,7 @@ async def test_init_racing_the_callback_resumes_or_refuses(
         _init(ready, order_id), _callback(auth_client, payment.gateway_reference)
     )
 
-    assert callback.json()["outcome"] == "paid"
+    assert callback.json()["outcome"] == "success"
     if started.status_code == 201:
         assert started.json()["payment_id"] == str(payment.id)  # resumed, not a second one
     else:
@@ -294,10 +294,7 @@ async def test_callbacks_after_the_order_was_cancelled_by_expiry_refund_once(
     first = await _callback(auth_client, payment.gateway_reference)
     replay = await _callback(auth_client, payment.gateway_reference)
 
-    assert (first.json()["outcome"], replay.json()["outcome"]) == (
-        "refund_required",
-        "already_processed",
-    )
+    assert (first.json()["outcome"], replay.json()["outcome"]) == ("failed", "failed")
     # init's lazy cancel released the active reservation (it had already expired).
     await _refunded(db_engine, variant, order_id, reservation="released")
     refunds = await _count(
@@ -318,7 +315,7 @@ async def test_a_paid_order_is_sold_even_if_its_product_was_deleted_since(
     response = await _callback(auth_client, payment.gateway_reference)
 
     # The order holds its own snapshot and reservation; a later delete cannot undo a sale.
-    assert response.json()["outcome"] == "paid"
+    assert response.json()["outcome"] == "success"
     await _sold(db_engine, variant, order_id)
 
 

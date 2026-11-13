@@ -89,7 +89,7 @@ async def _late_paid(
     await _complete(auth_client, payment)
     await _expire_now(db_engine, order_id)
     settled = await _callback(auth_client, payment.gateway_reference)
-    assert settled.json()["outcome"] == "refund_required", settled.text
+    assert settled.json()["outcome"] == "failed", settled.text
     return ready, order_id, payment
 
 
@@ -168,7 +168,7 @@ async def test_a_full_refund_of_the_gateway_amount(
     _error(await _refund(auth_client, refunder, payment.id, "OTHER-1"), 409, "CONFLICT")
     # A late or repeated callback never reopens it.
     late = await _callback(auth_client, payment.gateway_reference)
-    assert late.json()["outcome"] == "already_processed"
+    assert late.json()["outcome"] == "failed"  # the order is no longer paid
     assert (await _payment(db_engine, payment.id)).status == "refunded"
     listed = await auth_client.get(
         PAYMENTS, params={"status": "refunded", "limit": 100}, headers=refunder.headers
@@ -189,7 +189,7 @@ async def test_an_unknown_gateway_amount_needs_the_amount_staff_paid(
     # 5 rial more than asked: not a whole toman, so the gateway figure is unknown.
     await _complete(auth_client, payment, amount_rial=payment.amount * 10 + 5)
     settled = await _callback(auth_client, payment.gateway_reference)
-    assert settled.json()["outcome"] == "amount_mismatch"
+    assert settled.json()["outcome"] == "failed"
     assert (await _payment(db_engine, payment.id)).paid_amount is None
     order = await _order(db_engine, order_id)
 
@@ -273,7 +273,7 @@ async def test_a_duplicate_on_a_paid_order_leaves_the_order_paid(
     order_id = await _placed(ready)
     first = await _started(ready, order_id)
     await _complete(auth_client, first)
-    assert (await _callback(auth_client, first.gateway_reference)).json()["outcome"] == "paid"
+    assert (await _callback(auth_client, first.gateway_reference)).json()["outcome"] == "success"
     duplicate = await _another_paid_attempt(auth_client, db_engine, order_id, first.amount)
     assert (await _payment(db_engine, duplicate)).status == "refund_required"
 
@@ -376,9 +376,7 @@ async def test_a_zero_gateway_amount_has_nothing_to_refund(
     order_id = await _placed(ready)
     payment = await _started(ready, order_id)
     await _complete(auth_client, payment, amount_rial=0)
-    assert (await _callback(auth_client, payment.gateway_reference)).json()["outcome"] == (
-        "amount_mismatch"
-    )
+    assert (await _callback(auth_client, payment.gateway_reference)).json()["outcome"] == "failed"
     assert (await _payment(db_engine, payment.id)).paid_amount == 0
 
     for extra in ({}, {"amount": 1}):

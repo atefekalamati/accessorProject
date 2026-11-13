@@ -14,7 +14,7 @@ from app.db.models import FakeGatewaySession
 from app.db.session import get_db_session
 from app.modules.auth.dependencies import get_current_user
 from app.modules.auth.service import CurrentUser
-from app.modules.payments.callback import CallbackService, read_body
+from app.modules.payments.callback import CallbackService, public_outcome, read_body
 from app.modules.payments.gateways import get_payment_gateway
 from app.modules.payments.gateways.base import PaymentGateway
 from app.modules.payments.gateways.fake import FakeGateway
@@ -79,7 +79,7 @@ async def payment_callback(
     metrics = getattr(request.app.state, "metrics", None)
     if metrics is not None:
         metrics.payment_callback(applied.outcome.value)
-    body = CallbackResponse(outcome=applied.outcome.value)
+    body = CallbackResponse(outcome=public_outcome(applied).value)
     return JSONResponse(content=body.model_dump(mode="json"), headers=dict(NO_STORE))
 
 

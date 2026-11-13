@@ -160,7 +160,7 @@ async def test_a_purchase_from_guest_cart_to_paid_order(
     paid = await shopper.pay(order["id"])
 
     assert paid["started"]["amount"] == order["grand_total"]
-    assert paid["callback"] == {"outcome": "paid"}
+    assert paid["callback"] == {"outcome": "success"}
     assert (paid["order"]["status"], paid["order"]["payment_status"]) == ("confirmed", "paid")
     assert paid["order"]["order_number"] == order["order_number"]
     assert await _stock(db_engine, ring) == (3, 0)  # committed
@@ -191,7 +191,7 @@ async def test_a_declined_payment_is_retried_to_success(
     assert await _stock(db_engine, ring) == (5, 1)  # still held for the retry (D34)
     paid = await shopper.pay(order["id"])
 
-    assert paid["callback"]["outcome"] == "paid"
+    assert paid["callback"]["outcome"] == "success"
     assert paid["started"]["payment_id"] != declined["started"]["payment_id"]
     assert await _stock(db_engine, ring) == (4, 0)
 
@@ -216,7 +216,7 @@ async def test_a_payment_after_the_reservation_expired_is_refund_required(
     callback = await shopper.client.post(f"{API}/payments/callback", json={"reference": reference})
 
     assert callback.status_code == 200, callback.text
-    assert callback.json() == {"outcome": "refund_required"}
+    assert callback.json() == {"outcome": "failed"}
     seen = await shopper.call("GET", f"/orders/{order['order_number']}", 200)
     assert (seen["status"], seen["payment_status"]) == ("cancelled", "refund_required")
     assert await _stock(db_engine, ring) == (5, 0)  # never consumed

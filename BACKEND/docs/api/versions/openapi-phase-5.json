@@ -20025,6 +20025,11 @@
         "properties": {
           "outcome": {
             "type": "string",
+            "enum": [
+              "success",
+              "failed",
+              "pending"
+            ],
             "title": "Outcome"
           }
         },

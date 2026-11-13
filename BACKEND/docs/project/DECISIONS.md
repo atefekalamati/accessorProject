@@ -540,6 +540,7 @@
 - تصمیم (کاربر):
   1. **مبلغ ناهمخوان:** verify نتیجه PAID می‌دهد ولی مبلغ ≠ `payment.amount` یا ≠ `grand_total`. در این حالت payment → `refund_required` با reason `amount_mismatch`، به‌همراه log ERROR و audit. رزرو مصرف نمی‌شود، سفارش باز می‌ماند (order payment → `failed`) و retry در مهلت ممکن است.
   2. **پاسخ callback:** به هر callback پردازش‌شده 200 داده می‌شود و نتیجه (`outcome`) در بدنه است (تکراری، PAID، FAILED، PENDING، mismatch، refund_required، duplicate). هدف جلوگیری از retry storm درگاه است. ref ناشناخته 404 می‌گیرد، rate limit 429 و بدنه نامعتبر 400.
+     - **به‌روزرسانی 2026-11-13 (ADR-061، SEC-08):** پاسخ عمومی فقط `{outcome}` با سه مقدار `success`، `failed` و `pending` است. شماره و وضعیت سفارش حذف شدند. هفت نتیجه داخلی بالا در متریک، log و audit می‌مانند. جزئیات با token از `GET /orders/{order_number}`.
   3. **init دوباره روی payment pending:** اگر session درگاه هنوز معتبر است (`gateway_expires_at` > now)، همان `redirect_url` برمی‌گردد. وگرنه payment قدیمی با درگاه verify و اعمال می‌شود؛ اگر باز هم pending ماند، `failed` (`superseded`) می‌شود و payment جدید ساخته می‌شود.
   4. **پرداخت دوم روی سفارش paid:** payment → `refund_required` (`duplicate_payment`) با audit و WARNING. سفارش، موجودی، سبد و redemption فقط یک بار اثر می‌گیرند.
   5. callback به شکل `POST` با JSON طبق PRD است. پشتیبانی GET redirect در PAY-07.
@@ -714,10 +715,16 @@
 ### ADR-061 — پاسخ عمومی callback پرداخت فقط outcome است (SEC-08؛ تصمیم کاربر)
 - تاریخ: 2026-11-13
 - زمینه: `POST /payments/callback` بدون ورود است و reference درگاه در تاریخچه مرورگر می‌ماند. پاسخ قبلی (ADR-051) `order_number` و وضعیت سفارش و پرداخت را به هر دارنده reference می‌داد (SECURITY-REVIEW F4).
-- تصمیم (کاربر): پاسخ 200 فقط `{outcome}` است. صفحه نتیجه `order_number` را قبل از redirect در `sessionStorage` نگه می‌دارد، بعد از load در سمت client refresh می‌کند و سفارش را با token از `GET /orders/{order_number}` می‌خواند (FRONTEND.md §۷).
-- ریسک پذیرفته‌شده: دارنده reference هنوز نتیجه (paid، failed، refund و…) را برای یک reference بی‌نام می‌بیند، بدون هویت سفارش، مبلغ یا PII. فراخوانی callback توسط هر کسی مثل قبل بی‌خطر است، چون idempotent است و سرور با درگاه verify می‌کند.
+- تصمیم (کاربر): پاسخ 200 فقط `{outcome}` است، با سه مقدار عمومی:
+  - `success`: payment_status سفارش `paid` است. شامل `paid`، `already_processed` روی سفارش پرداخت‌شده، و `duplicate_payment` (سفارش پرداخت‌شده است؛ بازپرداخت پرداخت دوم کار ادمین است).
+  - `pending`: درگاه هنوز نتیجه قطعی نداده است.
+  - `failed`: هر حالت دیگر: `failed`، `amount_mismatch`، `refund_required`، و `already_processed` روی سفارش پرداخت‌نشده یا بازپرداخت‌شده.
+  - نگاشت تابع خالص `public_outcome` در `app/modules/payments/callback.py` است. هفت نتیجه داخلی (ADR-051) در متریک `payment_callback`، log و audit می‌مانند.
+- صفحه نتیجه `order_number` را قبل از redirect در `sessionStorage` نگه می‌دارد، بعد از load در سمت client refresh می‌کند و سفارش را با token از `GET /orders/{order_number}` می‌خواند (FRONTEND.md §۷).
+- کاربر واردنشده: پیام کلی `outcome`، سپس ورود و بازگشت به صفحه همان سفارش.
+- ریسک پذیرفته‌شده: دارنده reference هنوز یکی از سه نتیجه را برای یک reference بی‌نام می‌بیند، بدون هویت سفارش، مبلغ یا PII. فراخوانی callback توسط هر کسی مثل قبل بی‌خطر است، چون idempotent است و سرور با درگاه verify می‌کند.
 - بدون تغییر: verify، تراکنش، idempotency، متریک، `no-store` و خطاهای 400/404/429/503. `Applied` داخلی دست نخورد.
-- پیامدها: ADR-051 (شکل پاسخ)، FRONTEND.md §۷، smoke staging، snapshot OpenAPI فاز ۵.
+- پیامدها: ADR-051 (شکل پاسخ، به‌روز شد)، PRD «پرداخت» (پاسخ callback)، FRONTEND.md §۷، smoke staging، snapshot OpenAPI فاز ۵.
 
 ### تصمیم‌های deferred
 - **D8، D9، D10، D13:** به تصمیم کاربر موکول شدند (ADR-058). production تا آن موقع مسدود است.
@@ -741,6 +748,7 @@
 | 2026-10-25 | «معماری سیستم»، «هویت و دسترسی»، «قیمت و مالیات»، «موجودی و رزرو»، «سبد خرید»، «ورود یا خرید مهمان»، «شیوه ارسال»، «کد تخفیف»، «پرداخت»، «نتیجه سفارش»، «تخفیف‌ها»، «انبار» (یادداشت) | هم‌خوانی با کد (HANDOFF-01): قرارداد snake_case و 429/503؛ دسترسی پنل با permission؛ چرخش refresh و reuse detection؛ CartPriceSnapshot حذف و flagهای per-line؛ فیلدهای OrderItem/OrderPriceSnapshot/Order/Payment؛ شکست پرداخت رزرو را نگه می‌دارد؛ `acknowledge-prices`؛ وضعیت `converted` سبد حذف؛ callback همیشه 200 با `outcome`، mismatch و duplicate → refund_required، init دوباره و 503؛ `ORDER_PENDING`، لغو با payment pending → 409، `GET /orders` در ACC-01؛ انتقال‌های payment؛ درصد کد به basis point | ADR-017–019، ADR-038، ADR-040–048، ADR-050–052 |
 | 2026-10-26 | «پروفایل»، «سفارش‌ها»، «داشبورد»، «مشتریان»، «گزارش‌ها»، «گزارش ممیزی»، «محتوا و بنرها»، «درباره برند»، «تماس با ما»، «سؤالات متداول»، «قوانین و حریم خصوصی» (همه ✓)؛ «مدیریت سفارش» ✓ و «صفحه اصلی» ✓ (تکمیل)؛ «دسته‌بندی محصولات» ✓ (کارت) | بازنویسی یازده بخش قالبی (ACC-00، ADM-00، CNT-00)؛ بازپرداخت دستی و Shipment؛ کاهش scope صفحه اصلی؛ `color_swatches` و `is_new` | D35–D42 (ADR-053) |
 | 2026-11-13 | «حالت‌های رابط»، «امنیت»، «تست و پذیرش»، «پایش و رخدادها» (همه ✓) | بازنویسی چهار بخش قالبی؛ سقف سراسری درخواست، هدرهای امنیتی، سقف بدنه، خاموشی مستندات API در production، معیار آماده بودن نسخه، متریک و هشدار و پشتیبان؛ endpointهای قالبی حذف شدند (SEC-00، OPS-00) | ADR-060 |
+| 2026-11-13 | «پرداخت» (پاسخ callback) | پاسخ عمومی callback فقط `outcome` با سه مقدار `success`، `failed` و `pending`؛ شماره و وضعیت سفارش حذف شد؛ جزئیات با token از `GET /orders/{order_number}` (SEC-08) | ADR-061 |
 
 قاعده: هر task نوع `XX-00` بخش قالبی ماژول خود را در PRD بازنویسی می‌کند، به عنوان آن بخش «✓ بازبینی‌شده» اضافه می‌کند و یک ردیف به این جدول می‌افزاید.
 
