@@ -230,7 +230,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | SEC-01 | Global rate limiting | NOT_STARTED | HIGH | HIGH | 3 | SEC-00 | 429 on abuse |
 | SEC-02 | Security headers + request size limit | NOT_STARTED | HIGH | HIGH | 2 | SEC-00 | headers tested |
 | SEC-03 | Security review & tests (authz, IDOR, tampering) | NOT_STARTED | HIGH | HIGH | 5 | Phase 3 | findings fixed or tracked |
-| SEC-04 | DB-level append-only audit_logs (trigger blocks UPDATE; DELETE trigger exists since FND-04) | NOT_STARTED | HIGH | HIGH | 2 | INF-05 | UPDATE/DELETE rejected by DB (integration test) |
+| SEC-04 | DB-level append-only audit_logs (trigger blocks UPDATE; DELETE trigger exists since FND-04) | COMPLETE | HIGH | HIGH | 2 | INF-05 | UPDATE/DELETE rejected by DB (integration test) |
 
 ### M5.2 Operations — PRD «پایش و رخدادها» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -240,7 +240,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | DEC-09 | Choose real SMS provider (D9) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
 | DEC-10 | Choose real file storage (D10) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
 | DEC-13 | Production target (D13) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
-| OPS-01 | Metrics + error-tracking adapter | NOT_STARTED | MEDIUM | MEDIUM | 4 | — | metrics endpoint |
+| OPS-01 | Metrics + error-tracking adapter | NOT_STARTED | MEDIUM | MEDIUM | 4 | OPS-00 | metrics endpoint |
 | OPS-02 | Monitoring & alerts | NOT_STARTED | MEDIUM | MEDIUM | 3 | OPS-01 | alerts defined |
 | OPS-03 | Backup/restore runbook | NOT_STARTED | HIGH | HIGH | 3 | — | restore rehearsed |
 | OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | DEFERRED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies; if `ENVIRONMENT=production`, `TRUSTED_PROXIES` must be explicitly set (empty value = explicit "none"), unset → startup fails |
