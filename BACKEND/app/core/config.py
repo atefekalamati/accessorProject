@@ -111,6 +111,9 @@ class Settings(BaseSettings):
     payment_event_retention_days: int = Field(default=90, ge=7, le=3650)
     # How long a fake gateway session accepts the customer.
     payment_fake_session_seconds: int = Field(default=900, ge=60, le=3600)
+    # Request bodies over this many bytes get 413 (SEC-02); multipart uploads have their
+    # own limit (app.shared.media).
+    max_request_body_bytes: int = Field(default=1_048_576, ge=1024, le=4_194_304)
     # Product cards show "new" for products created within this many days (D42).
     product_new_days: int = Field(default=30, ge=1, le=365)
     # Contact form (CNT-06): per client IP and per mobile over a rolling window; reaching a

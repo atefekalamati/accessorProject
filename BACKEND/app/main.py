@@ -19,6 +19,7 @@ from app.core.config import (
     get_settings,
 )
 from app.core.errors import ErrorResponse, register_exception_handlers
+from app.core.http_security import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
 from app.db.session import create_database_engine, create_session_factory
@@ -28,6 +29,7 @@ from app.modules.payments.jobs import reconcile_pending_payments, run_reconciler
 from app.modules.payments.router import fake_gateway_router
 from app.shared.database.router import dev_router, readiness_router
 from app.shared.health.router import router as health_router
+from app.shared.media import MAX_REQUEST_BYTES
 from app.shared.storage import create_file_storage
 
 
@@ -86,18 +88,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                         await task
             await engine.dispose()
 
+    production = app_settings.environment is Environment.PRODUCTION
     application = FastAPI(
         title=app_settings.app_name,
         version=app_settings.app_version,
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url="/openapi.json",
+        # Off in production (ADR-060); docs/api/openapi.json is the frontend's contract.
+        docs_url=None if production else "/docs",
+        redoc_url=None if production else "/redoc",
+        openapi_url=None if production else "/openapi.json",
         responses={
             400: {"model": ErrorResponse, "description": "Validation error"},
             401: {"model": ErrorResponse, "description": "Authentication required"},
             403: {"model": ErrorResponse, "description": "Permission denied"},
             404: {"model": ErrorResponse, "description": "Resource not found"},
             409: {"model": ErrorResponse, "description": "Conflicting state"},
+            413: {"model": ErrorResponse, "description": "Request body too large"},
             422: {"model": ErrorResponse, "description": "Business rule violation"},
             429: {
                 "model": ErrorResponse,
@@ -111,6 +116,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.settings = app_settings
     application.state.file_storage = create_file_storage(app_settings)
 
+    # Added innermost first: SecurityHeaders → CORS → RequestContext → body limit →
+    # routes, so a 413 still has the request id, CORS and security headers (SEC-02).
+    application.add_middleware(
+        BodySizeLimitMiddleware,
+        max_bytes=app_settings.max_request_body_bytes,
+        # Twice the upload cap: the upload endpoints keep their own order (auth first, then
+        # 400 over their cap, CAT-05); only far larger bodies stop here.
+        multipart_max_bytes=2 * MAX_REQUEST_BYTES,
+    )
+    application.add_middleware(RequestContextMiddleware)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=app_settings.cors_origins_list,
@@ -121,7 +136,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key"],
         expose_headers=["X-Request-ID", "Retry-After"],
     )
-    application.add_middleware(RequestContextMiddleware)
+    application.add_middleware(SecurityHeadersMiddleware, hsts=production)
     register_exception_handlers(application)
 
     application.include_router(health_router)
