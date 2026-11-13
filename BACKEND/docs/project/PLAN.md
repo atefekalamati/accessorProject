@@ -226,7 +226,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 ### M5.1 Security — PRD «امنیت»، «تست و پذیرش»، «حالت‌های رابط» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| SEC-00 | Rewrite security & acceptance requirements | NOT_STARTED | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
+| SEC-00 | Rewrite security & acceptance requirements | COMPLETE | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
 | SEC-01 | Global rate limiting | NOT_STARTED | HIGH | HIGH | 3 | SEC-00 | 429 on abuse |
 | SEC-02 | Security headers + request size limit | NOT_STARTED | HIGH | HIGH | 2 | SEC-00 | headers tested |
 | SEC-03 | Security review & tests (authz, IDOR, tampering) | NOT_STARTED | HIGH | HIGH | 5 | Phase 3 | findings fixed or tracked |
@@ -235,7 +235,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 ### M5.2 Operations — PRD «پایش و رخدادها» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
-| OPS-00 | Rewrite monitoring & incidents requirements | NOT_STARTED | MEDIUM | HIGH | 1 | — | PRD section ✓ بازبینی‌شده + approved |
+| OPS-00 | Rewrite monitoring & incidents requirements | COMPLETE | MEDIUM | HIGH | 1 | — | PRD section ✓ بازبینی‌شده + approved |
 | DEC-08 | Choose real payment gateway (D8) | DEFERRED | HIGH | HIGH | 0.5 | — | ADR written |
 | DEC-09 | Choose real SMS provider (D9) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
 | DEC-10 | Choose real file storage (D10) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |

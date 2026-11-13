@@ -1,6 +1,6 @@
 # SEC-00 — Rewrite security & acceptance requirements
 
-**Status:** NOT_STARTED · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** — · **Level:** HIGH
+**Status:** COMPLETE · **Priority:** HIGH · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** — · **Level:** HIGH
 
 ## Objective
 بازنویسی بخش‌های قالبی «امنیت»، «تست و پذیرش» و «حالت‌های رابط» با الزامات دقیق و قابل تست.
@@ -9,9 +9,9 @@
 «امنیت»، «تست و پذیرش»، «حالت‌های رابط» (قالبی).
 
 ## Acceptance Criteria
-- [ ] بخش‌ها بازنویسی و ✓ شدند؛ CRUDهای قالبی حذف شدند.
-- [ ] ردیف PRD changes و تصمیم‌ها در DECISIONS.md.
-- [ ] تأیید کاربر (تغییر PRD: استثنای AUTOPILOT).
+- [x] بخش‌ها بازنویسی و ✓ شدند؛ CRUDهای قالبی حذف شدند.
+- [x] ردیف PRD changes و تصمیم‌ها در DECISIONS.md.
+- [x] تأیید کاربر (تغییر PRD: استثنای AUTOPILOT).
 
 ## Implementation Notes
 فقط PRD و DECISIONS؛ همراه با OPS-00 در یک پیش‌نویس فرستاده می‌شود.
@@ -23,3 +23,4 @@ python -m ruff check . ; python -m ruff format --check . ; python -m mypy app te
 ```
 
 ## Log
+- 2026-11-13: بازنویسی «حالت‌های رابط»، «امنیت» و «تست و پذیرش» (همه ✓)؛ endpointهای قالبی حذف شدند؛ کاربر پیش‌نویس و پنج سؤال را بدون تغییر تأیید کرد (ADR-060). COMPLETE.
