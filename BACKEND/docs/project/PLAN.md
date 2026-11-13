@@ -227,7 +227,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | SEC-00 | Rewrite security & acceptance requirements | COMPLETE | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
-| SEC-01 | Global rate limiting | NOT_STARTED | HIGH | HIGH | 3 | SEC-00 | 429 on abuse |
+| SEC-01 | Global rate limiting | COMPLETE | HIGH | HIGH | 3 | SEC-00 | 429 on abuse |
 | SEC-02 | Security headers + request size limit | COMPLETE | HIGH | HIGH | 2 | SEC-00 | headers tested |
 | SEC-03 | Security review & tests (authz, IDOR, tampering) | NOT_STARTED | HIGH | HIGH | 5 | Phase 3 | findings fixed or tracked |
 | SEC-04 | DB-level append-only audit_logs (trigger blocks UPDATE; DELETE trigger exists since FND-04) | COMPLETE | HIGH | HIGH | 2 | INF-05 | UPDATE/DELETE rejected by DB (integration test) |

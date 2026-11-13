@@ -22,6 +22,7 @@ from app.core.errors import ErrorResponse, register_exception_handlers
 from app.core.http_security import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
+from app.core.rate_limit import RateLimitMiddleware
 from app.db.session import create_database_engine, create_session_factory
 from app.modules.inventory.jobs import run_sweeper
 from app.modules.payments.gateways import build_payment_gateway
@@ -116,8 +117,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.settings = app_settings
     application.state.file_storage = create_file_storage(app_settings)
 
-    # Added innermost first: SecurityHeaders → CORS → RequestContext → body limit →
-    # routes, so a 413 still has the request id, CORS and security headers (SEC-02).
+    # Added innermost first: SecurityHeaders → CORS → RequestContext → rate limit →
+    # body limit → routes, so a 413 or 429 still has the request id, CORS and security
+    # headers (SEC-01, SEC-02).
     application.add_middleware(
         BodySizeLimitMiddleware,
         max_bytes=app_settings.max_request_body_bytes,
@@ -125,6 +127,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # 400 over their cap, CAT-05); only far larger bodies stop here.
         multipart_max_bytes=2 * MAX_REQUEST_BYTES,
     )
+    application.add_middleware(RateLimitMiddleware, settings=app_settings)
     application.add_middleware(RequestContextMiddleware)
     application.add_middleware(
         CORSMiddleware,

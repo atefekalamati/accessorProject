@@ -110,6 +110,9 @@ def settings() -> Settings:
         reservation_sweep_seconds=0,
         # Tests reconcile explicitly (tests/test_payment_reconcile.py).
         payment_reconcile_seconds=0,
+        # Every test client shares one IP; tests/test_rate_limit.py sets small caps.
+        rate_limit_per_ip=1_000_000,
+        rate_limit_admin_per_user=1_000_000,
     )
 
 

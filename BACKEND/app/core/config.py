@@ -114,6 +114,12 @@ class Settings(BaseSettings):
     # Request bodies over this many bytes get 413 (SEC-02); multipart uploads have their
     # own limit (app.shared.media).
     max_request_body_bytes: int = Field(default=1_048_576, ge=1024, le=4_194_304)
+    # Global rate limit (SEC-01): per client IP on /api/v1 and per admin user on
+    # /api/v1/admin, over a sliding window; in process memory (ADR-060). Behind a reverse
+    # proxy the IP limit needs the trusted-proxy setup of OPS-04.
+    rate_limit_window_seconds: int = Field(default=60, ge=1, le=3600)
+    rate_limit_per_ip: int = Field(default=300, ge=1)
+    rate_limit_admin_per_user: int = Field(default=600, ge=1)
     # Product cards show "new" for products created within this many days (D42).
     product_new_days: int = Field(default=30, ge=1, le=365)
     # Contact form (CNT-06): per client IP and per mobile over a rolling window; reaching a
