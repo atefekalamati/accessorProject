@@ -15,3 +15,6 @@ build/
 
 var/
 .env.staging
+
+# Database dumps (OPS-03): personal data, never committed.
+backups/
