@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 5 Release › M5.1 Security / M5.2 Operations
-- **Current Task:** batch ۳ فاز ۵ کامل شد. بعدی: batch ۴: SEC-03 (مرور امنیتی، بازبین opus)، سپس دروازه فاز ۵.
+- **Current Task:** batch ۴ فاز ۵ کامل شد. تنها task فعال باز: SEC-08 (BLOCKED، تصمیم کاربر درباره پاسخ callback پرداخت). سپس دروازه فاز ۵.
 - **Status:** فازهای ۱ تا ۴ در `master` merge شده‌اند. فاز ۴: PR #7، merge `094587d`، git tag `phase-4`، image `ghcr.io/atefekalamati/accessorproject-api:phase-4` (هم‌digest با tag `<sha>`، `sha256:7b90b5cc…`). فاز ۵ شروع شد.
-- **Progress:** 133/145 task فعال COMPLETE · وزنی 88.7% (371.5h / 419h؛ 8 task و 17h DEFERRED جدا) · MVP 100%
+- **Progress:** 134/146 task فعال COMPLETE · وزنی 89.6% (376.5h / 420h؛ 9 task و 19h DEFERRED جدا) · MVP 100%
 - **Blockers:** هیچ مانعی برای فاز ۵ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058).
 - **Next Action:** فاز ۵ با `/phase`. batch ۲: SEC-02، SEC-01، OPS-03 → batch ۳: OPS-01، OPS-02 → batch ۴: SEC-03 (مرور امنیتی آخر، بعد از همه تغییرها) → دروازه فاز ۵ (snapshot OpenAPI، PR، CI؛ merge فقط کاربر).
   - ترتیب: M4.1 (CAT-18، ACC-01، ACC-02) → M4.2 (ADM-01، ADM-03، ADM-06؛ ADM-02؛ ADM-08؛ ADM-04، ADM-05؛ ADM-07) → M4.3 (CNT-01..07).
@@ -22,7 +22,7 @@
 ---
 
 ## Overall Progress
-**88.7%** = 371.5h COMPLETE / 419h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED و DEFERRED حذف می‌شوند؛ 17h DEFERRED، ADR-058).
+**89.6%** = 376.5h COMPLETE / 420h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED و DEFERRED حذف می‌شوند؛ 19h DEFERRED، ADR-058).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -31,15 +31,16 @@
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | COMPLETE | 67h | 67h | 100% | 2026-11-13 (واقعی) |
-| 5 Release | IN_PROGRESS | 29h (+17h DEFERRED) | 24h | 82.8% | 2026-11-27 |
+| 5 Release | IN_PROGRESS | 30h (+19h DEFERRED) | 29h | 96.7% | 2026-11-27 |
 | 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2026-12-18 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 47.5h فعال ≈ 3.2 هفته از 2026-11-13. MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
+- باقی‌مانده: 43.5h فعال ≈ 2.9 هفته از 2026-11-13. MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-11-13: SEC-03 (مرور امنیتی کل API در برابر REVIEW-CHECKLIST با بازبین opus روی plan و diff؛ هیچ آسیب‌پذیری قابل بهره‌برداری پیدا نشد؛ محافظ‌های خودکار در tests/test_security_review.py (همه schemaهای بدنه در هر سطح بدون فیلد ناشناخته، registry همه idهای مسیر، query و بدنه با تست مالکیت یا SD rule، registry همه writeهای ادمین با action audit به‌صورت literal کد در بسته endpoint، نبود routeهای dev در production، فیلدهای ممتاز /users/me رد، نبود FORWARDED_ALLOW_IPS=*)؛ گزارش و یافته‌ها در docs/project/SECURITY-REVIEW.md؛ F4 → SEC-08 (BLOCKED، تصمیم کاربر)، F5 → OPS-11 (DEFERRED با D13)، F1 تا F3 → OPS-04).
 - 2026-11-13: OPS-02 (قواعد هشدار Prometheus در ops/prometheus/alerts.yml (نرخ 5xx، 503 درگاه، توقف job تطبیق و sweep، refund_required باز بیش از ۲۴ ساعت، database_up، شکست scrape) با runbook هر هشدار در docs/ops/ALERTS.md؛ تست که هر قاعده severity و runbook دارد، هیچ بخش runbook بی‌قاعده نیست و فقط متریک‌ها و jobهایی را به کار می‌برد که API واقعاً منتشر می‌کند؛ اجرای واقعی به D13 بستگی دارد).
 - 2026-11-13: OPS-01 (GET /metrics با فرمت Prometheus و بدون dependency جدید، محافظت با METRICS_TOKEN (بدون token یا با token نادرست 404، بیرون از OpenAPI)؛ شمار و مدت درخواست به تفکیک الگوی route (بدون id یا PII)، شمار 429، نتیجه callback پرداخت، زمان آخرین موفقیت job تطبیق و sweep، database_up و payments_refund_required_open؛ ErrorReporter با پیاده‌سازی log-only که هر 500 را یک بار با request_id و نوع خطا (بدون متن) می‌گیرد و خرابی خودش 500 را تغییر نمی‌دهد).
 - 2026-11-13: OPS-03 (پشتیبان و بازیابی: scripts/backup.sh (pg_dump custom، فایل 600 در backups/ gitignored، بررسی با pg_restore --list، retention ۱۴ روزه فقط برای فایل‌های خودش با timestamp دقیق، رد دیتابیس _test بدون --allow-test)، runbook در docs/ops/BACKUP-RESTORE.md، و scripts/restore_rehearsal.sh فقط روی postgres-test؛ تمرین سبز: ۴۸ جدول با تعداد ردیف برابر، revision یکسان 20261113_0033، سه trigger جدول audit_logs برگشتند؛ atk_postgres_data دست نخورد؛ بازبین مستقل plan و diff را تأیید کرد (یک major و چند minor رفع شد)؛ بدون تغییر کد Python (suite کامل روی همین کد: ۲۳۲۶ سبز)).
@@ -157,6 +158,9 @@
 ---
 
 ## Plan changes
+### 2026-11-13 — یافته‌های SEC-03
+SEC-08 (پاسخ callback پرداخت، F4) با وضعیت BLOCKED منتظر تصمیم کاربر است. OPS-11 (سخت‌سازی سرور staging ماندگار، F5) همراه D13 DEFERRED است. فهرست کامل در `docs/project/SECURITY-REVIEW.md`.
+
 ### 2026-11-13 — ترتیب بقیه فاز ۵ و حفاظت master (تصمیم کاربر)
 PR #8 تصادفی merge شد؛ کاربر گفت revert نشود و image `phase-5` در دروازه واقعی دوباره ساخته می‌شود. حفاظت `master` اعمال شد: PR الزامی، checkهای `checks`، `staging-smoke` و `secret-scan`، بدون force-push و حذف، برای admin هم. ترتیب: SEC-03 به آخر رفت تا مرور امنیتی روی کد نهایی باشد.
 
@@ -273,6 +277,9 @@ D8، D9، D10 و D13 موکول شدند. PAY-07، OPS-04، OPS-05، OPS-07 و D
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-11-13 — SEC-03 COMPLETE
+مرور امنیتی کل API در برابر REVIEW-CHECKLIST با بازبین opus روی plan و diff؛ هیچ آسیب‌پذیری قابل بهره‌برداری پیدا نشد؛ محافظ‌های خودکار در tests/test_security_review.py (همه schemaهای بدنه در هر سطح بدون فیلد ناشناخته، registry همه idهای مسیر، query و بدنه با تست مالکیت یا SD rule، registry همه writeهای ادمین با action audit به‌صورت literal کد در بسته endpoint، نبود routeهای dev در production، فیلدهای ممتاز /users/me رد، نبود FORWARDED_ALLOW_IPS=*)؛ گزارش و یافته‌ها در docs/project/SECURITY-REVIEW.md؛ F4 → SEC-08 (BLOCKED، تصمیم کاربر)، F5 → OPS-11 (DEFERRED با D13)، F1 تا F3 → OPS-04.
+
 ### 2026-11-13 — OPS-02 COMPLETE
 قواعد هشدار Prometheus در ops/prometheus/alerts.yml (نرخ 5xx، 503 درگاه، توقف job تطبیق و sweep، refund_required باز بیش از ۲۴ ساعت، database_up، شکست scrape) با runbook هر هشدار در docs/ops/ALERTS.md؛ تست که هر قاعده severity و runbook دارد، هیچ بخش runbook بی‌قاعده نیست و فقط متریک‌ها و jobهایی را به کار می‌برد که API واقعاً منتشر می‌کند؛ اجرای واقعی به D13 بستگی دارد.
 

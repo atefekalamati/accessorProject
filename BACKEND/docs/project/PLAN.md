@@ -229,7 +229,8 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | SEC-00 | Rewrite security & acceptance requirements | COMPLETE | HIGH | HIGH | 2 | — | PRD sections ✓ بازبینی‌شده + approved |
 | SEC-01 | Global rate limiting | COMPLETE | HIGH | HIGH | 3 | SEC-00 | 429 on abuse |
 | SEC-02 | Security headers + request size limit | COMPLETE | HIGH | HIGH | 2 | SEC-00 | headers tested |
-| SEC-03 | Security review & tests (authz, IDOR, tampering) | NOT_STARTED | HIGH | HIGH | 5 | Phase 3 | findings fixed or tracked |
+| SEC-03 | Security review & tests (authz, IDOR, tampering) | COMPLETE | HIGH | HIGH | 5 | Phase 3 | findings fixed or tracked |
+| SEC-08 | Payment callback response: outcome only? (SECURITY-REVIEW F4) | BLOCKED | MEDIUM | HIGH | 1 | SEC-03 | user decision recorded; response and FRONTEND.md updated or risk accepted in an ADR |
 | SEC-04 | DB-level append-only audit_logs (trigger blocks UPDATE; DELETE trigger exists since FND-04) | COMPLETE | HIGH | HIGH | 2 | INF-05 | UPDATE/DELETE rejected by DB (integration test) |
 
 ### M5.2 Operations — PRD «پایش و رخدادها» (قالبی)
@@ -246,11 +247,12 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | DEFERRED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies; if `ENVIRONMENT=production`, `TRUSTED_PROXIES` must be explicitly set (empty value = explicit "none"), unset → startup fails |
 | OPS-05 | Real SMS provider adapter | DEFERRED | HIGH | HIGH | 3 | AUTH-04, D9 | works behind interface |
 | OPS-06 | OpenAPI export & versioning | COMPLETE | MEDIUM | LOW | 2 | HANDOFF-01 | versioned file |
+| OPS-11 | Persistent staging hardening: no dev routes, fake gateway or mock OTP (SECURITY-REVIEW F5) | DEFERRED | MEDIUM | MEDIUM | 2 | D13 | staging server refuses dev-only features unless explicitly ephemeral |
 | OPS-10 | Provider contract tests (payment, SMS, storage) | COMPLETE | HIGH | MEDIUM | 2 | PAY-01, AUTH-04, CAT-05 | one suite every adapter must pass; fakes pass it; production fails closed |
 | OPS-07 | Real file storage adapter | DEFERRED | HIGH | MEDIUM | 3 | CAT-05, D10 | works behind interface |
 | PAY-07 | Real payment gateway adapter (Toman→Rial here) | DEFERRED | HIGH | HIGH | 5 | PAY-01, D8 | verify + callback on sandbox |
 
-**Phase 5:** 46h (فعال 29h؛ DEFERRED 17h)
+**Phase 5:** 49h (فعال 30h؛ DEFERRED 19h)
 
 ---
 
