@@ -18,7 +18,7 @@
 | 1 | Foundation | COMPLETE | 2026-10-09 | 37h | 100% | — |
 | 2 | Core domain | COMPLETE | 2026-12-07 | 142h | 100% | 1 |
 | 3 | Purchase flow (MVP line) | COMPLETE | 2027-01-23 | 101.5h | 100% | 2 |
-| 4 | Account & admin | IN_PROGRESS | 2027-02-20 | 61h | 0% | 3 |
+| 4 | Account & admin | COMPLETE | 2027-02-20 | 67h | 100% | 3 |
 | 5 | Release | NOT_STARTED | 2027-03-12 | 43h | 0% | 3–4 / D8، D9، D10 (انتخاب واقعی)، D13 |
 | 6 | Post-core (suggestion) | NOT_STARTED | 2027-03-30 | 38.5h | 0% | 3 |
 

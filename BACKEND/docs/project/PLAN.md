@@ -213,7 +213,7 @@
 | CNT-04 | Static pages (about, terms, privacy) | COMPLETE | LOW | LOW | 3 | CNT-00 | published only |
 | CNT-05 | FAQ | COMPLETE | LOW | LOW | 2 | CNT-00 | ordered, published only |
 | CNT-06 | Contact form / tickets | COMPLETE | LOW | MEDIUM | 4 | CNT-00 | rate-limited |
-| CNT-07 | Content tests | NOT_STARTED | MEDIUM | LOW | 2 | CNT-01…06 | public/admin split covered |
+| CNT-07 | Content tests | COMPLETE | MEDIUM | LOW | 2 | CNT-01…06 | public/admin split covered |
 
 **Phase 4:** 67h
 
