@@ -1,0 +1,71 @@
+# Prometheus alerting rules for the API (OPS-02, PRD «پایش و رخدادها» ✓, ADR-060).
+# Scrape GET /metrics with the METRICS_TOKEN bearer. Every alert has a runbook section in
+# docs/ops/ALERTS.md with the same name. Thresholds are a starting point; tune them once real
+# traffic exists (production is deferred, D13).
+groups:
+  - name: project-ak-api
+    rules:
+      - alert: ApiHigh5xxRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(http_requests_total[5m])), 1e-9) > 0.02
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: More than 2% of API responses are 5xx
+          runbook: docs/ops/ALERTS.md#apihigh5xxrate
+
+      - alert: PaymentGatewayUnavailable
+        expr: sum(increase(http_requests_total{route=~"/api/v1/payments/.*", status="503"}[10m])) > 3
+        for: 0m
+        labels:
+          severity: page
+        annotations:
+          summary: Payment endpoints answer 503 (the gateway does not respond)
+          runbook: docs/ops/ALERTS.md#paymentgatewayunavailable
+
+      - alert: PaymentReconcileStalled
+        expr: time() - job_last_success_timestamp_seconds{job="payment_reconcile"} > 900
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: The payment reconciliation job has not succeeded for 15 minutes
+          runbook: docs/ops/ALERTS.md#paymentreconcilestalled
+
+      - alert: ReservationSweepStalled
+        expr: time() - job_last_success_timestamp_seconds{job="reservation_sweep"} > 900
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: The reservation sweep has not succeeded for 15 minutes
+          runbook: docs/ops/ALERTS.md#reservationsweepstalled
+
+      - alert: RefundRequiredWaiting
+        expr: payments_refund_required_open > 0
+        for: 24h
+        labels:
+          severity: ticket
+        annotations:
+          summary: A payment has waited more than 24 hours for a manual refund
+          runbook: docs/ops/ALERTS.md#refundrequiredwaiting
+
+      - alert: DatabaseDown
+        expr: database_up == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: The API cannot query the database
+          runbook: docs/ops/ALERTS.md#databasedown
+
+      - alert: MetricsScrapeFailing
+        expr: up{job="project-ak-api"} == 0
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: Prometheus cannot scrape the API (down, or a wrong METRICS_TOKEN)
+          runbook: docs/ops/ALERTS.md#metricsscrapefailing

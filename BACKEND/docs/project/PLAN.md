@@ -241,7 +241,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | DEC-10 | Choose real file storage (D10) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
 | DEC-13 | Production target (D13) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
 | OPS-01 | Metrics + error-tracking adapter | COMPLETE | MEDIUM | MEDIUM | 4 | OPS-00 | metrics endpoint |
-| OPS-02 | Monitoring & alerts | NOT_STARTED | MEDIUM | MEDIUM | 3 | OPS-01 | alerts defined |
+| OPS-02 | Monitoring & alerts | COMPLETE | MEDIUM | MEDIUM | 3 | OPS-01 | alerts defined |
 | OPS-03 | Backup/restore runbook | COMPLETE | HIGH | HIGH | 3 | — | restore rehearsed |
 | OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | DEFERRED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies; if `ENVIRONMENT=production`, `TRUSTED_PROXIES` must be explicitly set (empty value = explicit "none"), unset → startup fails |
 | OPS-05 | Real SMS provider adapter | DEFERRED | HIGH | HIGH | 3 | AUTH-04, D9 | works behind interface |

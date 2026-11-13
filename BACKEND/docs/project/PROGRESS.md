@@ -4,9 +4,9 @@
 
 ## Current / Next
 - **Phase › Milestone:** 5 Release › M5.1 Security / M5.2 Operations
-- **Current Task:** batch ۳ فاز ۵: OPS-02 (قواعد هشدار).
+- **Current Task:** batch ۳ فاز ۵ کامل شد. بعدی: batch ۴: SEC-03 (مرور امنیتی، بازبین opus)، سپس دروازه فاز ۵.
 - **Status:** فازهای ۱ تا ۴ در `master` merge شده‌اند. فاز ۴: PR #7، merge `094587d`، git tag `phase-4`، image `ghcr.io/atefekalamati/accessorproject-api:phase-4` (هم‌digest با tag `<sha>`، `sha256:7b90b5cc…`). فاز ۵ شروع شد.
-- **Progress:** 132/145 task فعال COMPLETE · وزنی 87.9% (368.5h / 419h؛ 8 task و 17h DEFERRED جدا) · MVP 100%
+- **Progress:** 133/145 task فعال COMPLETE · وزنی 88.7% (371.5h / 419h؛ 8 task و 17h DEFERRED جدا) · MVP 100%
 - **Blockers:** هیچ مانعی برای فاز ۵ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058).
 - **Next Action:** فاز ۵ با `/phase`. batch ۲: SEC-02، SEC-01، OPS-03 → batch ۳: OPS-01، OPS-02 → batch ۴: SEC-03 (مرور امنیتی آخر، بعد از همه تغییرها) → دروازه فاز ۵ (snapshot OpenAPI، PR، CI؛ merge فقط کاربر).
   - ترتیب: M4.1 (CAT-18، ACC-01، ACC-02) → M4.2 (ADM-01، ADM-03، ADM-06؛ ADM-02؛ ADM-08؛ ADM-04، ADM-05؛ ADM-07) → M4.3 (CNT-01..07).
@@ -22,7 +22,7 @@
 ---
 
 ## Overall Progress
-**87.9%** = 368.5h COMPLETE / 419h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED و DEFERRED حذف می‌شوند؛ 17h DEFERRED، ADR-058).
+**88.7%** = 371.5h COMPLETE / 419h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED و DEFERRED حذف می‌شوند؛ 17h DEFERRED، ADR-058).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -31,15 +31,16 @@
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | COMPLETE | 67h | 67h | 100% | 2026-11-13 (واقعی) |
-| 5 Release | IN_PROGRESS | 29h (+17h DEFERRED) | 21h | 72.4% | 2026-11-27 |
+| 5 Release | IN_PROGRESS | 29h (+17h DEFERRED) | 24h | 82.8% | 2026-11-27 |
 | 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2026-12-18 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 50.5h فعال ≈ 3.4 هفته از 2026-11-13. MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
+- باقی‌مانده: 47.5h فعال ≈ 3.2 هفته از 2026-11-13. MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-11-13: OPS-02 (قواعد هشدار Prometheus در ops/prometheus/alerts.yml (نرخ 5xx، 503 درگاه، توقف job تطبیق و sweep، refund_required باز بیش از ۲۴ ساعت، database_up، شکست scrape) با runbook هر هشدار در docs/ops/ALERTS.md؛ تست که هر قاعده severity و runbook دارد، هیچ بخش runbook بی‌قاعده نیست و فقط متریک‌ها و jobهایی را به کار می‌برد که API واقعاً منتشر می‌کند؛ اجرای واقعی به D13 بستگی دارد).
 - 2026-11-13: OPS-01 (GET /metrics با فرمت Prometheus و بدون dependency جدید، محافظت با METRICS_TOKEN (بدون token یا با token نادرست 404، بیرون از OpenAPI)؛ شمار و مدت درخواست به تفکیک الگوی route (بدون id یا PII)، شمار 429، نتیجه callback پرداخت، زمان آخرین موفقیت job تطبیق و sweep، database_up و payments_refund_required_open؛ ErrorReporter با پیاده‌سازی log-only که هر 500 را یک بار با request_id و نوع خطا (بدون متن) می‌گیرد و خرابی خودش 500 را تغییر نمی‌دهد).
 - 2026-11-13: OPS-03 (پشتیبان و بازیابی: scripts/backup.sh (pg_dump custom، فایل 600 در backups/ gitignored، بررسی با pg_restore --list، retention ۱۴ روزه فقط برای فایل‌های خودش با timestamp دقیق، رد دیتابیس _test بدون --allow-test)، runbook در docs/ops/BACKUP-RESTORE.md، و scripts/restore_rehearsal.sh فقط روی postgres-test؛ تمرین سبز: ۴۸ جدول با تعداد ردیف برابر، revision یکسان 20261113_0033، سه trigger جدول audit_logs برگشتند؛ atk_postgres_data دست نخورد؛ بازبین مستقل plan و diff را تأیید کرد (یک major و چند minor رفع شد)؛ بدون تغییر کد Python (suite کامل روی همین کد: ۲۳۲۶ سبز)).
 - 2026-11-13: SEC-01 (سقف سراسری درخواست در حافظه پروسه: ۳۰۰ در دقیقه برای هر IP روی /api/v1 (IPv6 به‌ازای /64؛ OPTIONS، health و ready معاف) و ۶۰۰ برای هر ادمین با token معتبر؛ 429 RATE_LIMITED با Retry-After، request_id، CORS و هدرهای امنیتی؛ کلیدها محدود (LRU)؛ قابل تنظیم؛ بازبین مستقل plan و diff را تأیید کرد؛ ریسک IP مشترک پشت proxy در ADR-060 و OPS-04 ثبت شد).
@@ -272,6 +273,9 @@ D8، D9، D10 و D13 موکول شدند. PAY-07، OPS-04، OPS-05، OPS-07 و D
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-11-13 — OPS-02 COMPLETE
+قواعد هشدار Prometheus در ops/prometheus/alerts.yml (نرخ 5xx، 503 درگاه، توقف job تطبیق و sweep، refund_required باز بیش از ۲۴ ساعت، database_up، شکست scrape) با runbook هر هشدار در docs/ops/ALERTS.md؛ تست که هر قاعده severity و runbook دارد، هیچ بخش runbook بی‌قاعده نیست و فقط متریک‌ها و jobهایی را به کار می‌برد که API واقعاً منتشر می‌کند؛ اجرای واقعی به D13 بستگی دارد.
+
 ### 2026-11-13 — OPS-01 COMPLETE
 GET /metrics با فرمت Prometheus و بدون dependency جدید، محافظت با METRICS_TOKEN (بدون token یا با token نادرست 404، بیرون از OpenAPI)؛ شمار و مدت درخواست به تفکیک الگوی route (بدون id یا PII)، شمار 429، نتیجه callback پرداخت، زمان آخرین موفقیت job تطبیق و sweep، database_up و payments_refund_required_open؛ ErrorReporter با پیاده‌سازی log-only که هر 500 را یک بار با request_id و نوع خطا (بدون متن) می‌گیرد و خرابی خودش 500 را تغییر نمی‌دهد.
 
