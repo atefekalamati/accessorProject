@@ -120,6 +120,8 @@ class Settings(BaseSettings):
     rate_limit_window_seconds: int = Field(default=60, ge=1, le=3600)
     rate_limit_per_ip: int = Field(default=300, ge=1)
     rate_limit_admin_per_user: int = Field(default=600, ge=1)
+    # Bearer token of GET /metrics (OPS-01); unset means the endpoint answers 404.
+    metrics_token: SecretStr | None = Field(default=None, min_length=32)
     # Product cards show "new" for products created within this many days (D42).
     product_new_days: int = Field(default=30, ge=1, le=365)
     # Contact form (CNT-06): per client IP and per mobile over a rolling window; reaching a

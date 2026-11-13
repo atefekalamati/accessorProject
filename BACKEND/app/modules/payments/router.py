@@ -76,6 +76,9 @@ async def payment_callback(
     # Size-capped while it is read; its shape is the adapter's business.
     payload = await read_body(request)
     applied = await CallbackService(session, gateway, settings).handle(payload, request)
+    metrics = getattr(request.app.state, "metrics", None)
+    if metrics is not None:
+        metrics.payment_callback(applied.outcome.value)
     body = CallbackResponse(
         outcome=applied.outcome.value,
         order_number=applied.order_number,

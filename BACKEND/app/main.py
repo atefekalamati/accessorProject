@@ -18,9 +18,11 @@ from app.core.config import (
     Settings,
     get_settings,
 )
+from app.core.error_reporting import build_error_reporter
 from app.core.errors import ErrorResponse, register_exception_handlers
 from app.core.http_security import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.logging import configure_logging
+from app.core.metrics import MetricsMiddleware, MetricsRegistry
 from app.core.middleware import RequestContextMiddleware
 from app.core.rate_limit import RateLimitMiddleware
 from app.db.session import create_database_engine, create_session_factory
@@ -31,6 +33,7 @@ from app.modules.payments.router import fake_gateway_router
 from app.shared.database.router import dev_router, readiness_router
 from app.shared.health.router import router as health_router
 from app.shared.media import MAX_REQUEST_BYTES
+from app.shared.monitoring import router as monitoring_router
 from app.shared.storage import create_file_storage
 
 
@@ -45,6 +48,7 @@ class _MediaFiles(StaticFiles):
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     app_settings = settings or get_settings()
+    metrics = MetricsRegistry()
     configure_logging(app_settings.log_level)
 
     @asynccontextmanager
@@ -63,7 +67,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         sweeper: asyncio.Task[None] | None = None
         if app_settings.reservation_sweep_seconds > 0:
             sweeper = asyncio.create_task(
-                run_sweeper(engine, app_settings.reservation_sweep_seconds),
+                run_sweeper(
+                    engine,
+                    app_settings.reservation_sweep_seconds,
+                    on_success=lambda: metrics.job_succeeded("reservation_sweep"),
+                ),
                 name="reservation-sweeper",
             )
         app.state.reservation_sweeper = sweeper
@@ -75,6 +83,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                         engine, gateway, app_settings, purge=purge
                     ),
                     app_settings.payment_reconcile_seconds,
+                    on_success=lambda: metrics.job_succeeded("payment_reconcile"),
                 ),
                 name="payment-reconciler",
             )
@@ -115,11 +124,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     application.state.settings = app_settings
+    application.state.metrics = metrics
+    application.state.error_reporter = build_error_reporter(app_settings)
     application.state.file_storage = create_file_storage(app_settings)
 
-    # Added innermost first: SecurityHeaders → CORS → RequestContext → rate limit →
-    # body limit → routes, so a 413 or 429 still has the request id, CORS and security
-    # headers (SEC-01, SEC-02).
+    # Added innermost first: SecurityHeaders → CORS → RequestContext → metrics →
+    # rate limit → body limit → routes, so a 413 or 429 still has the request id, CORS
+    # and security headers and is counted (SEC-01, SEC-02, OPS-01).
     application.add_middleware(
         BodySizeLimitMiddleware,
         max_bytes=app_settings.max_request_body_bytes,
@@ -127,7 +138,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # 400 over their cap, CAT-05); only far larger bodies stop here.
         multipart_max_bytes=2 * MAX_REQUEST_BYTES,
     )
-    application.add_middleware(RateLimitMiddleware, settings=app_settings)
+    application.add_middleware(RateLimitMiddleware, settings=app_settings, metrics=metrics)
+    application.add_middleware(MetricsMiddleware, registry=metrics)
     application.add_middleware(RequestContextMiddleware)
     application.add_middleware(
         CORSMiddleware,
@@ -144,6 +156,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     application.include_router(health_router)
     application.include_router(readiness_router)
+    application.include_router(monitoring_router)
     application.include_router(api_router, prefix="/api/v1")
     if app_settings.environment is not Environment.PRODUCTION:
         application.include_router(dev_router, prefix="/api/v1")

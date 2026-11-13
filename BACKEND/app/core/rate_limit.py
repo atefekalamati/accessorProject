@@ -21,6 +21,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from app.core.config import Settings
 from app.core.errors import ErrorCode
 from app.core.http_security import send_error
+from app.core.metrics import MetricsRegistry
 
 # Never limited: liveness and readiness probes.
 EXEMPT_PATHS: Final = frozenset({"/api/v1/health", "/api/v1/ready"})
@@ -111,9 +112,11 @@ class RateLimitMiddleware:
         *,
         settings: Settings,
         clock: Callable[[], float] = time.monotonic,
+        metrics: MetricsRegistry | None = None,
     ) -> None:
         self.app = app
         self.settings = settings
+        self.metrics = metrics
         self.clock = clock
         window = settings.rate_limit_window_seconds
         self.per_ip = SlidingWindowLimiter(settings.rate_limit_per_ip, window)
@@ -151,6 +154,8 @@ class RateLimitMiddleware:
             return None
 
     async def _refuse(self, send: Send, scope: Scope, retry_after: int, scope_name: str) -> None:
+        if self.metrics is not None:
+            self.metrics.rate_limited(scope_name)
         await send_error(
             send,
             scope,
