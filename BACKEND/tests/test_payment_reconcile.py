@@ -82,9 +82,9 @@ async def test_a_lost_callback_is_applied_by_reconciliation(
     assert (order.status, order.payment_status) == ("confirmed", "paid")
     assert (await _reservation(db_engine, order_id)).status == "committed"
     # The late callback afterwards changes nothing.
-    assert (await _callback(auth_client, payment.gateway_reference)).json()["outcome"] == (
-        "already_processed"
-    )
+    assert (await _callback(auth_client, payment.gateway_reference)).json()["outcome"] == "success"
+    # Same payment, so not reclassified as a duplicate needing a refund.
+    assert await _status(db_engine, payment.id) == ("paid", None)
 
 
 async def test_a_declined_payment_is_closed_and_one_still_at_the_gateway_is_left(

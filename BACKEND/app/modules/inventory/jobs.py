@@ -276,14 +276,21 @@ async def run_sweeper(
     engine: AsyncEngine,
     interval_seconds: float,
     sweep: Sweep = sweep_expired_reservations,
+    on_success: Callable[[], None] | None = None,
 ) -> None:
-    """Sweep every ``interval_seconds`` until cancelled; a failed round is logged, not fatal."""
+    """Sweep every ``interval_seconds`` until cancelled; a failed round is logged, not fatal.
+
+    ``on_success`` runs after each successful round (the job metric of OPS-01).
+    """
     while True:
         await asyncio.sleep(interval_seconds)
         try:
             await sweep(engine)
         except Exception:
             logger.exception("reservation.sweep_round_failed")
+        else:
+            if on_success is not None:
+                on_success()
 
 
 async def _main() -> None:

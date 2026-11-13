@@ -42,7 +42,7 @@ async def _paid(auth_client: AsyncClient, catalog: Catalog, buyer: MakeBuyer) ->
     payment = await _started(ready, order_id)
     await _complete(auth_client, payment)
     settled = await _callback(auth_client, payment.gateway_reference)
-    assert settled.json()["outcome"] == "paid", settled.text
+    assert settled.json()["outcome"] == "success", settled.text
     return ready, order_id
 
 

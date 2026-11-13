@@ -79,19 +79,31 @@
 - `POST /payments/init` با همان کلید وقتی درخواست اول هنوز با درگاه در حال صحبت است → 409 `PAYMENT_IN_PROGRESS`. چند ثانیه بعد با همان کلید retry کن.
 
 ## ۷. پرداخت
-1. `POST /payments/init {order_id}` (با `Idempotency-Key`) → 201 `{payment_id, order_id, order_number, amount, currency, redirect_url, gateway_expires_at, reservation_expires_at}`. مرورگر را به `redirect_url` ببر. مبلغ را فقط نمایش بده.
-2. درگاه مرورگر را به صفحه نتیجه frontend برمی‌گرداند (`PAYMENT_CALLBACK_URL` بک‌اند به این صفحه اشاره می‌کند). صفحه نتیجه reference را برمی‌دارد، `POST /payments/callback {"reference": "..."}` را صدا می‌زند و صفحه را از پاسخ می‌سازد. این endpoint عمومی است و token نمی‌خواهد. پارامترهای درگاه هیچ اثری ندارند، چون سرور خودش با درگاه verify می‌کند.
-3. پاسخ callback پردازش‌شده همیشه 200 است: `{outcome, order_number, order_status, order_payment_status, payment_status}`.
+1. `POST /payments/init {order_id}` (با `Idempotency-Key`) → 201 `{payment_id, order_id, order_number, amount, currency, redirect_url, gateway_expires_at, reservation_expires_at}`. قبل از رفتن به `redirect_url`، `order_number` را در `sessionStorage` نگه دار. مبلغ را فقط نمایش بده.
+2. درگاه مرورگر را به صفحه نتیجه frontend برمی‌گرداند (`PAYMENT_CALLBACK_URL` بک‌اند به این صفحه اشاره می‌کند). صفحه نتیجه reference را برمی‌دارد، `POST /payments/callback {"reference": "..."}` را صدا می‌زند و پیام را از `outcome` می‌سازد. این endpoint عمومی است و token نمی‌خواهد. پارامترهای درگاه هیچ اثری ندارند، چون سرور خودش با درگاه verify می‌کند.
+3. پاسخ callback پردازش‌شده همیشه 200 و **فقط** `{outcome}` است، با یکی از سه مقدار `success`، `failed` یا `pending` (ADR-061). reference در تاریخچه مرورگر می‌ماند، پس پاسخ عمومی شماره سفارش، مبلغ، وضعیت یا جزئیات (مثل بازپرداخت) را ندارد. جزئیات فقط در گام ۴ با token.
+4. جزئیات سفارش با token: access token فقط در حافظه است و با رفتن به درگاه از بین می‌رود. صفحه نتیجه بعد از load، **در سمت client** (نه SSR) همان refresh single-flight بخش ۳ را اجرا می‌کند و بعد `GET /orders/{order_number}` (از `sessionStorage`) را می‌خواند: `status`، `payment_status` و شماره سفارش. refresh cookie (`SameSite=Strict`) روی خود redirect درگاه فرستاده نمی‌شود، ولی روی fetchهای بعد از load فرستاده می‌شود.
+   - کاربر وارد نیست (refresh با 401، یا بازگشت در مرورگر دیگری باز شد، که با اپ بانک موبایل رایج است): پیام کلی `outcome` را نشان بده و کاربر را به ورود بفرست. بعد از ورود او را به صفحه همان سفارش (`/orders/{order_number}`) برگردان.
+   - `order_number` در `sessionStorage` نیست: بعد از ورود `GET /orders?sort=newest` را بخوان. سفارش مهمان وجود ندارد، پس سفارش بعد از ورود همیشه خواندنی است.
 
 | `outcome` | معنا | UI |
 |---|---|---|
-| `paid` | پرداخت تأیید شد و سفارش `confirmed` است | صفحه موفقیت با شماره سفارش |
-| `already_processed` | قبلاً اعمال شده (refresh صفحه) | بر اساس `order_status` و `payment_status` نمایش بده |
+| `success` | سفارش پرداخت‌شده است (اولین بار، refresh صفحه، یا پرداخت دوم روی سفارش پرداخت‌شده) | صفحه موفقیت؛ شماره سفارش از گام ۴ |
 | `pending` | درگاه هنوز نتیجه قطعی نداده است | «در حال بررسی»؛ چند ثانیه بعد همان callback را دوباره بفرست (با backoff؛ سرور هم خودش تطبیق می‌دهد) |
-| `failed` | پرداخت ناموفق؛ رزرو و کد تخفیف تا پایان مهلت نگه داشته می‌شوند | دکمه «تلاش دوباره» → init جدید با کلید جدید |
-| `amount_mismatch` | مبلغ درگاه با سفارش نمی‌خواند؛ نیاز به بازپرداخت دستی | «پرداخت ناموفق؛ مبلغ برگشت داده می‌شود». تلاش دوباره ممکن است |
-| `refund_required` | پول دریافت شد ولی رزرو منقضی شده بود و سفارش لغو شد | «سفارش لغو شد؛ مبلغ برگشت داده می‌شود» با شماره سفارش |
-| `duplicate_payment` | پرداخت دوم روی سفارشی که قبلاً پرداخت شده بود | «سفارش قبلاً پرداخت شده؛ پرداخت دوم برگشت داده می‌شود» |
+| `failed` | سفارش پرداخت‌شده نیست | جزئیات را از گام ۴ بخوان (جدول پایین)؛ بدون ورود فقط «پرداخت انجام نشد» |
+
+جزئیات `failed` از `GET /orders/{order_number}` (گام ۴):
+
+| وضعیت سفارش | معنا | UI |
+|---|---|---|
+| `pending_payment` و `payment_status=failed` | پرداخت ناموفق یا مبلغ ناهمخوان؛ رزرو و کد تخفیف تا پایان مهلت نگه داشته می‌شوند | دکمه «تلاش دوباره» → init جدید با کلید جدید. اگر payment آخر `refund_required` است: «مبلغ برگشت داده می‌شود» |
+| `cancelled` و `payment_status=refund_required` | پول دریافت شد ولی رزرو منقضی شده بود و سفارش لغو شد | «سفارش لغو شد؛ مبلغ برگشت داده می‌شود» |
+| `payment_status=refunded` | مبلغ برگشت داده شد | «مبلغ برگشت داده شد» |
+| `pending_payment` و `payment_status=pending` | تلاش دیگری برای همین سفارش هنوز در درگاه است | «پرداخت دیگری در حال بررسی است»؛ کمی بعد دوباره بخوان |
+| `cancelled` و `payment_status=failed` یا `unpaid` | سفارش لغو شد و مبلغی کسر نشد | «سفارش لغو شد» |
+| هر حالت دیگر | — | `status` و `payment_status` سفارش را همان‌طور نمایش بده |
+
+پرداخت دوم روی سفارش پرداخت‌شده `success` می‌گیرد. payment دوم در جزئیات سفارش `refund_required` است: «پرداخت دوم برگشت داده می‌شود».
 
 - callback: 404 reference ناشناخته، 429 بیش از حد (`Retry-After`)، 400 بدنه نامعتبر. 503 `PAYMENT_GATEWAY_UNAVAILABLE` یعنی verify با درگاه شکست خورد و چیزی تغییر نکرد. این حالت بعد از یک پرداخت واقعی هم ممکن است، پس صفحه خطا نشان نده: «در حال بررسی» را نشان بده و همان callback را با backoff دوباره بفرست. job تطبیق سرور هم آن را می‌بندد.
 - init دوباره، مثلاً وقتی مشتری صفحه درگاه را بست:
@@ -110,3 +122,4 @@
 - آدرس و سفارش دیگران همیشه 404 است. پیام «پیدا نشد» نشان بده.
 - rate limitها بر اساس IP هستند. پشت proxy به پیکربندی trusted-proxy (OPS-04) نیاز دارند.
 - endpointهای `/admin/*` با مجوز (permission) کنترل می‌شوند. 403 یعنی مجوز نداری، نه اینکه وارد نشده‌ای.
+- نسخه‌های API (OPS-06): `docs/api/openapi.json` همیشه نسخه جاری شاخه است. در هر دروازه فاز یک snapshot ثابت در `docs/api/versions/openapi-phase-N.json` ساخته می‌شود. هیچ operation موجود در آخرین snapshot حذف نمی‌شود (تست CI). تغییر ناسازگار فقط با مسیر جدید و هماهنگی frontend انجام می‌شود.

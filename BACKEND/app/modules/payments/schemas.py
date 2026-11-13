@@ -46,10 +46,10 @@ class FakeSessionResponse(BaseModel):
 
 
 class CallbackResponse(BaseModel):
-    """The acknowledgement to the gateway; always 200 once processed (ADR-051)."""
+    """The acknowledgement; always 200 once processed (ADR-051).
 
-    outcome: str
-    order_number: str
-    order_status: str
-    order_payment_status: str
-    payment_status: str
+    The endpoint is public and the reference sits in the browser history, so only the
+    outcome is returned. The order itself is read with a token (ADR-061, SEC-08).
+    """
+
+    outcome: Literal["success", "failed", "pending"]

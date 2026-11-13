@@ -54,6 +54,8 @@ class ErrorCode(StrEnum):
     MOBILE_ALREADY_REGISTERED = "MOBILE_ALREADY_REGISTERED"
     ORDER_PENDING = "ORDER_PENDING"
     PAYMENT_IN_PROGRESS = "PAYMENT_IN_PROGRESS"
+    # 413 — request body over the limit (SEC-02)
+    PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE"
     # 422 — business rule violation
     BUSINESS_RULE_VIOLATION = "BUSINESS_RULE_VIOLATION"
     INVALID_STATE_TRANSITION = "INVALID_STATE_TRANSITION"
@@ -86,6 +88,7 @@ ERROR_STATUS: Mapping[ErrorCode, int] = MappingProxyType(
         ErrorCode.MOBILE_ALREADY_REGISTERED: 409,
         ErrorCode.ORDER_PENDING: 409,
         ErrorCode.PAYMENT_IN_PROGRESS: 409,
+        ErrorCode.PAYLOAD_TOO_LARGE: 413,
         ErrorCode.BUSINESS_RULE_VIOLATION: 422,
         ErrorCode.INVALID_STATE_TRANSITION: 422,
         ErrorCode.DISCOUNT_NOT_APPLICABLE: 422,
@@ -255,6 +258,13 @@ async def unhandled_error_handler(request: Request, exc: Exception) -> JSONRespo
     # Exceptions bypass RequestContextMiddleware, so echo the request id here.
     request_id = _request_id(request)
     logger.exception("unhandled.exception", extra={"request_id": request_id}, exc_info=exc)
+    reporter = getattr(request.app.state, "error_reporter", None)
+    if reporter is not None:
+        route = getattr(request.scope.get("route"), "path", None) or "unmatched"
+        try:
+            reporter.report(exc, request_id=request_id, method=request.method, route=route)
+        except Exception:  # a broken reporter never changes the 500
+            logger.exception("error.report_failed", extra={"request_id": request_id})
     return _error_response(
         request=request,
         status_code=ERROR_STATUS[ErrorCode.INTERNAL_SERVER_ERROR],

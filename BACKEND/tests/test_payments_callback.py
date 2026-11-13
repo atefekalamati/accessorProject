@@ -91,7 +91,14 @@ async def _post(client: AsyncClient, ip: str | None = None, **kwargs: Any) -> Re
 async def _callback(
     client: AsyncClient, reference: object, *, ip: str | None = None, **extra: Any
 ) -> Response:
-    return await _post(client, ip, json={"reference": reference} | extra)
+    response = await _post(client, ip, json={"reference": reference} | extra)
+    if response.status_code == 200:
+        # Public and keyed by a reference in the browser history: the outcome only, never
+        # the order number or a status (SEC-08, ADR-061). Holds for every outcome here.
+        assert list(response.json()) == ["outcome"], response.text
+        assert response.json()["outcome"] in {"success", "failed", "pending"}, response.text
+        assert response.headers["cache-control"] == "no-store"
+    return response
 
 
 async def _item(engine: AsyncEngine, variant: ProductVariant) -> InventoryItem:
@@ -139,12 +146,9 @@ async def test_a_verified_payment_confirms_the_order(
 
     assert response.status_code == 200, response.text
     assert response.headers["cache-control"] == "no-store"
-    body = response.json()
-    assert (body["outcome"], body["order_status"], body["order_payment_status"]) == (
-        "paid",
-        "confirmed",
-        "paid",
-    )
+    assert response.json() == {"outcome": "success"}
+    order = await _order(db_engine, order_id)
+    assert (order.status, order.payment_status) == ("confirmed", "paid")
     [paid] = await _payments(db_engine, order_id)
     assert (paid.status, paid.paid_amount, paid.failure_reason) == ("paid", paid.amount, None)
     assert paid.paid_at is not None and paid.raw_event is not None
@@ -176,8 +180,11 @@ async def test_repeated_and_concurrent_callbacks_apply_once(
     )
     again = await _callback(auth_client, payment.gateway_reference)
 
-    outcomes = sorted(response.json()["outcome"] for response in [*responses, again])
-    assert outcomes == ["already_processed"] * 3 + ["paid"]
+    # Every caller sees the paid order; the payment was applied exactly once.
+    assert [response.json()["outcome"] for response in [*responses, again]] == ["success"] * 4
+    # A replay is never taken for a second payment (duplicate_payment, refund_required).
+    [paid] = await _payments(db_engine, order_id)
+    assert (paid.status, paid.failure_reason) == ("paid", None)
     assert all(response.status_code == 200 for response in [*responses, again])
     item = await _item(db_engine, variant)
     assert (item.total_quantity, item.reserved_quantity) == (3, 0)  # committed once
@@ -294,7 +301,7 @@ async def test_a_wrong_amount_is_refund_required_and_consumes_nothing(
     with caplog.at_level(logging.ERROR, logger="app.modules.payments.processing"):
         response = await _callback(auth_client, payment.gateway_reference)
 
-    assert (response.status_code, response.json()["outcome"]) == (200, "amount_mismatch")
+    assert (response.status_code, response.json()["outcome"]) == (200, "failed")
     [refund] = await _payments(db_engine, order_id)
     expected_paid = payment.amount + 1 if amount_rial == "different" else None
     assert (refund.status, refund.failure_reason, refund.paid_amount) == (
@@ -341,7 +348,7 @@ async def test_a_payment_after_the_reservation_expired_is_refund_required(
     with caplog.at_level(logging.WARNING, logger="app.modules.payments.processing"):
         response = await _callback(auth_client, payment.gateway_reference)
 
-    assert (response.status_code, response.json()["outcome"]) == (200, "refund_required")
+    assert (response.status_code, response.json()["outcome"]) == (200, "failed")
     [refund] = await _payments(db_engine, order_id)
     assert (refund.status, refund.failure_reason) == ("refund_required", "reservation_expired")
     order = await _order(db_engine, order_id)
@@ -375,7 +382,7 @@ async def test_a_second_payment_on_a_paid_order_is_refund_required(
     order_id = await _placed(ready)
     first = await _started(ready, order_id)
     await _complete(auth_client, first)
-    assert (await _callback(auth_client, first.gateway_reference)).json()["outcome"] == "paid"
+    assert (await _callback(auth_client, first.gateway_reference)).json()["outcome"] == "success"
     # A second session for the same order (two tabs) that the customer also paid.
     fake = _fake(auth_client)
     second_id = uuid4()
@@ -397,7 +404,7 @@ async def test_a_second_payment_on_a_paid_order_is_refund_required(
 
     response = await _callback(auth_client, answer.reference)
 
-    assert response.json()["outcome"] == "duplicate_payment"
+    assert response.json()["outcome"] == "success"
     async with AsyncSession(db_engine) as session:
         second = await session.get(Payment, second_id)
     assert second is not None
@@ -435,7 +442,8 @@ async def test_a_late_failure_after_another_payment_succeeded_changes_only_its_r
 
     response = await _callback(auth_client, answer.reference)
 
-    assert response.json()["outcome"] == "failed"
+    # The public outcome is the order's state: still paid (ADR-061).
+    assert response.json()["outcome"] == "success"
     order = await _order(db_engine, order_id)
     assert (order.status, order.payment_status) == ("confirmed", "paid")  # paid → failed refused
 
@@ -501,7 +509,7 @@ async def test_a_late_success_of_a_failed_attempt_is_applied(
 
     response = await _callback(auth_client, payment.gateway_reference)
 
-    assert response.json()["outcome"] == "paid"
+    assert response.json()["outcome"] == "success"
     [paid] = await _payments(db_engine, order_id)
     assert (paid.status, paid.failure_reason) == ("paid", None)
     assert (await _order(db_engine, order_id)).status == "confirmed"
@@ -526,7 +534,7 @@ async def test_a_wrong_amount_on_an_old_attempt_leaves_the_live_one_alone(
 
     response = await _callback(auth_client, old_ref)
 
-    assert response.json()["outcome"] == "amount_mismatch"
+    assert response.json()["outcome"] == "failed"
     order = await _order(db_engine, order_id)
     # The live attempt is still at the gateway: the order stays pending (cancel stays 409).
     assert (order.status, order.payment_status) == ("pending_payment", "pending")
@@ -547,7 +555,7 @@ async def test_a_wrong_amount_on_a_cancelled_order_is_refund_required(
 
     response = await _callback(auth_client, payment.gateway_reference)
 
-    assert response.json()["outcome"] == "amount_mismatch"
+    assert response.json()["outcome"] == "failed"
     order = await _order(db_engine, order_id)
     assert (order.status, order.payment_status) == ("cancelled", "refund_required")
 
@@ -566,7 +574,7 @@ async def test_the_cart_loses_exactly_the_ordered_lines_and_keeps_another_code(
     payment = await _started(ready, order_id)
     await _complete(auth_client, payment)
 
-    assert (await _callback(auth_client, payment.gateway_reference)).json()["outcome"] == "paid"
+    assert (await _callback(auth_client, payment.gateway_reference)).json()["outcome"] == "success"
 
     cart, lines = await _cart_of(db_engine, ready.account.id)
     assert lines == {}  # the line equalled the ordered quantity: removed
@@ -612,4 +620,4 @@ async def test_a_callback_when_verify_is_unreachable_is_503_and_kept(
         PaymentEvent.kind == "callback",
     )
     assert stored == 1
-    assert (await _callback(auth_client, payment.gateway_reference)).json()["outcome"] == "paid"
+    assert (await _callback(auth_client, payment.gateway_reference)).json()["outcome"] == "success"

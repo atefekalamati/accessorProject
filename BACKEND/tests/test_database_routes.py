@@ -22,8 +22,10 @@ async def test_development_database_status_is_absent_in_production() -> None:
 
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.get("/api/v1/dev/database-status")
-        openapi_response = await client.get("/openapi.json")
+        served_spec = await client.get("/openapi.json")
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "HTTP_404"
-    assert "/api/v1/dev/database-status" not in openapi_response.json()["paths"]
+    # The spec is not served in production (ADR-060); the route is absent from it too.
+    assert served_spec.status_code == 404
+    assert "/api/v1/dev/database-status" not in application.openapi()["paths"]

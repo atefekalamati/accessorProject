@@ -8,7 +8,7 @@ Phase mode (rules also in CLAUDE.md section 11, "Phase mode"). Same rules as /ba
 3. Stop and report immediately on any /batch stop condition (unclear test failure, open decision or PRD ambiguity, work outside the plan, unplanned schema/migration change, red CI) or an AUTOPILOT exception.
 4. Session cap: 4 batches. Then one report (status header, one line per task, totals, next step, CI result) and say "ready for /clear"; the user runs /clear + /phase.
 5. Phase gate, automatically when every task of the phase is COMPLETE (ADR-037):
-   a. Open a PR from the phase branch to `master` with `gh pr create` (gh at `C:\Program Files\GitHub CLI\gh.exe`). Body: tasks done, ADRs, PRD changes, migrations, test count; end with the PR attribution line.
+   a. Freeze the API: `python scripts/export_openapi.py --snapshot phase-N` and commit it (OPS-06). Open a PR from the phase branch to `master` with `gh pr create` (gh at `C:\Program Files\GitHub CLI\gh.exe`). Body: tasks done, ADRs, PRD changes, migrations, test count; end with the PR attribution line.
    b. Watch the PR CI, including the ephemeral staging smoke job (OPS-08). Red = stop and report.
    c. Stop and ask the user to merge. Never merge yourself.
    d. After the user merges: confirm the CD job (OPS-09) pushed the image to GHCR with tags `<sha>` and `phase-N`; create and push git tag `phase-N` on the merge commit.

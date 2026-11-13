@@ -230,8 +230,13 @@ async def _purge_events(engine: AsyncEngine, before: datetime) -> int:
 Reconcile = Callable[[bool], Awaitable[ReconcileResult]]
 
 
-async def run_reconciler(reconcile: Reconcile, interval_seconds: float) -> None:
+async def run_reconciler(
+    reconcile: Reconcile,
+    interval_seconds: float,
+    on_success: Callable[[], None] | None = None,
+) -> None:
     """Reconcile every ``interval_seconds`` until cancelled; a failed round is logged.
+    ``on_success`` runs after each successful round (the job metric of OPS-01).
 
     ``reconcile(purge)`` is asked to trim old events at most once an hour.
     """
@@ -247,6 +252,8 @@ async def run_reconciler(reconcile: Reconcile, interval_seconds: float) -> None:
         else:
             if purge:
                 last_purge = loop.time()
+            if on_success is not None:
+                on_success()
 
 
 async def _main() -> None:

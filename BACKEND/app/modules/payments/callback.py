@@ -5,7 +5,9 @@ call (server to server, outside any transaction) is the only source of truth. Ev
 callback is stored redacted in ``payment_events`` and counted for the per-IP rate limit
 (429). A processed callback always answers 200 with the outcome in the body, so the
 gateway never retries into a storm (ADR-051); an unknown reference is 404 and a body
-without one 400.
+without one 400. The endpoint is public and the reference sits in the browser history,
+so the body holds only a coarse public outcome (``public_outcome``); the order itself is
+read with a token (ADR-061, SEC-08).
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import timedelta
+from enum import StrEnum
 from typing import Any, Final
 
 from fastapi import Request
@@ -22,17 +25,38 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.core.errors import BadRequestError, NotFoundError, RateLimitedError
 from app.core.time import utc_now
-from app.db.models import Payment, PaymentEvent
+from app.db.models import Payment, PaymentEvent, PaymentStatus
 from app.db.models.payments import PaymentEventKind
 from app.modules.payments.common import record_event
 from app.modules.payments.gateways.base import GatewayUnavailable, PaymentGateway, VerifyResult
-from app.modules.payments.processing import Applied, PaymentProcessor
+from app.modules.payments.processing import Applied, Outcome, PaymentProcessor
 from app.modules.payments.service import call_gateway, gateway_unavailable
 from app.shared.audit import client_ip
 
 MAX_CALLBACK_BYTES: Final = 8 * 1024
 
 logger = logging.getLogger(__name__)
+
+
+class PublicOutcome(StrEnum):
+    SUCCESS = "success"
+    FAILED = "failed"
+    PENDING = "pending"
+
+
+def public_outcome(applied: Applied) -> PublicOutcome:
+    """The outcome a public caller may see: the order's payment state, nothing finer.
+
+    ``success`` only when the order is paid (a repeated callback, or a second payment on
+    a paid order, included); ``pending`` while the gateway has no final answer; anything
+    else, a refund case included, is ``failed``. The detail stays in metrics, logs and
+    audit, and the customer reads it on the order with a token (ADR-061).
+    """
+    if applied.outcome is Outcome.PENDING:
+        return PublicOutcome.PENDING
+    if applied.order_payment_status == PaymentStatus.PAID:
+        return PublicOutcome.SUCCESS
+    return PublicOutcome.FAILED
 
 
 def _invalid(message: str) -> BadRequestError:

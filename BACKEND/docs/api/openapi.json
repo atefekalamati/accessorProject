@@ -73,6 +73,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -176,6 +186,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -295,6 +315,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -398,6 +428,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -519,6 +559,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -666,6 +716,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -787,6 +847,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -917,6 +987,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -1020,6 +1100,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -1146,6 +1236,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -1370,6 +1470,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -1508,6 +1618,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -1638,6 +1758,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -1841,6 +1971,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -1961,6 +2101,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -2217,6 +2367,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -2320,6 +2480,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -2480,6 +2650,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -2630,6 +2810,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -2768,6 +2958,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -2871,6 +3071,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -3001,6 +3211,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -3115,6 +3335,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -3432,6 +3662,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -3765,6 +4005,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -3897,6 +4147,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -4045,6 +4305,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -4159,6 +4429,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -4329,6 +4609,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -4445,6 +4735,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -4591,6 +4891,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -4702,6 +5012,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -4840,6 +5160,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -5061,6 +5391,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -5177,6 +5517,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -5305,6 +5655,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -5449,6 +5809,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -5560,6 +5930,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -5706,6 +6086,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -5836,6 +6226,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -5982,6 +6382,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -6093,6 +6503,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -6221,6 +6641,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -6411,6 +6841,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -6532,6 +6972,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -6670,6 +7120,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -6778,6 +7238,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -6902,6 +7372,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -7053,6 +7533,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -7183,6 +7673,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -7339,6 +7839,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -7560,6 +8070,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -7756,6 +8276,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -7886,6 +8416,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -8050,6 +8590,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -8184,6 +8734,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -8310,6 +8870,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -8454,6 +9024,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -8616,6 +9196,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -8743,6 +9333,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -8895,6 +9495,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -9019,6 +9629,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -9223,6 +9843,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -9339,6 +9969,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -9467,6 +10107,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -9611,6 +10261,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -9730,6 +10390,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -9837,6 +10507,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -9961,6 +10641,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -10094,6 +10784,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -10238,6 +10938,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -10357,6 +11067,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -10464,6 +11184,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -10652,6 +11382,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -10768,6 +11508,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -10896,6 +11646,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -11040,6 +11800,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -11151,6 +11921,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -11272,6 +12052,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -11463,6 +12253,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -11605,6 +12405,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -11733,6 +12543,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -11853,6 +12673,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -12122,6 +12952,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -12242,6 +13082,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -12388,6 +13238,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -12508,6 +13368,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -12746,6 +13616,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -12876,6 +13756,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -13028,6 +13918,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -13131,6 +14031,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -13253,6 +14163,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -13423,6 +14343,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -13539,6 +14469,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -13685,6 +14625,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -13804,6 +14754,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -13907,6 +14867,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -14061,6 +15031,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -14177,6 +15157,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -14323,6 +15313,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -14442,6 +15442,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -14553,6 +15563,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -14728,6 +15748,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -14848,6 +15878,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -14992,6 +16032,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -15095,6 +16145,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -15249,6 +16309,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -15365,6 +16435,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -15511,6 +16591,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -15622,6 +16712,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -15776,6 +16876,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -15892,6 +17002,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -16038,6 +17158,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -16157,6 +17287,16 @@
               }
             }
           },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Business rule violation",
             "content": {
@@ -16260,6 +17400,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -16382,6 +17532,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -16514,6 +17674,16 @@
           },
           "409": {
             "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
             "content": {
               "application/json": {
                 "schema": {
@@ -18855,35 +20025,20 @@
         "properties": {
           "outcome": {
             "type": "string",
+            "enum": [
+              "success",
+              "failed",
+              "pending"
+            ],
             "title": "Outcome"
-          },
-          "order_number": {
-            "type": "string",
-            "title": "Order Number"
-          },
-          "order_status": {
-            "type": "string",
-            "title": "Order Status"
-          },
-          "order_payment_status": {
-            "type": "string",
-            "title": "Order Payment Status"
-          },
-          "payment_status": {
-            "type": "string",
-            "title": "Payment Status"
           }
         },
         "type": "object",
         "required": [
-          "outcome",
-          "order_number",
-          "order_status",
-          "order_payment_status",
-          "payment_status"
+          "outcome"
         ],
         "title": "CallbackResponse",
-        "description": "The acknowledgement to the gateway; always 200 once processed (ADR-051)."
+        "description": "The acknowledgement; always 200 once processed (ADR-051).\n\nThe endpoint is public and the reference sits in the browser history, so only the\noutcome is returned. The order itself is read with a token (ADR-061, SEC-08)."
       },
       "CartDiscount": {
         "properties": {

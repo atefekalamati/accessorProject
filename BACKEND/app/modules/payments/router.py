@@ -14,7 +14,7 @@ from app.db.models import FakeGatewaySession
 from app.db.session import get_db_session
 from app.modules.auth.dependencies import get_current_user
 from app.modules.auth.service import CurrentUser
-from app.modules.payments.callback import CallbackService, read_body
+from app.modules.payments.callback import CallbackService, public_outcome, read_body
 from app.modules.payments.gateways import get_payment_gateway
 from app.modules.payments.gateways.base import PaymentGateway
 from app.modules.payments.gateways.fake import FakeGateway
@@ -76,13 +76,10 @@ async def payment_callback(
     # Size-capped while it is read; its shape is the adapter's business.
     payload = await read_body(request)
     applied = await CallbackService(session, gateway, settings).handle(payload, request)
-    body = CallbackResponse(
-        outcome=applied.outcome.value,
-        order_number=applied.order_number,
-        order_status=applied.order_status,
-        order_payment_status=applied.order_payment_status,
-        payment_status=applied.payment_status,
-    )
+    metrics = getattr(request.app.state, "metrics", None)
+    if metrics is not None:
+        metrics.payment_callback(applied.outcome.value)
+    body = CallbackResponse(outcome=public_outcome(applied).value)
     return JSONResponse(content=body.model_dump(mode="json"), headers=dict(NO_STORE))
 
 
