@@ -246,7 +246,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | OPS-04 | Deployment docs + production config (incl. trusted-proxy config) | DEFERRED | HIGH | HIGH | 4 | D13 | checklist complete; audit/log IP = real client IP, forwarded headers trusted only from configured proxies; if `ENVIRONMENT=production`, `TRUSTED_PROXIES` must be explicitly set (empty value = explicit "none"), unset → startup fails |
 | OPS-05 | Real SMS provider adapter | DEFERRED | HIGH | HIGH | 3 | AUTH-04, D9 | works behind interface |
 | OPS-06 | OpenAPI export & versioning | NOT_STARTED | MEDIUM | LOW | 2 | HANDOFF-01 | versioned file |
-| OPS-10 | Provider contract tests (payment, SMS, storage) | NOT_STARTED | HIGH | MEDIUM | 2 | PAY-01, AUTH-04, CAT-05 | one suite every adapter must pass; fakes pass it; production fails closed |
+| OPS-10 | Provider contract tests (payment, SMS, storage) | COMPLETE | HIGH | MEDIUM | 2 | PAY-01, AUTH-04, CAT-05 | one suite every adapter must pass; fakes pass it; production fails closed |
 | OPS-07 | Real file storage adapter | DEFERRED | HIGH | MEDIUM | 3 | CAT-05, D10 | works behind interface |
 | PAY-07 | Real payment gateway adapter (Toman→Rial here) | DEFERRED | HIGH | HIGH | 5 | PAY-01, D8 | verify + callback on sandbox |
 
