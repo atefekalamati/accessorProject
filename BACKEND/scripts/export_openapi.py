@@ -5,18 +5,25 @@ depends on the local ``.env``: the routes are the ones a development server serv
 including the development-only fake gateway (``/payments/fake/...``). ``--check`` fails
 when the committed file is out of date (a test runs the same comparison).
 
-    python scripts/export_openapi.py [--check]
+``--snapshot phase-N`` also freezes the spec as ``docs/api/versions/openapi-phase-N.json``
+at a phase gate (OPS-06). A test fails when an operation of the newest snapshot is
+missing from the current spec: removing one breaks the frontend.
+
+    python scripts/export_openapi.py [--check | --snapshot phase-N]
 """
 
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = ROOT / "docs" / "api" / "openapi.json"
+VERSIONS = ROOT / "docs" / "api" / "versions"
+_SNAPSHOT_NAME = re.compile(r"phase-[1-9][0-9]*")
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -46,8 +53,43 @@ def render(spec: dict[str, Any]) -> str:
     return json.dumps(spec, ensure_ascii=False, indent=2) + "\n"
 
 
+def snapshot_path(name: str) -> Path:
+    if _SNAPSHOT_NAME.fullmatch(name) is None:
+        raise ValueError(f"snapshot name must look like phase-N, got {name!r}")
+    return VERSIONS / f"openapi-{name}.json"
+
+
+def latest_snapshot() -> Path | None:
+    """The snapshot of the highest phase, or None before the first one."""
+    found = [
+        (int(match.group(1)), path)
+        for path in VERSIONS.glob("openapi-phase-*.json")
+        if (match := re.fullmatch(r"openapi-phase-([1-9][0-9]*)\.json", path.name))
+    ]
+    return max(found)[1] if found else None
+
+
+def operations(spec: dict[str, Any]) -> set[tuple[str, str]]:
+    methods = {"get", "put", "post", "delete", "patch", "head", "options"}
+    return {
+        (method.upper(), path)
+        for path, item in spec.get("paths", {}).items()
+        for method in item
+        if method in methods
+    }
+
+
 def main(argv: list[str]) -> int:
     text = render(build_spec())
+    if "--snapshot" in argv:
+        index = argv.index("--snapshot")
+        if index + 1 >= len(argv):
+            print("usage: export_openapi.py --snapshot phase-N")
+            return 2
+        target = snapshot_path(argv[index + 1])
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8", newline="\n")
+        print(f"wrote {target.relative_to(ROOT)}")
     if "--check" in argv:
         current = OUTPUT.read_text(encoding="utf-8") if OUTPUT.exists() else ""
         if current != text:

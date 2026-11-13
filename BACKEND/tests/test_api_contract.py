@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
+import pytest
 from httpx import AsyncClient
 
 _SPEC = importlib.util.spec_from_file_location(
@@ -48,6 +50,24 @@ def test_the_exported_openapi_file_is_current() -> None:
     current = export_openapi.OUTPUT.read_text(encoding="utf-8")
 
     assert current == expected, "run: python scripts/export_openapi.py"
+
+
+def test_no_operation_of_the_last_released_api_was_removed() -> None:
+    """A phase snapshot is what the frontend builds on (OPS-06); removing an operation
+    breaks it. Rename or remove only with a new versioned path and a frontend change."""
+    latest = export_openapi.latest_snapshot()
+    assert latest is not None, "no snapshot in docs/api/versions"
+    released = export_openapi.operations(json.loads(latest.read_text(encoding="utf-8")))
+    current = export_openapi.operations(export_openapi.build_spec())
+
+    assert sorted(released - current) == [], f"removed since {latest.name}"
+
+
+def test_snapshot_names_are_phase_numbers() -> None:
+    for bad in ("phase-0", "v1", "../phase-4", "phase-4.json"):
+        with pytest.raises(ValueError):
+            export_openapi.snapshot_path(bad)
+    assert export_openapi.snapshot_path("phase-12").name == "openapi-phase-12.json"
 
 
 def test_the_exported_spec_has_the_purchase_flow() -> None:
