@@ -3,16 +3,16 @@
 **Last Updated:** 2026-11-13
 
 ## Current / Next
-- **Phase › Milestone:** 5 Release › M5.1 Security / M5.2 Operations
-- **Current Task:** همه taskهای فعال فاز ۵ COMPLETE (آخرین: SEC-08). بعدی: دروازه فاز ۵.
-- **Status:** فازهای ۱ تا ۴ در `master` merge شده‌اند. فاز ۴: PR #7، merge `094587d`، git tag `phase-4`، image `ghcr.io/atefekalamati/accessorproject-api:phase-4` (هم‌digest با tag `<sha>`، `sha256:7b90b5cc…`). فاز ۵ شروع شد.
+- **Phase › Milestone:** 6 Post-core › M6.1 Collections
+- **Current Task:** نیازمندی‌های فاز ۶ (CAT-13، CAT-15، ACC-03، ORD-07، CNT-08) — منتظر تأیید کاربر برای شروع پیش‌نویس.
+- **Status:** فازهای ۱ تا ۵ در `master` merge شده‌اند. فاز ۵: PR #9، merge `3d68122`، git tag `phase-5`، image `ghcr.io/atefekalamati/accessorproject-api:phase-5` (هم‌digest با tag `<sha>`، `sha256:529e085a…`). snapshot `openapi-phase-5.json` با spec فعلی یکسان است. فاز ۶ شروع شد.
 - **Progress:** 135/146 task فعال COMPLETE · وزنی 89.9% (377.5h / 420h؛ 9 task و 19h DEFERRED جدا) · MVP 100%
 - **Blockers:** هیچ مانعی برای فاز ۵ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058).
-- **Next Action:** دروازه فاز ۵: snapshot OpenAPI (`phase-5`)، PR به `master`، CI با staging smoke؛ merge فقط کاربر. سپس tag `phase-5` و شاخه فاز ۶.
-  - ترتیب: M4.1 (CAT-18، ACC-01، ACC-02) → M4.2 (ADM-01، ADM-03، ADM-06؛ ADM-02؛ ADM-08؛ ADM-04، ADM-05؛ ADM-07) → M4.3 (CNT-01..07).
+- **Next Action:** نیازمندی‌های فاز ۶ با الگوی فاز ۳: پیش‌نویس CAT-13، CAT-15، ACC-03، ORD-07 و CNT-08 با هم و بدون ویرایش PRD؛ یک خلاصه (≤۸۰ خط) برای تأیید کاربر (تغییر scope در PRD = استثنای AUTOPILOT). بعد از تأیید، ویرایش‌های PRD در یک commit و سپس `/phase` برای M6.1..M6.6.
+  - ترتیب: M6.1 (CAT-14) → M6.2 (CAT-16) → M6.3 (ACC-04) → M6.4 (ORD-08، HIGH، بازگشت موجودی) → M6.5 (CNT-09) → M6.6 (ACC-05، HIGH).
   - دستور کاربر (2026-10-25): plan milestoneها برای تأیید متوقف نمی‌شود؛ فقط استثناهای استاندارد AUTOPILOT متوقف می‌شوند.
   - taskهای وضعیت سفارش و بازپرداخت (ADM-02 و هر task `refund_required`) بازبین opus دارند. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
-- **Branch:** `feat/phase-5-release` (از `master` در `094587d`). شاخه فاز ۴ کاملاً merge شده است.
+- **Branch:** `feat/phase-6-post-core` (از `master` در `3d68122`). شاخه فاز ۵ کاملاً merge شده است.
 - **Repo layout:** monorepo از 2026-10-26 (commit `ebcfbd5`).
   - بک‌اند در `BACKEND/` و فرانت در `FRONTEND/` است. CI در `.github/` ریشه است و داخل `BACKEND/` اجرا می‌شود.
   - جلسه بک‌اند از `BACKEND/` باز شود.
@@ -31,7 +31,7 @@
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | COMPLETE | 67h | 67h | 100% | 2026-11-13 (واقعی) |
-| 5 Release | COMPLETE (دروازه باقی) | 30h (+19h DEFERRED) | 30h | 100% | 2026-11-13 (واقعی) |
+| 5 Release | COMPLETE (merge شد، tag `phase-5`) | 30h (+19h DEFERRED) | 30h | 100% | 2026-11-13 (واقعی) |
 | 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2026-12-18 |
 
 ## Deadlines & Schedule
@@ -40,6 +40,7 @@
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-11-13: دروازه فاز ۵ (PR #9 توسط کاربر merge شد (`3d68122`)؛ CI روی master با staging-smoke سبز؛ CD image را با tagهای `3d68122…` و `phase-5` (digest یکسان `sha256:529e085a…`) در GHCR گذاشت؛ git tag `phase-5` روی commit merge push شد؛ شاخه `feat/phase-6-post-core` ساخته شد).
 - 2026-11-13: SEC-08 (به‌روز: `outcome` عمومی سه‌مقداری success|failed|pending بر اساس وضعیت پرداخت سفارش، تصمیم دوم کاربر؛ PRD «پرداخت» و ADR-051 به‌روز شدند؛ suite ۲۳۶۴ سبز) (پاسخ عمومی POST /payments/callback فقط {outcome} شد (تصمیم کاربر، ADR-061، رفع F4)؛ صفحه نتیجه سفارش را با token از GET /orders/{order_number} می‌خواند (FRONTEND.md §۷ با refresh سمت client، sessionStorage و fallbackها)؛ محافظ شکل پاسخ و no-store روی هر 200 در helper تست callback (همه outcomeها)؛ e2e و smoke staging وضعیت را با token می‌خوانند؛ openapi.json بازتولید شد؛ بازبین opus plan و diff را بررسی کرد؛ suite کامل ۲۳۵۲ سبز).
 - 2026-11-13: SEC-03 (مرور امنیتی کل API در برابر REVIEW-CHECKLIST با بازبین opus روی plan و diff؛ هیچ آسیب‌پذیری قابل بهره‌برداری پیدا نشد؛ محافظ‌های خودکار در tests/test_security_review.py (همه schemaهای بدنه در هر سطح بدون فیلد ناشناخته، registry همه idهای مسیر، query و بدنه با تست مالکیت یا SD rule، registry همه writeهای ادمین با action audit به‌صورت literal کد در بسته endpoint، نبود routeهای dev در production، فیلدهای ممتاز /users/me رد، نبود FORWARDED_ALLOW_IPS=*)؛ گزارش و یافته‌ها در docs/project/SECURITY-REVIEW.md؛ F4 → SEC-08 (BLOCKED، تصمیم کاربر)، F5 → OPS-11 (DEFERRED با D13)، F1 تا F3 → OPS-04).
 - 2026-11-13: OPS-02 (قواعد هشدار Prometheus در ops/prometheus/alerts.yml (نرخ 5xx، 503 درگاه، توقف job تطبیق و sweep، refund_required باز بیش از ۲۴ ساعت، database_up، شکست scrape) با runbook هر هشدار در docs/ops/ALERTS.md؛ تست که هر قاعده severity و runbook دارد، هیچ بخش runbook بی‌قاعده نیست و فقط متریک‌ها و jobهایی را به کار می‌برد که API واقعاً منتشر می‌کند؛ اجرای واقعی به D13 بستگی دارد).
