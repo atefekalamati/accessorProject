@@ -12,8 +12,8 @@
 | `docs/project/DECISIONS.md` | تصمیم‌های D1… (با task `DEC-NN` و taskهایی که مسدود می‌کنند)، ADRها و جدول PRD changes |
 | `tasks/phase-0N/<ID>-<slug>.md` | جزئیات task؛ قالب و قواعد در `tasks/README.md` |
 
-- **وضعیت‌ها:** `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` (منتظر تصمیم باز) / `COMPLETE` / `CANCELLED`.
-- **درصد:** ساعت برآوردی COMPLETE ÷ کل ساعت (CANCELLED حذف می‌شود).
+- **وضعیت‌ها:** `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` (منتظر تصمیم باز) / `COMPLETE` / `CANCELLED` / `DEFERRED` (کاربر به بعد موکول کرد).
+- **درصد:** ساعت برآوردی COMPLETE ÷ کل ساعت (CANCELLED و DEFERRED حذف می‌شوند؛ ADR-058).
 - **ددلاین‌ها:** فقط forecast با برچسب «پیش‌بینی». هرگز تاریخ حدسی بدون مبنا ننویس.
 
 ## برای هر task
