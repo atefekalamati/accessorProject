@@ -145,6 +145,9 @@
 ---
 
 ## Plan changes
+### 2026-11-13 — CI گیر کرده و سرعت CI (تصمیم کاربر، ADR-057)
+دو run (`7d25afd`، `c19d2e9`) حدود ۱۲ ساعت بدون job در صف GitHub ماندند و نه cancel شدند نه rerun. طبق دستور کاربر دست‌نخورده ماندند و یک commit خالی `ci: retrigger` (`7d87d0e`) همان کد را دوباره اجرا کرد. سپس uv، cache لایه docker و `paths-ignore` روی push اعمال شد. suite کامل و staging-smoke روی هر push باقی ماند.
+
 ### 2026-11-10 — ترتیب M4.3 (AUTOPILOT)
 مقصد `page` در سکشن و بنر به StaticPage نیاز دارد، پس ترتیب M4.3 شد: CNT-04، CNT-05، CNT-06 → CNT-01، CNT-02، CNT-03 → CNT-07. وابستگی CNT-01 به CNT-04 و CNT-03 به CNT-01 در PLAN.md اضافه شد. وضعیت کهنه ADM-04، ADM-05 و ADM-07 در PLAN.md به COMPLETE اصلاح شد.
 

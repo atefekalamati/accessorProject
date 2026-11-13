@@ -658,6 +658,17 @@
   - مجوز `contact_messages:manage` با seed اضافه می‌شود. بعد از استقرار، `python -m app.db.seed` دوباره اجرا شود.
 - پیامدها: CNT-04، CNT-05، CNT-06.
 
+### ADR-057 — سرعت CI: uv، cache لایه docker و path filter (تصمیم کاربر)
+- تاریخ: 2026-11-13
+- زمینه: دو run در 2026-11-11 حدود ۱۲ ساعت بدون job در صف GitHub ماندند و نه cancel شدند نه rerun. repo عمومی است، پس سقف دقیقه علت نبود. یک commit خالی `ci: retrigger` run تازه را بلافاصله شروع کرد. بعد از آن، plan کاهش زمان CI بررسی شد.
+- تصمیم (کاربر):
+  - ثابت می‌ماند: suite کامل و staging-smoke روی هر push. ADR-037 و قاعده «CI سبز بعد از هر push» تغییر نمی‌کنند. اجرای فقط تست‌های سریع روی push رد شد.
+  - نصب در CI با `uv pip install --system --require-hashes` از همان `requirements-dev.lock`. خود uv اول با pip و hash خودش از همان lock نصب می‌شود (SEC-06 حفظ می‌شود). wheelها با `actions/cache` و کلید hash lock cache می‌شوند.
+  - image API در staging-smoke و publish-image با `docker/build-push-action` و `cache-from/to: type=gha` (scope `api`) ساخته می‌شود. staging با `compose up --no-build` همان image را با نام `project-ak-staging-api` اجرا می‌کند.
+  - push که فقط `FRONTEND/**` یا `**/*.md` را تغییر دهد CI بک‌اند ندارد (`paths-ignore`). روی PR هیچ فیلتری نیست.
+  - uv و buildx ابزار CI هستند، نه dependency برنامه. uv از قبل در lock dev بود (`scripts/lock.py`).
+- پیامد: commit فقط-سند (مثلاً به‌روزرسانی PROGRESS و task به‌تنهایی) CI ندارد. commitهای task همیشه کد هم دارند، پس CI می‌گیرند.
+
 ### تصمیم‌های deferred
 - **D13 — محیط production:** تا فاز ۵ باز است (DEC-13؛ مانع OPS-04).
 
