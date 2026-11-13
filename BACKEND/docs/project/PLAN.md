@@ -230,7 +230,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | SEC-01 | Global rate limiting | COMPLETE | HIGH | HIGH | 3 | SEC-00 | 429 on abuse |
 | SEC-02 | Security headers + request size limit | COMPLETE | HIGH | HIGH | 2 | SEC-00 | headers tested |
 | SEC-03 | Security review & tests (authz, IDOR, tampering) | COMPLETE | HIGH | HIGH | 5 | Phase 3 | findings fixed or tracked |
-| SEC-08 | Payment callback response: outcome only? (SECURITY-REVIEW F4) | BLOCKED | MEDIUM | HIGH | 1 | SEC-03 | user decision recorded; response and FRONTEND.md updated or risk accepted in an ADR |
+| SEC-08 | Payment callback response: outcome only (SECURITY-REVIEW F4, ADR-061) | COMPLETE | MEDIUM | HIGH | 1 | SEC-03 | user decision recorded; response and FRONTEND.md updated or risk accepted in an ADR |
 | SEC-04 | DB-level append-only audit_logs (trigger blocks UPDATE; DELETE trigger exists since FND-04) | COMPLETE | HIGH | HIGH | 2 | INF-05 | UPDATE/DELETE rejected by DB (integration test) |
 
 ### M5.2 Operations — PRD «پایش و رخدادها» (قالبی)

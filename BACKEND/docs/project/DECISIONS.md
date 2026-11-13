@@ -711,6 +711,14 @@
   - **ریسک استقرار (مهم):** پشت reverse proxy یا با fetch سمت سرور frontend، همه کاربران یک IP دارند و یک سقف ۳۰۰ تایی مشترک می‌گیرند. تا OPS-04 (trusted proxy، DEFERRED) انجام نشود، `RATE_LIMIT_PER_IP` در آن محیط باید بالا برود. این پیش‌شرط production است (ADR-058).
 - پیامدها: PRD (چهار بخش ✓)، SEC-01، SEC-02، SEC-03، OPS-01، OPS-02، OPS-03، OPS-04.
 
+### ADR-061 — پاسخ عمومی callback پرداخت فقط outcome است (SEC-08؛ تصمیم کاربر)
+- تاریخ: 2026-11-13
+- زمینه: `POST /payments/callback` بدون ورود است و reference درگاه در تاریخچه مرورگر می‌ماند. پاسخ قبلی (ADR-051) `order_number` و وضعیت سفارش و پرداخت را به هر دارنده reference می‌داد (SECURITY-REVIEW F4).
+- تصمیم (کاربر): پاسخ 200 فقط `{outcome}` است. صفحه نتیجه `order_number` را قبل از redirect در `sessionStorage` نگه می‌دارد، بعد از load در سمت client refresh می‌کند و سفارش را با token از `GET /orders/{order_number}` می‌خواند (FRONTEND.md §۷).
+- ریسک پذیرفته‌شده: دارنده reference هنوز نتیجه (paid، failed، refund و…) را برای یک reference بی‌نام می‌بیند، بدون هویت سفارش، مبلغ یا PII. فراخوانی callback توسط هر کسی مثل قبل بی‌خطر است، چون idempotent است و سرور با درگاه verify می‌کند.
+- بدون تغییر: verify، تراکنش، idempotency، متریک، `no-store` و خطاهای 400/404/429/503. `Applied` داخلی دست نخورد.
+- پیامدها: ADR-051 (شکل پاسخ)، FRONTEND.md §۷، smoke staging، snapshot OpenAPI فاز ۵.
+
 ### تصمیم‌های deferred
 - **D8، D9، D10، D13:** به تصمیم کاربر موکول شدند (ADR-058). production تا آن موقع مسدود است.
 

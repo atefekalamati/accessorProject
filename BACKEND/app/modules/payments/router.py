@@ -79,13 +79,7 @@ async def payment_callback(
     metrics = getattr(request.app.state, "metrics", None)
     if metrics is not None:
         metrics.payment_callback(applied.outcome.value)
-    body = CallbackResponse(
-        outcome=applied.outcome.value,
-        order_number=applied.order_number,
-        order_status=applied.order_status,
-        order_payment_status=applied.order_payment_status,
-        payment_status=applied.payment_status,
-    )
+    body = CallbackResponse(outcome=applied.outcome.value)
     return JSONResponse(content=body.model_dump(mode="json"), headers=dict(NO_STORE))
 
 

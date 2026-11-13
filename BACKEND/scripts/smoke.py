@@ -282,8 +282,13 @@ def purchase(base_url: str, token_file: Path) -> None:
     _expect("pay at the fake gateway", status, 200, payload)
     status, settled = _call(base_url, "POST", "/payments/callback", body={"reference": reference})
     _expect("payment callback", status, 200, settled)
-    if (settled["outcome"], settled["order_status"]) != ("paid", "confirmed"):
+    if settled != {"outcome": "paid"}:
         raise SmokeError(f"payment callback: unexpected result {settled}")
+    # The callback is public and returns the outcome only; the order is read with a token.
+    status, placed = _call(base_url, "GET", f"/orders/{order['order_number']}", token=token)
+    _expect("order after payment", status, 200, placed)
+    if (placed["status"], placed["payment_status"]) != ("confirmed", "paid"):
+        raise SmokeError(f"order after payment: unexpected state {placed}")
     print("ok   order confirmed and paid")
     status, history = _call(base_url, "GET", f"/admin/inventory/{variant_id}/history", token=token)
     _expect("stock history", status, 200, history)

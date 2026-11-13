@@ -100,7 +100,9 @@ class Shopper:
         # The gateway's callback carries no session; only the reference matters.
         callback = await self.client.post(f"{API}/payments/callback", json={"reference": reference})
         assert callback.status_code == 200, callback.text
-        return {"started": started, "callback": callback.json()}
+        # The result page reads the order with its own token (SEC-08, ADR-061).
+        order = await self.call("GET", f"/orders/{started['order_number']}", 200)
+        return {"started": started, "callback": callback.json(), "order": order}
 
 
 async def _stock(engine: AsyncEngine, variant: ProductVariant) -> tuple[int, int]:
@@ -158,13 +160,9 @@ async def test_a_purchase_from_guest_cart_to_paid_order(
     paid = await shopper.pay(order["id"])
 
     assert paid["started"]["amount"] == order["grand_total"]
-    assert paid["callback"] == {
-        "outcome": "paid",
-        "order_number": order["order_number"],
-        "order_status": "confirmed",
-        "order_payment_status": "paid",
-        "payment_status": "paid",
-    }
+    assert paid["callback"] == {"outcome": "paid"}
+    assert (paid["order"]["status"], paid["order"]["payment_status"]) == ("confirmed", "paid")
+    assert paid["order"]["order_number"] == order["order_number"]
     assert await _stock(db_engine, ring) == (3, 0)  # committed
     assert await _stock(db_engine, chain) == (2, 0)
     assert await _redemption(db_engine, order["id"]) == "confirmed"
@@ -218,11 +216,9 @@ async def test_a_payment_after_the_reservation_expired_is_refund_required(
     callback = await shopper.client.post(f"{API}/payments/callback", json={"reference": reference})
 
     assert callback.status_code == 200, callback.text
-    assert callback.json()["outcome"] == "refund_required"
-    assert (callback.json()["order_status"], callback.json()["order_payment_status"]) == (
-        "cancelled",
-        "refund_required",
-    )
+    assert callback.json() == {"outcome": "refund_required"}
+    seen = await shopper.call("GET", f"/orders/{order['order_number']}", 200)
+    assert (seen["status"], seen["payment_status"]) == ("cancelled", "refund_required")
     assert await _stock(db_engine, ring) == (5, 0)  # never consumed
     # The cart was not emptied: the customer can order again (D33).
     assert (await shopper.call("GET", "/cart", 200))["items"]

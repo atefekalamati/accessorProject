@@ -91,7 +91,13 @@ async def _post(client: AsyncClient, ip: str | None = None, **kwargs: Any) -> Re
 async def _callback(
     client: AsyncClient, reference: object, *, ip: str | None = None, **extra: Any
 ) -> Response:
-    return await _post(client, ip, json={"reference": reference} | extra)
+    response = await _post(client, ip, json={"reference": reference} | extra)
+    if response.status_code == 200:
+        # Public and keyed by a reference in the browser history: the outcome only, never
+        # the order number or a status (SEC-08, ADR-061). Holds for every outcome here.
+        assert list(response.json()) == ["outcome"], response.text
+        assert response.headers["cache-control"] == "no-store"
+    return response
 
 
 async def _item(engine: AsyncEngine, variant: ProductVariant) -> InventoryItem:
@@ -139,12 +145,9 @@ async def test_a_verified_payment_confirms_the_order(
 
     assert response.status_code == 200, response.text
     assert response.headers["cache-control"] == "no-store"
-    body = response.json()
-    assert (body["outcome"], body["order_status"], body["order_payment_status"]) == (
-        "paid",
-        "confirmed",
-        "paid",
-    )
+    assert response.json() == {"outcome": "paid"}
+    order = await _order(db_engine, order_id)
+    assert (order.status, order.payment_status) == ("confirmed", "paid")
     [paid] = await _payments(db_engine, order_id)
     assert (paid.status, paid.paid_amount, paid.failure_reason) == ("paid", paid.amount, None)
     assert paid.paid_at is not None and paid.raw_event is not None
