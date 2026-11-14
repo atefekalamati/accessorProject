@@ -3,16 +3,15 @@
 **Last Updated:** 2026-11-13
 
 ## Current / Next
-- **Phase › Milestone:** 6 Post-core › M6.1 Collections
-- **Current Task:** نیازمندی‌های فاز ۶ (CAT-13، CAT-15، ACC-03، ORD-07، CNT-08) — منتظر تأیید کاربر برای شروع پیش‌نویس.
-- **Status:** فازهای ۱ تا ۵ در `master` merge شده‌اند. فاز ۵: PR #9، merge `3d68122`، git tag `phase-5`، image `ghcr.io/atefekalamati/accessorproject-api:phase-5` (هم‌digest با tag `<sha>`، `sha256:529e085a…`). snapshot `openapi-phase-5.json` با spec فعلی یکسان است. فاز ۶ شروع شد.
-- **Progress:** 135/146 task فعال COMPLETE · وزنی 89.9% (377.5h / 420h؛ 9 task و 19h DEFERRED جدا) · MVP 100%
-- **Blockers:** هیچ مانعی برای فاز ۵ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058).
-- **Next Action:** نیازمندی‌های فاز ۶ با الگوی فاز ۳: پیش‌نویس CAT-13، CAT-15، ACC-03، ORD-07 و CNT-08 با هم و بدون ویرایش PRD؛ یک خلاصه (≤۸۰ خط) برای تأیید کاربر (تغییر scope در PRD = استثنای AUTOPILOT). بعد از تأیید، ویرایش‌های PRD در یک commit و سپس `/phase` برای M6.1..M6.6.
-  - ترتیب: M6.1 (CAT-14) → M6.2 (CAT-16) → M6.3 (ACC-04) → M6.4 (ORD-08، HIGH، بازگشت موجودی) → M6.5 (CNT-09) → M6.6 (ACC-05، HIGH).
-  - دستور کاربر (2026-10-25): plan milestoneها برای تأیید متوقف نمی‌شود؛ فقط استثناهای استاندارد AUTOPILOT متوقف می‌شوند.
-  - taskهای وضعیت سفارش و بازپرداخت (ADM-02 و هر task `refund_required`) بازبین opus دارند. یادداشت‌ها: OPS-04 (trusted-proxy) پیش‌شرط production برای سقف IP کد تخفیف و callback پرداخت است (ADR-043). بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
-- **Branch:** `feat/phase-6-post-core` (از `master` در `3d68122`). شاخه فاز ۵ کاملاً merge شده است.
+- **Phase › Milestone:** 6 Post-core › M6.4 Returns
+- **Current Task:** ORD-07 (نیازمندی مرجوعی) و پیش‌نویس ACC-05 (حذف حساب) — منتظر تأیید کاربر.
+- **Status:** scope فاز ۶ را کاربر تأیید کرد (ADR-062): فقط مرجوعی (ORD-07، ORD-08) و حذف حساب (ACC-05). CAT-13/14، CAT-15/16، ACC-03/04 و CNT-08/09 `POST_LAUNCH` شدند (28.5h، در PLAN می‌مانند). فاز ۵: PR #9، merge `3d68122`، tag `phase-5`.
+- **Progress:** 135/138 task فعال COMPLETE · وزنی 96.4% (377.5h / 391.5h؛ 9 task و 19h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
+- **Blockers:** هیچ مانعی برای فاز ۶ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058).
+- **Next Action:** تأیید کاربر برای پیش‌نویس ORD-07 (`tasks/phase-06/ORD-07-returns-requirements.md`) و ACC-05 (`tasks/phase-06/ACC-05-account-deletion.md`). بعد از آن ویرایش PRD («مرجوعی» ✓، «پروفایل» ✓) در یک commit و سپس `/phase`.
+  - ترتیب: M6.4 (ORD-07 → ORD-08، HIGH، plan برای تأیید کاربر متوقف می‌شود) → M6.6 (ACC-05، HIGH، بازبین opus).
+  - taskهای وضعیت سفارش و بازپرداخت بازبین opus دارند. بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
+- **Branch:** `feat/phase-6-post-core` (از `master` در `3d68122`؛ طبق دستور کاربر همان می‌ماند). حفاظت `master`: `strict` خاموش می‌ماند.
 - **Repo layout:** monorepo از 2026-10-26 (commit `ebcfbd5`).
   - بک‌اند در `BACKEND/` و فرانت در `FRONTEND/` است. CI در `.github/` ریشه است و داخل `BACKEND/` اجرا می‌شود.
   - جلسه بک‌اند از `BACKEND/` باز شود.
@@ -22,7 +21,7 @@
 ---
 
 ## Overall Progress
-**89.9%** = 377.5h COMPLETE / 420h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED و DEFERRED حذف می‌شوند؛ 19h DEFERRED، ADR-058).
+**96.4%** = 377.5h COMPLETE / 391.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED، DEFERRED و POST_LAUNCH حذف می‌شوند؛ 19h DEFERRED، ADR-058؛ 28.5h POST_LAUNCH، ADR-062).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -32,11 +31,11 @@
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | COMPLETE | 67h | 67h | 100% | 2026-11-13 (واقعی) |
 | 5 Release | COMPLETE (merge شد، tag `phase-5`) | 30h (+19h DEFERRED) | 30h | 100% | 2026-11-13 (واقعی) |
-| 6 Post-core | NOT_STARTED | 42.5h | 0 | 0% | 2026-12-18 |
+| 6 Post-core | IN_PROGRESS | 12h (+28.5h POST_LAUNCH) | 0 | 0% | 2026-11-20 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 42.5h فعال (فاز ۶) ≈ 2.8 هفته از 2026-11-13. MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
+- باقی‌مانده: 12h فعال (فاز ۶) ≈ 0.8 هفته از 2026-11-13 (forecast 2026-11-20). MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
@@ -160,6 +159,9 @@
 ---
 
 ## Plan changes
+### 2026-11-13 — scope فاز ۶ (تصمیم کاربر، ADR-062)
+فاز ۶ فقط مرجوعی (ORD-07، ORD-08) و حذف حساب (ACC-05) است. کالکشن، جست‌وجو، علاقه‌مندی و اعلان (CAT-13..16، ACC-03/04، CNT-08/09؛ 28.5h) `POST_LAUNCH` شدند: حذف نشدند و از درصد و forecast بیرون‌اند. PRD برای این چهار بخش یادداشت وضعیت گرفت. سیاست D37 برای ACC-05 تعیین شد و جزئیات آن منتظر تأیید است. forecast فاز ۶ از 2026-12-18 به 2026-11-20 رسید. شاخه همان می‌ماند و `strict` حفاظت master خاموش می‌ماند.
+
 ### 2026-11-13 — یافته‌های SEC-03
 SEC-08 (پاسخ callback پرداخت، F4) با تصمیم کاربر (فقط outcome) COMPLETE شد (ADR-061). OPS-11 (سخت‌سازی سرور staging ماندگار، F5) همراه D13 DEFERRED است. فهرست کامل در `docs/project/SECURITY-REVIEW.md`.
 

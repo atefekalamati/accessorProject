@@ -1,7 +1,7 @@
 # PLAN — فهرست فازها، milestoneها و taskها
 
 - جزئیات هر task در `tasks/phase-0N/<ID>-<slug>.md` است. ستون «فایل» با ✓ یعنی فایل task وجود دارد.
-- وضعیت‌ها: `NOT_STARTED` · `IN_PROGRESS` · `BLOCKED` (منتظر تصمیم باز) · `COMPLETE` · `CANCELLED` · `DEFERRED` (کاربر به بعد موکول کرد؛ از درصد و forecast حذف می‌شود، ADR-058).
+- وضعیت‌ها: `NOT_STARTED` · `IN_PROGRESS` · `BLOCKED` (منتظر تصمیم باز) · `COMPLETE` · `CANCELLED` · `DEFERRED` (کاربر به بعد موکول کرد؛ از درصد و forecast حذف می‌شود، ADR-058) · `POST_LAUNCH` (عمداً بعد از launch؛ مثل DEFERRED از درصد و forecast حذف می‌شود، ADR-062).
 - **همه برآوردها (h) تخمین هستند.** ددلاین‌ها **پیش‌بینی (forecast)** هستند، نه تعهد. فرض: کار تنها و پاره‌وقت، ۱۵ ساعت در هفته، شروع 2026-09-29، بدون buffer. پیش‌بینی فقط در سطح فاز است.
 - ستون **Level** (LOW/MEDIUM/HIGH) سطح ریسک task است، نه اولویت (Pri). plan هر task با Level=HIGH باید ریسک‌ها، مراحل rollback و تست‌های اضافه را هم فهرست کند (CLAUDE.md بخش ۱۱).
 - **قاعده soft delete (SD rule):** هر read عمومی (list یا detail) رکورد soft-deleted را برنمی‌گرداند و detail آن → 404 `NOT_FOUND`. هر write که به entity ارجاع می‌دهد (افزودن به سبد، `POST /checkout/validate`، `POST /orders` و...) ارجاع به رکورد soft-deleted را رد می‌کند، با همان خطای ارجاع به entity ناموجود. taskهایی که «SD rule (test)» دارند باید برای آن تست داشته باشند. فیلد unique روی مدل soft-deletable طبق ADR-015 partial unique index با شرط `WHERE deleted_at IS NULL` است و تصمیم هر مدل در task خودش گرفته می‌شود.
@@ -256,25 +256,27 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 
 ---
 
-## Phase 6 — Post-core · forecast: 2027-03-30 (پیشنهاد؛ PRD همه را نسخه اول می‌داند)
+## Phase 6 — Post-core · forecast: 2026-11-20
+
+scope (ADR-062): فقط M6.4 مرجوعی و M6.6 حذف حساب. کالکشن، جست‌وجو، علاقه‌مندی و اعلان `POST_LAUNCH` هستند (28.5h).
 
 taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به taskهای کوچک‌تر شکسته می‌شوند.
 
 | Milestone | ID | Title | Status | Pri | Level | Est | Deps |
 |---|---|---|---|---|---|---|---|
-| M6.1 Collections | CAT-13 | Rewrite «کالکشن‌ها» requirements | NOT_STARTED | LOW | HIGH | 2 | — |
-| M6.1 Collections | CAT-14 | Collections implementation | NOT_STARTED | LOW | MEDIUM | 5 | CAT-13 · SD rule (test) |
-| M6.2 Search | CAT-15 | Rewrite «جست‌وجو» requirements | NOT_STARTED | LOW | HIGH | 2 | — |
-| M6.2 Search | CAT-16 | Advanced search implementation | NOT_STARTED | LOW | MEDIUM | 6 | CAT-15 · SD rule (test) |
-| M6.3 Wishlist | ACC-03 | Rewrite «علاقه‌مندی‌ها» requirements | NOT_STARTED | LOW | HIGH | 1.5 | — |
-| M6.3 Wishlist | ACC-04 | Wishlist implementation | NOT_STARTED | LOW | MEDIUM | 4 | ACC-03 · SD rule (test) |
+| M6.1 Collections | CAT-13 | Rewrite «کالکشن‌ها» requirements | POST_LAUNCH | LOW | HIGH | 2 | — |
+| M6.1 Collections | CAT-14 | Collections implementation | POST_LAUNCH | LOW | MEDIUM | 5 | CAT-13 · SD rule (test) |
+| M6.2 Search | CAT-15 | Rewrite «جست‌وجو» requirements | POST_LAUNCH | LOW | HIGH | 2 | — |
+| M6.2 Search | CAT-16 | Advanced search implementation | POST_LAUNCH | LOW | MEDIUM | 6 | CAT-15 · SD rule (test) |
+| M6.3 Wishlist | ACC-03 | Rewrite «علاقه‌مندی‌ها» requirements | POST_LAUNCH | LOW | HIGH | 1.5 | — |
+| M6.3 Wishlist | ACC-04 | Wishlist implementation | POST_LAUNCH | LOW | MEDIUM | 4 | ACC-03 · SD rule (test) |
 | M6.4 Returns | ORD-07 | Rewrite «مرجوعی» requirements | NOT_STARTED | LOW | HIGH | 2 | — |
 | M6.4 Returns | ORD-08 | Returns (stock only after inspection) | NOT_STARTED | LOW | HIGH | 6 | ORD-07 |
-| M6.5 Notifications | CNT-08 | Rewrite «اعلان‌ها» requirements | NOT_STARTED | LOW | HIGH | 2 | — |
-| M6.5 Notifications | CNT-09 | Notifications implementation | NOT_STARTED | LOW | MEDIUM | 6 | CNT-08 |
+| M6.5 Notifications | CNT-08 | Rewrite «اعلان‌ها» requirements | POST_LAUNCH | LOW | HIGH | 2 | — |
+| M6.5 Notifications | CNT-09 | Notifications implementation | POST_LAUNCH | LOW | MEDIUM | 6 | CNT-08 |
 | M6.6 Account deletion | ACC-05 | Account deletion with anonymization (D37) | NOT_STARTED | LOW | HIGH | 4 | ACC-01 |
 
-**Phase 6:** 42.5h
+**Phase 6:** 12h فعال (+28.5h POST_LAUNCH)
 
 ---
 
