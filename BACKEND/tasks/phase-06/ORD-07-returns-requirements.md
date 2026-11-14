@@ -1,6 +1,6 @@
 # ORD-07 — Rewrite «مرجوعی» requirements
 
-**Status:** IN_PROGRESS · **Priority:** LOW · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** — · **Level:** HIGH
+**Status:** COMPLETE · **Priority:** LOW · **Estimate:** 2h (estimate) · **Deadline:** — · **Dependencies:** — · **Level:** HIGH
 
 ## Objective
 بازنویسی بخش قالبی «مرجوعی» با الزامات دقیق؛ تعیین مبلغ بازپرداخت، بازگشت موجودی و شکستن ORD-08.
@@ -9,11 +9,11 @@
 «مرجوعی» (قالبی)؛ «موجودی و رزرو» ✓ («مرجوعی فقط پس از تأیید سلامت کالا موجودی را افزایش می‌دهد»)؛ «مدیریت سفارش» ✓؛ D35، ADR-053، ADR-054، ADR-062.
 
 ## Acceptance Criteria
-- [ ] پیش‌نویس زیر را کاربر تأیید کرد (R1، R2).
-- [ ] بخش «مرجوعی» بازنویسی و ✓ شد؛ CRUD قالبی حذف شد.
-- [ ] ADR و ردیف PRD changes در DECISIONS.md؛ PLAN با taskهای شکسته‌شده ORD-08.
+- [x] پیش‌نویس زیر را کاربر تأیید کرد (R1، R2).
+- [x] بخش «مرجوعی» بازنویسی و ✓ شد؛ CRUD قالبی حذف شد.
+- [x] ADR و ردیف PRD changes در DECISIONS.md؛ PLAN با taskهای شکسته‌شده ORD-08.
 
-## Implementation Notes — پیش‌نویس (تأییدنشده)
+## Implementation Notes — تأییدشده (ADR-063؛ متن نهایی در PRD «مرجوعی» ✓)
 - درخواست فقط برای سفارش خود کاربر با shipment `delivered`، حداکثر `RETURN_WINDOW_DAYS` (پیش‌فرض ۷، `Settings`) روز بعد از `delivered_at`. سفارش دیگران یا ناموجود → 404.
 - درخواست به‌ازای هر قلم: تعداد ≤ خریده‌شده منهای درخواست‌های باز یا پذیرفته‌شده قبلی (→ 422). دلیل از allowlist، توضیح اختیاری (≤۱۰۰۰). Idempotency-Key مثل `POST /orders`.
 - وضعیت‌ها: `requested → approved | rejected`، `approved → received → inspected`، سپس `refund_required → refunded`. لغو توسط مشتری فقط در `requested`. هر انتقال: history و audit.
@@ -29,3 +29,4 @@
 
 ## Log
 - 2026-11-13: پیش‌نویس در گفت‌وگو فرستاده شد. کاربر scope فاز ۶ را تأیید کرد (ADR-062). R1 و R2 منتظر تأیید هستند.
+- 2026-11-13: کاربر R1 و R2 (ORD-11) را تأیید کرد و یادداشت بررسی حقوقی هزینه ارسال را خواست. PRD «مرجوعی» ✓ و «مدیریت سفارش» ✓ ویرایش شدند؛ ADR-063، D44. ORD-08 به ORD-08..10 شکسته شد. COMPLETE.

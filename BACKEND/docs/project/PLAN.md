@@ -256,7 +256,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 
 ---
 
-## Phase 6 — Post-core · forecast: 2026-11-20
+## Phase 6 — Post-core · forecast: 2026-11-21
 
 scope (ADR-062): فقط M6.4 مرجوعی و M6.6 حذف حساب. کالکشن، جست‌وجو، علاقه‌مندی و اعلان `POST_LAUNCH` هستند (28.5h).
 
@@ -270,13 +270,18 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 | M6.2 Search | CAT-16 | Advanced search implementation | POST_LAUNCH | LOW | MEDIUM | 6 | CAT-15 · SD rule (test) |
 | M6.3 Wishlist | ACC-03 | Rewrite «علاقه‌مندی‌ها» requirements | POST_LAUNCH | LOW | HIGH | 1.5 | — |
 | M6.3 Wishlist | ACC-04 | Wishlist implementation | POST_LAUNCH | LOW | MEDIUM | 4 | ACC-03 · SD rule (test) |
-| M6.4 Returns | ORD-07 | Rewrite «مرجوعی» requirements | NOT_STARTED | LOW | HIGH | 2 | — |
-| M6.4 Returns | ORD-08 | Returns (stock only after inspection) | NOT_STARTED | LOW | HIGH | 6 | ORD-07 |
+| M6.4 Returns | ORD-07 | Rewrite «مرجوعی» requirements | COMPLETE | LOW | HIGH | 2 | — |
+| M6.4 Returns | ORD-08 | Return request model + customer API (ADR-063) | NOT_STARTED | LOW | HIGH | 2.5 | ORD-07 · plan → user |
+| M6.4 Returns | ORD-09 | Admin review, receive, inspect; stock only for sellable (opus) | NOT_STARTED | LOW | HIGH | 2.5 | ORD-08 |
+| M6.4 Returns | ORD-10 | Return refund amount + manual refund record (opus) | NOT_STARTED | LOW | HIGH | 1.5 | ORD-09 |
+| M6.4 Returns | ORD-11 | Admin cancel of paid, unshipped order → refund_required + stock back (opus) | NOT_STARTED | LOW | HIGH | 2 | ORD-07 |
+| M6.6 Account deletion | DSC-06 | Redemption phone → HMAC with key rotation (opus) | NOT_STARTED | LOW | HIGH | 2.5 | ORD-07 |
 | M6.5 Notifications | CNT-08 | Rewrite «اعلان‌ها» requirements | POST_LAUNCH | LOW | HIGH | 2 | — |
 | M6.5 Notifications | CNT-09 | Notifications implementation | POST_LAUNCH | LOW | MEDIUM | 6 | CNT-08 |
-| M6.6 Account deletion | ACC-05 | Account deletion with anonymization (D37) | NOT_STARTED | LOW | HIGH | 4 | ACC-01 |
+| M6.6 Account deletion | ACC-05 | Anonymization migration + service (D37, ADR-063; opus) | NOT_STARTED | LOW | HIGH | 3 | DSC-06 · ORD-08 |
+| M6.6 Account deletion | ACC-06 | Deletion OTP (`purpose`) + endpoints + tests (opus) | NOT_STARTED | LOW | HIGH | 2 | ACC-05 |
 
-**Phase 6:** 12h فعال (+28.5h POST_LAUNCH)
+**Phase 6:** 18h فعال (+28.5h POST_LAUNCH)
 
 ---
 

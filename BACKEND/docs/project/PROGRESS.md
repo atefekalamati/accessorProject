@@ -4,13 +4,13 @@
 
 ## Current / Next
 - **Phase › Milestone:** 6 Post-core › M6.4 Returns
-- **Current Task:** ORD-07 (نیازمندی مرجوعی) و پیش‌نویس ACC-05 (حذف حساب) — منتظر تأیید کاربر.
-- **Status:** scope فاز ۶ را کاربر تأیید کرد (ADR-062): فقط مرجوعی (ORD-07، ORD-08) و حذف حساب (ACC-05). CAT-13/14، CAT-15/16، ACC-03/04 و CNT-08/09 `POST_LAUNCH` شدند (28.5h، در PLAN می‌مانند). فاز ۵: PR #9، merge `3d68122`، tag `phase-5`.
-- **Progress:** 135/138 task فعال COMPLETE · وزنی 96.4% (377.5h / 391.5h؛ 9 task و 19h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
-- **Blockers:** هیچ مانعی برای فاز ۶ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058).
-- **Next Action:** تأیید کاربر برای پیش‌نویس ORD-07 (`tasks/phase-06/ORD-07-returns-requirements.md`) و ACC-05 (`tasks/phase-06/ACC-05-account-deletion.md`). بعد از آن ویرایش PRD («مرجوعی» ✓، «پروفایل» ✓) در یک commit و سپس `/phase`.
-  - ترتیب: M6.4 (ORD-07 → ORD-08، HIGH، plan برای تأیید کاربر متوقف می‌شود) → M6.6 (ACC-05، HIGH، بازبین opus).
-  - taskهای وضعیت سفارش و بازپرداخت بازبین opus دارند. بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
+- **Current Task:** ORD-08 (مدل مرجوعی و API مشتری، HIGH) — plan برای تأیید کاربر.
+- **Status:** ORD-07 COMPLETE: PRD «مرجوعی» ✓ و حذف حساب در «پروفایل» ✓؛ ADR-063 (R1، R2، A1، A3، و A2 با تغییر کاربر: HMAC موبایل در redemption). scope فاز ۶ (ADR-062): فقط مرجوعی و حذف حساب؛ CAT-13/14، CAT-15/16، ACC-03/04 و CNT-08/09 `POST_LAUNCH` هستند.
+- **Progress:** 136/143 task فعال COMPLETE · وزنی 95.5% (379.5h / 397.5h؛ 9 task و 19h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
+- **Blockers:** هیچ مانعی برای فاز ۶ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058). **قبل از launch:** بررسی حقوقی بازپرداخت هزینه ارسال در مرجوعی (D44، ADR-063).
+- **Next Action:** plan ORD-08 برای تأیید کاربر (دستور کاربر). بعد از تأیید: `/phase` ادامه پیدا می‌کند.
+  - ترتیب: ORD-08 → ORD-09 → ORD-10 → ORD-11 → DSC-06 → ACC-05 → ACC-06؛ سپس دروازه فاز ۶.
+  - بازبین opus برای ORD-09، ORD-10، ORD-11، DSC-06، ACC-05 و ACC-06 (موجودی، پول، مصرف کد، auth). ORD-08 هم HIGH است و بازبین مستقل دارد. بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-6-post-core` (از `master` در `3d68122`؛ طبق دستور کاربر همان می‌ماند). حفاظت `master`: `strict` خاموش می‌ماند.
 - **Repo layout:** monorepo از 2026-10-26 (commit `ebcfbd5`).
   - بک‌اند در `BACKEND/` و فرانت در `FRONTEND/` است. CI در `.github/` ریشه است و داخل `BACKEND/` اجرا می‌شود.
@@ -21,7 +21,7 @@
 ---
 
 ## Overall Progress
-**96.4%** = 377.5h COMPLETE / 391.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED، DEFERRED و POST_LAUNCH حذف می‌شوند؛ 19h DEFERRED، ADR-058؛ 28.5h POST_LAUNCH، ADR-062).
+**95.5%** = 379.5h COMPLETE / 397.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED، DEFERRED و POST_LAUNCH حذف می‌شوند؛ 19h DEFERRED، ADR-058؛ 28.5h POST_LAUNCH، ADR-062).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -31,14 +31,15 @@
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | COMPLETE | 67h | 67h | 100% | 2026-11-13 (واقعی) |
 | 5 Release | COMPLETE (merge شد، tag `phase-5`) | 30h (+19h DEFERRED) | 30h | 100% | 2026-11-13 (واقعی) |
-| 6 Post-core | IN_PROGRESS | 12h (+28.5h POST_LAUNCH) | 0 | 0% | 2026-11-20 |
+| 6 Post-core | IN_PROGRESS | 18h (+28.5h POST_LAUNCH) | 2h | 11% | 2026-11-21 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 12h فعال (فاز ۶) ≈ 0.8 هفته از 2026-11-13 (forecast 2026-11-20). MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
+- باقی‌مانده: 16h فعال (فاز ۶) ≈ 1.1 هفته از 2026-11-13 (forecast 2026-11-21). MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-11-13: ORD-07 (نیازمندی مرجوعی و حذف حساب؛ کاربر تأیید کرد با تغییر A2؛ PRD «مرجوعی» ✓، «پروفایل» ✓، «کد تخفیف» ✓ و «مدیریت سفارش» ✓؛ ADR-063، D44، D45؛ taskهای جدید ORD-09..11، DSC-06، ACC-06).
 - 2026-11-13: دروازه فاز ۵ (PR #9 توسط کاربر merge شد (`3d68122`)؛ CI روی master با staging-smoke سبز؛ CD image را با tagهای `3d68122…` و `phase-5` (digest یکسان `sha256:529e085a…`) در GHCR گذاشت؛ git tag `phase-5` روی commit merge push شد؛ شاخه `feat/phase-6-post-core` ساخته شد).
 - 2026-11-13: SEC-08 (به‌روز: `outcome` عمومی سه‌مقداری success|failed|pending بر اساس وضعیت پرداخت سفارش، تصمیم دوم کاربر؛ PRD «پرداخت» و ADR-051 به‌روز شدند؛ suite ۲۳۶۴ سبز) (پاسخ عمومی POST /payments/callback فقط {outcome} شد (تصمیم کاربر، ADR-061، رفع F4)؛ صفحه نتیجه سفارش را با token از GET /orders/{order_number} می‌خواند (FRONTEND.md §۷ با refresh سمت client، sessionStorage و fallbackها)؛ محافظ شکل پاسخ و no-store روی هر 200 در helper تست callback (همه outcomeها)؛ e2e و smoke staging وضعیت را با token می‌خوانند؛ openapi.json بازتولید شد؛ بازبین opus plan و diff را بررسی کرد؛ suite کامل ۲۳۵۲ سبز).
 - 2026-11-13: SEC-03 (مرور امنیتی کل API در برابر REVIEW-CHECKLIST با بازبین opus روی plan و diff؛ هیچ آسیب‌پذیری قابل بهره‌برداری پیدا نشد؛ محافظ‌های خودکار در tests/test_security_review.py (همه schemaهای بدنه در هر سطح بدون فیلد ناشناخته، registry همه idهای مسیر، query و بدنه با تست مالکیت یا SD rule، registry همه writeهای ادمین با action audit به‌صورت literal کد در بسته endpoint، نبود routeهای dev در production، فیلدهای ممتاز /users/me رد، نبود FORWARDED_ALLOW_IPS=*)؛ گزارش و یافته‌ها در docs/project/SECURITY-REVIEW.md؛ F4 → SEC-08 (BLOCKED، تصمیم کاربر)، F5 → OPS-11 (DEFERRED با D13)، F1 تا F3 → OPS-04).
@@ -159,6 +160,9 @@
 ---
 
 ## Plan changes
+### 2026-11-13 — نیازمندی مرجوعی و حذف حساب (تصمیم کاربر، ADR-063)
+ORD-08 به ORD-08..ORD-10 شکسته شد؛ ORD-11 (لغو سفارش پرداخت‌شده توسط ادمین، 2h) و DSC-06 (HMAC موبایل در redemption، 2.5h) اضافه شدند؛ ACC-05 به ACC-05 (3h) و ACC-06 (2h) شکسته شد. فاز ۶ از 12h به 18h فعال رسید و forecast به 2026-11-21. یادداشت PRD: سیاست هزینه ارسال مرجوعی قبل از launch با قانون تجارت الکترونیکی تطبیق داده شود.
+
 ### 2026-11-13 — scope فاز ۶ (تصمیم کاربر، ADR-062)
 فاز ۶ فقط مرجوعی (ORD-07، ORD-08) و حذف حساب (ACC-05) است. کالکشن، جست‌وجو، علاقه‌مندی و اعلان (CAT-13..16، ACC-03/04، CNT-08/09؛ 28.5h) `POST_LAUNCH` شدند: حذف نشدند و از درصد و forecast بیرون‌اند. PRD برای این چهار بخش یادداشت وضعیت گرفت. سیاست D37 برای ACC-05 تعیین شد و جزئیات آن منتظر تأیید است. forecast فاز ۶ از 2026-12-18 به 2026-11-20 رسید. شاخه همان می‌ماند و `strict` حفاظت master خاموش می‌ماند.
 
