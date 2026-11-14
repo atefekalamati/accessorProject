@@ -8,6 +8,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
+from app.modules.returns.schemas import ReturnableItemResponse
+
 Fingerprint = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
 
 
@@ -153,3 +155,7 @@ class OrderDetailResponse(OrderResponse):
     payment_deadline: datetime | None
     can_pay: bool
     can_cancel: bool
+    # Returns (ORD-08): the window's exclusive end once delivered, and what is left per line.
+    return_deadline: datetime | None
+    can_return: bool
+    returnable_items: list[ReturnableItemResponse]

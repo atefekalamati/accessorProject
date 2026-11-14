@@ -124,6 +124,9 @@ class Settings(BaseSettings):
     metrics_token: SecretStr | None = Field(default=None, min_length=32)
     # Product cards show "new" for products created within this many days (D42).
     product_new_days: int = Field(default=30, ge=1, le=365)
+    # A delivered order can be returned until this many days after delivery (ADR-063). A
+    # change moves the deadline of every delivered order, past ones included.
+    return_window_days: int = Field(default=7, ge=1, le=90)
     # Contact form (CNT-06): per client IP and per mobile over a rolling window; reaching a
     # cap gives 429. Behind a reverse proxy the IP cap needs the setup of OPS-04.
     contact_window_seconds: int = Field(default=3600, ge=60, le=86_400)

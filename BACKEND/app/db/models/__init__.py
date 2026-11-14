@@ -62,6 +62,14 @@ from app.db.models.orders import (
 from app.db.models.payments import FakeGatewaySession, Payment, PaymentEvent
 from app.db.models.pricing import PriceHistory, PricingSetting
 from app.db.models.rbac import Permission, Role, RolePermission, UserRole
+from app.db.models.returns import (
+    ItemCondition,
+    ReturnItem,
+    ReturnReason,
+    ReturnRequest,
+    ReturnStatus,
+    ReturnStatusHistory,
+)
 from app.db.models.settings import AppSetting
 from app.db.models.shipping import ShippingMethod
 from app.db.models.users import User, UserStatus
@@ -118,6 +126,12 @@ __all__ = [
     "RedemptionStatus",
     "ReservationItemStatus",
     "ReservationStatus",
+    "ItemCondition",
+    "ReturnItem",
+    "ReturnReason",
+    "ReturnRequest",
+    "ReturnStatus",
+    "ReturnStatusHistory",
     "Role",
     "SectionType",
     "RolePermission",

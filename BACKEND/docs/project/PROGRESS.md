@@ -4,11 +4,11 @@
 
 ## Current / Next
 - **Phase › Milestone:** 6 Post-core › M6.4 Returns
-- **Current Task:** ORD-08 (مدل مرجوعی و API مشتری، HIGH) — plan برای تأیید کاربر.
+- **Current Task:** ORD-09 (بررسی، دریافت، بازرسی و افزایش موجودی؛ HIGH، opus) — NOT_STARTED.
 - **Status:** ORD-07 COMPLETE: PRD «مرجوعی» ✓ و حذف حساب در «پروفایل» ✓؛ ADR-063 (R1، R2، A1، A3، و A2 با تغییر کاربر: HMAC موبایل در redemption). scope فاز ۶ (ADR-062): فقط مرجوعی و حذف حساب؛ CAT-13/14، CAT-15/16، ACC-03/04 و CNT-08/09 `POST_LAUNCH` هستند.
-- **Progress:** 136/143 task فعال COMPLETE · وزنی 95.5% (379.5h / 397.5h؛ 9 task و 19h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
+- **Progress:** 137/143 task فعال COMPLETE · وزنی 96.1% (382h / 397.5h؛ 9 task و 19h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
 - **Blockers:** هیچ مانعی برای فاز ۶ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058). **قبل از launch:** بررسی حقوقی بازپرداخت هزینه ارسال در مرجوعی (D44، ADR-063).
-- **Next Action:** plan ORD-08 برای تأیید کاربر (دستور کاربر). بعد از تأیید: `/phase` ادامه پیدا می‌کند.
+- **Next Action:** `/phase` ادامه پیدا می‌کند: ORD-09 → ORD-10 → ORD-11 → DSC-06 → ACC-05 → ACC-06 (دستور کاربر 2026-11-13).
   - ترتیب: ORD-08 → ORD-09 → ORD-10 → ORD-11 → DSC-06 → ACC-05 → ACC-06؛ سپس دروازه فاز ۶.
   - بازبین opus برای ORD-09، ORD-10، ORD-11، DSC-06، ACC-05 و ACC-06 (موجودی، پول، مصرف کد، auth). ORD-08 هم HIGH است و بازبین مستقل دارد. بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-6-post-core` (از `master` در `3d68122`؛ طبق دستور کاربر همان می‌ماند). حفاظت `master`: `strict` خاموش می‌ماند.
@@ -21,7 +21,7 @@
 ---
 
 ## Overall Progress
-**95.5%** = 379.5h COMPLETE / 397.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED، DEFERRED و POST_LAUNCH حذف می‌شوند؛ 19h DEFERRED، ADR-058؛ 28.5h POST_LAUNCH، ADR-062).
+**96.1%** = 382h COMPLETE / 397.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED، DEFERRED و POST_LAUNCH حذف می‌شوند؛ 19h DEFERRED، ADR-058؛ 28.5h POST_LAUNCH، ADR-062).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -31,14 +31,15 @@
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | COMPLETE | 67h | 67h | 100% | 2026-11-13 (واقعی) |
 | 5 Release | COMPLETE (merge شد، tag `phase-5`) | 30h (+19h DEFERRED) | 30h | 100% | 2026-11-13 (واقعی) |
-| 6 Post-core | IN_PROGRESS | 18h (+28.5h POST_LAUNCH) | 2h | 11% | 2026-11-21 |
+| 6 Post-core | IN_PROGRESS | 18h (+28.5h POST_LAUNCH) | 4.5h | 25% | 2026-11-21 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 16h فعال (فاز ۶) ≈ 1.1 هفته از 2026-11-13 (forecast 2026-11-21). MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
+- باقی‌مانده: 13.5h فعال (فاز ۶) ≈ 1.1 هفته از 2026-11-13 (forecast 2026-11-21). MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-11-13: ORD-08 (مرجوعی، سمت مشتری: migration `0034` با schema کامل return_requests/items/history و CHECKهای رکورد بازپرداخت؛ `POST /orders/{number}/returns` با Idempotency-Key و قفل advisory و ردیف سفارش، سقف تعداد بعد از قفل؛ فهرست، جزئیات و لغو؛ `returnable_items`، `can_return` و `return_deadline` در جزئیات سفارش؛ `admin_note` داخلی؛ بازبین مستقل plan و diff؛ suite ۲۳۸۴ سبز).
 - 2026-11-13: ORD-07 (نیازمندی مرجوعی و حذف حساب؛ کاربر تأیید کرد با تغییر A2؛ PRD «مرجوعی» ✓، «پروفایل» ✓، «کد تخفیف» ✓ و «مدیریت سفارش» ✓؛ ADR-063، D44، D45؛ taskهای جدید ORD-09..11، DSC-06، ACC-06).
 - 2026-11-13: دروازه فاز ۵ (PR #9 توسط کاربر merge شد (`3d68122`)؛ CI روی master با staging-smoke سبز؛ CD image را با tagهای `3d68122…` و `phase-5` (digest یکسان `sha256:529e085a…`) در GHCR گذاشت؛ git tag `phase-5` روی commit merge push شد؛ شاخه `feat/phase-6-post-core` ساخته شد).
 - 2026-11-13: SEC-08 (به‌روز: `outcome` عمومی سه‌مقداری success|failed|pending بر اساس وضعیت پرداخت سفارش، تصمیم دوم کاربر؛ PRD «پرداخت» و ADR-051 به‌روز شدند؛ suite ۲۳۶۴ سبز) (پاسخ عمومی POST /payments/callback فقط {outcome} شد (تصمیم کاربر، ADR-061، رفع F4)؛ صفحه نتیجه سفارش را با token از GET /orders/{order_number} می‌خواند (FRONTEND.md §۷ با refresh سمت client، sessionStorage و fallbackها)؛ محافظ شکل پاسخ و no-store روی هر 200 در helper تست callback (همه outcomeها)؛ e2e و smoke staging وضعیت را با token می‌خوانند؛ openapi.json بازتولید شد؛ بازبین opus plan و diff را بررسی کرد؛ suite کامل ۲۳۵۲ سبز).

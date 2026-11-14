@@ -271,7 +271,7 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 | M6.3 Wishlist | ACC-03 | Rewrite «علاقه‌مندی‌ها» requirements | POST_LAUNCH | LOW | HIGH | 1.5 | — |
 | M6.3 Wishlist | ACC-04 | Wishlist implementation | POST_LAUNCH | LOW | MEDIUM | 4 | ACC-03 · SD rule (test) |
 | M6.4 Returns | ORD-07 | Rewrite «مرجوعی» requirements | COMPLETE | LOW | HIGH | 2 | — |
-| M6.4 Returns | ORD-08 | Return request model + customer API (ADR-063) | NOT_STARTED | LOW | HIGH | 2.5 | ORD-07 · plan → user |
+| M6.4 Returns | ORD-08 | Return request model + customer API (ADR-063) | COMPLETE | LOW | HIGH | 2.5 | ORD-07 · plan → user |
 | M6.4 Returns | ORD-09 | Admin review, receive, inspect; stock only for sellable (opus) | NOT_STARTED | LOW | HIGH | 2.5 | ORD-08 |
 | M6.4 Returns | ORD-10 | Return refund amount + manual refund record (opus) | NOT_STARTED | LOW | HIGH | 1.5 | ORD-09 |
 | M6.4 Returns | ORD-11 | Admin cancel of paid, unshipped order → refund_required + stock back (opus) | NOT_STARTED | LOW | HIGH | 2 | ORD-07 |

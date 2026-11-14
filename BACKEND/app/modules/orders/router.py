@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import UnaryExpression
 
+from app.core.config import Settings, get_app_settings
 from app.db.models import Order, OrderStatus
 from app.db.models.orders import ORDER_NUMBER_PATTERN
 from app.db.session import get_db_session
@@ -42,8 +43,9 @@ def get_order_service(
 def get_account_order_service(
     session: Annotated[AsyncSession, Depends(get_db_session)],
     storage: Annotated[FileStorage, Depends(get_file_storage)],
+    settings: Annotated[Settings, Depends(get_app_settings)],
 ) -> AccountOrderService:
-    return AccountOrderService(session, storage)
+    return AccountOrderService(session, storage, return_window_days=settings.return_window_days)
 
 
 ORDER_SORTS: Final[dict[str, tuple[UnaryExpression[Any], ...]]] = {
