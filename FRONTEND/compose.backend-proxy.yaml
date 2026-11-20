@@ -1,0 +1,13 @@
+# Override for the backend's api service, merged into ../BACKEND/docker-compose.yml by
+# compose.yaml. Paths here would resolve relative to BACKEND/; keep it to settings only.
+#
+# Uvicorn trusts X-Forwarded-For only from FORWARDED_ALLOW_IPS (default 127.0.0.1). The
+# frontend proxy replaces X-Forwarded-For with the one client IP, so the API's per-IP limits
+# (OTP, discount codes, payment callback, global cap) see visitors instead of the frontend
+# container. Trust exactly the frontend container's fixed address, never "*" (a backend
+# test forbids "*"). Production: OPS-04 (docs/BACKEND-FOLLOWUPS.md).
+
+services:
+  api:
+    environment:
+      FORWARDED_ALLOW_IPS: "172.30.57.10"

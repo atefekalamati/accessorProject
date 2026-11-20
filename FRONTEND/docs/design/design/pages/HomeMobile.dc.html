@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>کالیا — صفحه‌ی اصلی موبایل</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&amp;family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2E2A3A;text-decoration:none}
+</style>
+</helmet>
+<div dir="rtl" style="background: #F7F5FB; color: #2E2A3A; font-family: 'Vazirmatn', sans-serif; font-size: 15px; line-height: 1.8; max-width: 560px; margin: 0 auto;">
+
+<header style="padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+<button aria-label="منو" style="width: 44px; height: 44px; border-radius: 14px; background: #ECE6F6; border: 0; color: #2E2A3A; display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h10"></path></svg></button>
+<sc-if value="{{ ribbon }}" hint-placeholder-val="{{ true }}"><a href="#" aria-label="کالیا — صفحه‌ی اصلی" style="display: inline-flex; align-items: center;"><img src="../../brand/kalea-ribbon.png" alt="Kaléa" style="height: 48px; width: auto; display: block;"></a></sc-if><sc-if value="{{ serif }}" hint-placeholder-val="{{ false }}"><a href="#" aria-label="کالیا — صفحه‌ی اصلی" style="font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 32px; line-height: 1; letter-spacing: 0.06em; color: #2E2A3A;">KALÉA</a></sc-if>
+<button aria-label="سبد خرید، ۲ کالا" style="position: relative; width: 44px; height: 44px; border-radius: 14px; background: #ECE6F6; border: 0; color: #2E2A3A; display: flex; align-items: center; justify-content: center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8z"></path><path d="M9 8V6a3 3 0 016 0v2"></path></svg><span style="position: absolute; top: -4px; left: -4px; background: #CDEBDD; font-size: 11px; font-weight: 600; width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; line-height: 1;">۲</span></button>
+</header>
+
+<div style="padding: 0 16px 16px;">
+<label style="display: flex; align-items: center; gap: 10px; background: #FFFFFF; border-radius: 16px; padding: 0 14px; height: 48px; border: 1px solid #E1DAEA;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F5A6E" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">جست‌وجو</span>
+<input type="search" placeholder="جست‌وجو در کالیا…" style="flex: 1; min-width: 0; border: 0; background: transparent; font-family: inherit; font-size: 15px; color: #2E2A3A;">
+</label>
+</div>
+
+<section style="padding: 0 16px 40px; display: flex; flex-direction: column; gap: 12px;">
+<div style="border-radius: 28px; background: #E7E0F3; padding: 32px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px;">
+<span style="background: #FFFFFF; border-radius: 999px; padding: 2px 12px; font-size: 12px; color: #6B4FA0;">تازه‌های فصل</span>
+<h1 style="margin: 0; font-weight: 700; font-size: 30px; line-height: 1.35;">رنگ‌های آرام برای روزهای قشنگ</h1>
+<p style="margin: 0; color: #5F5A6E; font-size: 14px;">اکسسوری‌های پاستلی، فروخته‌شده مستقیم.</p>
+<a href="#" style="background: #6B4FA0; color: #FFFFFF; border-radius: 16px; padding: 0 28px; min-height: 48px; display: inline-flex; align-items: center;">شروع خرید</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+<div style="height: 180px; border-radius: 22px; background: #DDF0E8; display: flex; align-items: center; justify-content: center; color: #4A5A53; font-size: 12px;">[تصویر]</div>
+<div style="height: 180px; border-radius: 22px; background: #F3E2EC; display: flex; align-items: center; justify-content: center; color: #5F5A6E; font-size: 12px;">[تصویر]</div>
+</div>
+</section>
+
+<section aria-labelledby="m-cat" style="padding: 0 16px 40px;">
+<h2 id="m-cat" style="margin: 0 0 16px; font-weight: 700; font-size: 22px;">دسته‌بندی‌ها</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+<a href="#" style="display: flex; flex-direction: column; gap: 8px;"><div style="aspect-ratio: 4 / 5; border-radius: 20px; background: #E7E0F3; display: flex; align-items: center; justify-content: center; color: #5F5A6E; font-size: 12px;">[تصویر دسته]</div><span style="font-weight: 500;">کیف</span></a>
+<a href="#" style="display: flex; flex-direction: column; gap: 8px;"><div style="aspect-ratio: 4 / 5; border-radius: 20px; background: #DDF0E8; display: flex; align-items: center; justify-content: center; color: #4A5A53; font-size: 12px;">[تصویر دسته]</div><span style="font-weight: 500;">زیورآلات</span></a>
+<a href="#" style="display: flex; flex-direction: column; gap: 8px;"><div style="aspect-ratio: 4 / 5; border-radius: 20px; background: #F3E2EC; display: flex; align-items: center; justify-content: center; color: #5F5A6E; font-size: 12px;">[تصویر دسته]</div><span style="font-weight: 500;">شال و روسری</span></a>
+<a href="#" style="display: flex; flex-direction: column; gap: 8px;"><div style="aspect-ratio: 4 / 5; border-radius: 20px; background: #FBF0D9; display: flex; align-items: center; justify-content: center; color: #5F5A6E; font-size: 12px;">[تصویر دسته]</div><span style="font-weight: 500;">اکسسوری مو</span></a>
+</div>
+</section>
+
+<section aria-labelledby="m-new" style="padding: 0 16px 40px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;"><h2 id="m-new" style="margin: 0; font-weight: 700; font-size: 22px;">تازه‌ها</h2><a href="#" style="font-size: 13px; color: #6B4FA0;">همه</a></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+<article style="background: #FFFFFF; border-radius: 20px; padding: 8px; display: flex; flex-direction: column; gap: 6px;"><div style="position: relative; aspect-ratio: 1 / 1; border-radius: 14px; background: #E7E0F3; display: flex; align-items: center; justify-content: center; color: #5F5A6E; font-size: 11px;">[تصویر]<span style="position: absolute; top: 6px; right: 6px; background: #FFFFFF; border-radius: 999px; font-size: 11px; padding: 0 8px;">تازه</span></div><div style="padding: 0 4px 4px;"><h3 style="margin: 0; font-weight: 500; font-size: 14px;">کیف کوچک یاسی</h3><span style="font-weight: 600; font-size: 14px;">[قیمت] تومان</span></div></article>
+<article style="background: #FFFFFF; border-radius: 20px; padding: 8px; display: flex; flex-direction: column; gap: 6px;"><div style="position: relative; aspect-ratio: 1 / 1; border-radius: 14px; background: #DDF0E8; display: flex; align-items: center; justify-content: center; color: #4A5A53; font-size: 11px;">[تصویر]<span style="position: absolute; top: 6px; right: 6px; background: #6B4FA0; color: #FFFFFF; border-radius: 999px; font-size: 11px; padding: 0 8px;">٪[تخفیف]</span></div><div style="padding: 0 4px 4px;"><h3 style="margin: 0; font-weight: 500; font-size: 14px;">شال نخی نعنایی</h3><span style="font-size: 12px; text-decoration: line-through; color: #5F5A6E;">[قیمت قبل]</span><span style="display: block; font-weight: 600; font-size: 14px;">[قیمت] تومان</span></div></article>
+<article style="background: #FFFFFF; border-radius: 20px; padding: 8px; display: flex; flex-direction: column; gap: 6px;"><div style="aspect-ratio: 1 / 1; border-radius: 14px; background: #F3E2EC; display: flex; align-items: center; justify-content: center; color: #5F5A6E; font-size: 11px;">[تصویر]</div><div style="padding: 0 4px 4px;"><h3 style="margin: 0; font-weight: 500; font-size: 14px;">دستبند مهره‌ای</h3><span style="font-weight: 600; font-size: 14px;">[قیمت] تومان</span><span style="display: block; font-size: 11px; color: #6B4FA0;">تعداد محدود</span></div></article>
+<article style="background: #FFFFFF; border-radius: 20px; padding: 8px; display: flex; flex-direction: column; gap: 6px;"><div style="aspect-ratio: 1 / 1; border-radius: 14px; background: #EFEDF3; display: flex; align-items: center; justify-content: center; color: #5F5A6E; font-size: 11px;">[تصویر]</div><div style="padding: 0 4px 4px;"><h3 style="margin: 0; font-weight: 500; font-size: 14px; color: #5F5A6E;">کش موی مخملی</h3><span style="font-size: 13px; color: #5F5A6E;">ناموجود</span></div></article>
+</div>
+</section>
+
+<section style="background: #EFEAF7; padding: 0 0 32px;">
+<div style="height: 260px; background: #E7E0F3; display: flex; align-items: center; justify-content: center; color: #5F5A6E; font-size: 13px;">[تصویر مجموعه]</div>
+<div style="padding: 24px 16px 0; display: flex; flex-direction: column; gap: 10px;">
+<span style="font-size: 12px; color: #6B4FA0;">مجموعه</span>
+<h2 style="margin: 0; font-weight: 700; font-size: 26px;">رنگ‌های آرام فصل</h2>
+<p style="margin: 0; color: #5F5A6E; font-size: 14px;">[توضیح کوتاه مجموعه]</p>
+<a href="#" style="align-self: flex-start; border-bottom: 1px solid #2E2A3A; padding: 4px 0;">دیدن مجموعه</a>
+</div>
+</section>
+
+<section style="padding: 32px 16px; display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; gap: 12px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B4FA0" stroke-width="1.4" aria-hidden="true" style="flex: none;"><path d="M3 12h13"></path><path d="M12 6l6 6-6 6"></path></svg><div><h3 style="margin: 0; font-weight: 600; font-size: 15px;">خرید مستقیم</h3><p style="margin: 0; color: #5F5A6E; font-size: 13px;">بدون واسطه، با قیمت منصفانه‌تر.</p></div></div>
+<div style="display: flex; gap: 12px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B4FA0" stroke-width="1.4" aria-hidden="true" style="flex: none;"><path d="M12 3l2.5 5.5 6 .7-4.5 4 1.3 5.9L12 16l-5.3 3.1L8 13.2l-4.5-4 6-.7L12 3z"></path></svg><div><h3 style="margin: 0; font-weight: 600; font-size: 15px;">کیفیت انتخاب‌شده</h3><p style="margin: 0; color: #5F5A6E; font-size: 13px;">هر قطعه پیش از فروش بررسی می‌شود.</p></div></div>
+<div style="display: flex; gap: 12px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B4FA0" stroke-width="1.4" aria-hidden="true" style="flex: none;"><rect x="4" y="10" width="16" height="10" rx="1"></rect><path d="M8 10V7a4 4 0 018 0v3"></path></svg><div><h3 style="margin: 0; font-weight: 600; font-size: 15px;">پرداخت امن</h3><p style="margin: 0; color: #5F5A6E; font-size: 13px;">ورود با کد پیامکی، پرداخت بانکی.</p></div></div>
+</section>
+
+<footer style="background: #2E2A3A; color: #ECE8F4; padding: 32px 16px 24px; display: flex; flex-direction: column; gap: 20px;">
+<span style="font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 30px; line-height: 1; letter-spacing: 0.06em; color: #ECE8F4;">KALÉA</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; font-size: 14px;">
+<nav aria-label="فروشگاه" style="display: flex; flex-direction: column; gap: 6px;"><span style="color: #B8B2C7; font-size: 12px;">فروشگاه</span><a href="#" style="color: #ECE8F4;">کیف</a><a href="#" style="color: #ECE8F4;">زیورآلات</a><a href="#" style="color: #ECE8F4;">شال و روسری</a><a href="#" style="color: #ECE8F4;">اکسسوری مو</a></nav>
+<nav aria-label="راهنما" style="display: flex; flex-direction: column; gap: 6px;"><span style="color: #B8B2C7; font-size: 12px;">راهنما</span><a href="#" style="color: #ECE8F4;">سؤالات متداول</a><a href="#" style="color: #ECE8F4;">قوانین</a><a href="#" style="color: #ECE8F4;">حریم خصوصی</a><a href="#" style="color: #ECE8F4;">تماس با ما</a></nav>
+</div>
+<div style="border-top: 1px solid #45405A; padding-top: 14px; color: #B8B2C7; font-size: 12px;">© ۱۴۰۵ کالیا</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"logo":{"editor":"enum","default":"ribbon","options":["ribbon","serif"]},"$preview":{"width":390,"height":3900}}'>
+class Component extends DCLogic {
+renderVals() { const logo = this.props.logo ?? 'ribbon'; return { ribbon: logo === 'ribbon', serif: logo === 'serif' }; }
+}
+</script>
+</body>
+</html>

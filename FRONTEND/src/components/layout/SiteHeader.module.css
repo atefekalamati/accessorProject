@@ -1,0 +1,136 @@
+/* From Category.dc.html / Product.dc.html (desktop) and HomeMobile.dc.html (phone). */
+
+.header {
+  position: relative;
+}
+
+.bar {
+  max-width: calc(var(--content-max) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding: 20px var(--gutter);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--space-6);
+  font-size: 14px;
+}
+
+.navLink {
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+}
+
+.navLink[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.iconButton {
+  position: relative;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--radius-sm);
+  background: var(--lilac-100);
+  border: 0;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.iconButton:hover {
+  color: var(--accent);
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--mint-300);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menuButton {
+  display: none;
+}
+
+.menu {
+  border-top: 1px solid var(--line);
+  background: var(--surface-card);
+}
+
+.menuNav {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--gutter) var(--space-4);
+}
+
+.menuLink {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+
+.menuLink:last-child {
+  border-bottom: 0;
+}
+
+.menuLink[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@media (min-width: 768px) {
+  .menu {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .bar {
+    padding: 14px var(--gutter);
+    grid-template-columns: auto 1fr auto;
+    gap: var(--space-2);
+  }
+
+  .menuButton {
+    display: flex;
+  }
+
+  .nav,
+  .account {
+    display: none;
+  }
+}

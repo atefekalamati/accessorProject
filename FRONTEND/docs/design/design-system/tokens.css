@@ -1,0 +1,48 @@
+/* Generated from tokens.json — Kaléa design tokens */
+:root {
+  --surface: #F7F5FB;
+  --surface-card: #FFFFFF;
+  --lilac-50: #EFEAF7;
+  --lilac-100: #ECE6F6;
+  --lilac-200: #E7E0F3;
+  --mint-200: #DDF0E8;
+  --mint-300: #CDEBDD;
+  --blush-200: #F3E2EC;
+  --cream-200: #FBF0D9;
+  --neutral-100: #EFEDF3;
+  --line: #E1DAEA;
+  --ink: #2E2A3A;
+  --ink-muted: #5F5A6E;
+  --accent: #6B4FA0;
+  --on-accent: #FFFFFF;
+  --success: #3E7060;
+  --danger: #8A3B5C;
+  --on-ink: #ECE8F4;
+  --on-ink-muted: #B8B2C7;
+  --wordmark-on-ink: #ECE8F4;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-24: 96px;
+  --radius-sm: 14px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+  --font-sans: "Vazirmatn", system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+}
+.t-wordmark { font-family: var(--font-display); font-size: 36px; line-height: 1; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.t-display { font-family: var(--font-sans); font-size: 50px; line-height: 1.3; font-weight: 700; }
+.t-heading-1 { font-family: var(--font-sans); font-size: 34px; line-height: 1.4; font-weight: 700; }
+.t-heading-2 { font-family: var(--font-sans); font-size: 30px; line-height: 1.4; font-weight: 700; }
+.t-heading-3 { font-family: var(--font-sans); font-size: 20px; line-height: 1.5; font-weight: 700; }
+.t-body { font-family: var(--font-sans); font-size: 15px; line-height: 1.8; font-weight: 400; }
+.t-body-strong { font-family: var(--font-sans); font-size: 15px; line-height: 1.8; font-weight: 600; }
+.t-small { font-family: var(--font-sans); font-size: 14px; line-height: 1.8; font-weight: 400; }
+.t-caption { font-family: var(--font-sans); font-size: 13px; line-height: 1.7; font-weight: 400; }
+.t-badge { font-family: var(--font-sans); font-size: 12px; line-height: 1.6; font-weight: 500; }
