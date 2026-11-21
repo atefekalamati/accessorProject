@@ -1,0 +1,26 @@
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+}
+
+.header,
+.login {
+  width: auto;
+  display: block;
+}
+
+/* 64px desktop, 48px phone (44–48 allowed), 56px on login screens. */
+.header {
+  height: 64px;
+}
+
+.login {
+  height: 56px;
+}
+
+@media (max-width: 767px) {
+  .header {
+    height: 48px;
+  }
+}

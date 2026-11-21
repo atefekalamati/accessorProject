@@ -1,0 +1,71 @@
+/* Dark footer from Category.dc.html, with the link groups of HomeMobile.dc.html. */
+
+.footer {
+  margin-top: auto;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: 14px;
+}
+
+.inner,
+.legal {
+  max-width: calc(var(--content-max) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.inner {
+  padding-top: var(--space-12);
+  padding-bottom: var(--space-6);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wordmark-on-ink);
+}
+
+.groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-6);
+  flex: 0 1 560px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+}
+
+.groupTitle {
+  color: var(--on-ink-muted);
+  font-size: 12px;
+  margin-bottom: var(--space-1);
+}
+
+.link {
+  color: var(--on-ink);
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+}
+
+.link:hover {
+  color: var(--on-ink);
+  text-decoration: underline;
+}
+
+.legal p {
+  border-top: 1px solid var(--ink-muted);
+  padding-block: 14px var(--space-6);
+  color: var(--on-ink-muted);
+  font-size: 12px;
+}
