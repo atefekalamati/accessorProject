@@ -120,12 +120,21 @@ MATRIX: Final[dict[tuple[str, str], frozenset[str]]] = {
     ("GET", "/admin/contact-messages"): _one("contact_messages:manage"),
     ("GET", "/admin/contact-messages/{message_id}"): _one("contact_messages:manage"),
     ("PATCH", "/admin/contact-messages/{message_id}"): _one("contact_messages:manage"),
+    # returns (ORD-09)
+    ("GET", "/admin/returns"): _one("returns:manage"),
+    ("GET", "/admin/returns/{return_id}"): _one("returns:manage"),
+    ("POST", "/admin/returns/{return_id}/approve"): _one("returns:manage"),
+    ("POST", "/admin/returns/{return_id}/reject"): _one("returns:manage"),
+    ("POST", "/admin/returns/{return_id}/receive"): _one("returns:manage"),
+    ("POST", "/admin/returns/{return_id}/inspect"): _one("returns:manage"),
 }
 
 # The seed mapping, written out independently (PRD «هویت و دسترسی» ✓, ADR-019, D35).
 EXPECTED_ROLES: Final[dict[str, frozenset[str]]] = {
     "customer": frozenset(),
-    "support": frozenset({"orders:read", "customers:read", "contact_messages:manage"}),
+    "support": frozenset(
+        {"orders:read", "customers:read", "contact_messages:manage", "returns:manage"}
+    ),
     "content_manager": frozenset({"content:manage", "categories:edit_content"}),
     "admin": ALL_PERMISSION_KEYS - {"pricing_settings:update", "users:manage_roles", "audit:read"},
     "super_admin": ALL_PERMISSION_KEYS,

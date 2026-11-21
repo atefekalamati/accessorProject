@@ -761,6 +761,10 @@
   - شناسه قلم سفارش فقط در جزئیات سفارش و در فهرست جدای `returnable_items` نمایش داده می‌شود. پاسخ `POST /orders` تغییر نمی‌کند تا پاسخ‌های ذخیره‌شده idempotency با پاسخ‌های جدید یکی بمانند.
   - تغییر `RETURN_WINDOW_DAYS` مهلت همه سفارش‌های تحویل‌شده را جابه‌جا می‌کند، حتی سفارش‌های قبلی (پذیرفته شد).
   - schema کامل مرجوعی (`accepted_quantity`، `inventory_movement_id`، رکورد بازپرداخت) در همان migration `0034` ساخته شد تا ORD-09 و ORD-10 migration نخواهند.
+- تصمیم‌های کم‌اثر ORD-09 (خودم):
+  - اگر variant یک قلم `sellable` soft-delete شده باشد، بازرسی ثبت می‌شود اما موجودی برنمی‌گردد. در audit با `restock_skipped: true` علامت می‌خورد و خطا نمی‌دهد.
+  - هر قلم برگشت‌داده‌شده movement جدای خودش را دارد، حتی اگر دو قلم variant یکسان داشته باشند (ستون `inventory_movement_id` یکتاست). یعنی «قلم restock شده ⇔ movement دارد». سقف موجودی روی مجموع هر variant بررسی می‌شود.
+  - تکرار همان انتقال (approve، reject، receive) روی درخواستی که در همان وضعیت است → 200 بدون history و audit. inspect تکراری → 422، چون دوباره موجودی برنمی‌گرداند.
 
 ## PRD changes
 
