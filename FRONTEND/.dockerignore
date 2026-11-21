@@ -1,0 +1,20 @@
+node_modules
+.next
+coverage
+playwright-report
+test-results
+e2e
+test
+.env
+.env.*
+!.env.example
+Dockerfile
+compose*.yaml
+*.md
+!docs/design/**
+# Tests and test tooling are not part of the image (next build would typecheck them).
+**/*.test.ts
+**/*.test.tsx
+vitest.config.mts
+playwright.config.ts
+scripts/start-standalone.mjs

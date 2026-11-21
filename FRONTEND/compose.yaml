@@ -1,0 +1,43 @@
+# Frontend + backend stack for local and staging-like runs, without editing BACKEND/.
+#
+#   cd FRONTEND && docker compose up --build
+#
+# The backend's compose file is included together with compose.backend-proxy.yaml, which
+# only adds settings for the API container (see that file). Backend settings (.env with
+# DATABASE/JWT values) are read by the included file from BACKEND/ as usual.
+
+# Own project name: the backend-only stack ("atk") keeps its volumes untouched.
+name: kalea
+
+include:
+  - path:
+      - ../BACKEND/docker-compose.yml
+      - ./compose.backend-proxy.yaml
+
+services:
+  web:
+    build:
+      context: .
+    environment:
+      API_ORIGIN: http://api:8000
+      # The browser reaches this container directly, so no X-Forwarded-For can be trusted and
+      # no client IP is forwarded (all visitors share one API rate-limit bucket). Behind an
+      # ingress, set its hop count here (docs/BACKEND-FOLLOWUPS.md, OPS-04).
+      TRUSTED_PROXY_HOPS: "0"
+      FAKE_GATEWAY_PAGE: "1"
+    ports:
+      - "${WEB_HOST_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      default:
+        ipv4_address: 172.30.57.10
+    restart: unless-stopped
+
+# Fixed subnet so the API can trust X-Forwarded-For from the frontend container only.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.57.0/24

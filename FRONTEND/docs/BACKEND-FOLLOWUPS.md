@@ -1,0 +1,36 @@
+# Backend follow-ups from the frontend
+
+Things the storefront needs from the backend (`BACKEND/`), found while building against the
+frozen contract `BACKEND/docs/api/versions/openapi-phase-5.json`. The frontend never edits
+`BACKEND/`; each item is a request for the backend session. "Interim" is what the frontend
+does until the item lands.
+
+| #   | Item                                                                                                            | Why                                                                                                                                                                                                  | Interim in the frontend                                                                                                                                                                                    | Blocks                                   |
+| --- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| F1  | `image_url` on cart lines (`CartLineResponse`), quote lines (`QuoteLine`) and order lines (`OrderLineResponse`) | Cart, checkout and order designs show a thumbnail per line (conflict C1)                                                                                                                             | Pastel placeholder tile                                                                                                                                                                                    | —                                        |
+| F2  | Color hex on category filter values (`FilterValue` has only `value`, `count`)                                   | Category color chips show a dot in the design (C4)                                                                                                                                                   | Text chips with the count, no dot                                                                                                                                                                          | —                                        |
+| F3  | Delivery estimate (ETA) on shipping methods (`ShippingMethodResponse`)                                          | Checkout shows «زمان تقریبی تحویل» per method (C7)                                                                                                                                                   | Shows `description` in the ETA slot                                                                                                                                                                        | —                                        |
+| F4  | Optional label on addresses (e.g. «خانه»، «محل کار»)                                                            | Address cards are titled by label in the design (C8)                                                                                                                                                 | Recipient name and city as the card title                                                                                                                                                                  | —                                        |
+| F5  | Test-only readable OTP (e.g. a fixed code or a code-read endpoint, enabled only in `testing`/`staging`)         | OTP codes live only in `FakeSmsSender` memory, so an automated run against the real API cannot log in                                                                                                | CI e2e runs against a schema-typed mock API                                                                                                                                                                | Real-backend smoke test before launch    |
+| F6  | Trusted proxy (OPS-04, DEFERRED)                                                                                | Per-IP limits (OTP 60/h per IP, discount codes, payment callback, global 300/min) key on the socket address. Behind the frontend proxy every visitor would share one IP.                             | `FRONTEND/compose.yaml` sets `FORWARDED_ALLOW_IPS` on the API to the frontend container's fixed address (`172.30.57.10`, subnet `172.30.57.0/24`); the proxy replaces `X-Forwarded-For` with one client IP | **Production.** See "OPS-04 notes" below |
+| F7  | `PAYMENT_CALLBACK_URL` must point at the frontend result page `/payment/result`                                 | The default (`…/api/v1/payments/callback` on the API) sends the browser to a JSON endpoint; FRONTEND.md §7 expects the gateway to return to the frontend, which then calls `POST /payments/callback` | Deploy setting, set per environment                                                                                                                                                                        | Payment flow outside development         |
+| F8  | Gateway return handler once the gateway is chosen (D8)                                                          | Some gateways return with a form POST, which a page cannot receive; the return parameter name is also gateway-specific                                                                               | `/payment/result?reference=` (the fake gateway's form)                                                                                                                                                     | Real gateway                             |
+
+## OPS-04 notes (production blocker)
+
+- The frontend resolves the client IP from `X-Forwarded-For` using `TRUSTED_PROXY_HOPS`
+  (number of trusted proxies in front of it) and forwards exactly one address in
+  `X-Forwarded-For` and `X-Real-IP`, replacing anything the client sent.
+- Next.js only fills `X-Forwarded-For` with the socket address when the header is absent,
+  so a client that reaches the frontend directly can forge it. With
+  `TRUSTED_PROXY_HOPS=0` the frontend therefore forwards no client IP at all (one shared
+  bucket, never spoofable). **In production the frontend
+  must sit behind an ingress that appends the peer address, `TRUSTED_PROXY_HOPS` must match
+  the ingress hop count, and only that ingress may reach the frontend.**
+- The API must trust `X-Forwarded-For` only from the frontend's address
+  (`FORWARDED_ALLOW_IPS=<frontend address>`), never `*` (the backend test
+  `test_no_config_trusts_forwarded_headers_from_everyone` forbids `*`).
+- Uvicorn reads `X-Forwarded-For` only; `X-Real-IP` is sent for other proxies and is
+  ignored by the API.
+- Server rendering also forwards the visitor's IP, so page views do not count against the
+  frontend server's own address.
