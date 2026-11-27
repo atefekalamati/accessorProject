@@ -1,6 +1,6 @@
 # ACC-05 — Account deletion: anonymization migration + service (D37)
 
-**Status:** NOT_STARTED · **Priority:** LOW · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** DSC-06 · ORD-08 · **Level:** HIGH
+**Status:** COMPLETE · **Priority:** LOW · **Estimate:** 3h (estimate) · **Deadline:** — · **Dependencies:** DSC-06 · ORD-08 · **Level:** HIGH
 
 ## Objective
 مشتری حساب خود را حذف می‌کند. هویت ناشناس می‌شود، ولی سفارش و پرداخت برای حسابداری می‌مانند.
@@ -11,9 +11,9 @@
 ## Acceptance Criteria
 - [x] پیش‌نویس را کاربر تأیید کرد (A1، A3؛ A2 با تغییر: HMAC → DSC-06).
 - [x] «پروفایل» ✓ و D37 در DECISIONS به‌روز شد (ADR-063).
-- [ ] migration: `users.phone` nullable فقط برای حساب حذف‌شده؛ snapshotهای سفارش ناشناس‌پذیر.
-- [ ] سرویس ناشناس‌سازی در یک تراکنش طبق PRD «پروفایل» ✓؛ تست نبود PII.
-- [ ] پیش‌شرط‌ها 409 `ACCOUNT_HAS_ACTIVE_ORDERS` و 422 `STAFF_ACCOUNT`.
+- [x] migration: `users.phone` nullable فقط برای حساب حذف‌شده؛ snapshotهای سفارش ناشناس‌پذیر.
+- [x] سرویس ناشناس‌سازی در یک تراکنش طبق PRD «پروفایل» ✓؛ تست نبود PII.
+- [x] پیش‌شرط‌ها 409 `ACCOUNT_HAS_ACTIVE_ORDERS` و 422 `STAFF_ACCOUNT`.
 
 ## Implementation Notes — تأییدشده (ADR-063؛ متن نهایی در PRD «مرجوعی» ✓)
 سیاست کاربر (ADR-062): نام، موبایل و آدرس‌ها ناشناس می‌شوند و موبایل برای ثبت‌نام دوباره آزاد می‌شود. سفارش و پرداخت می‌مانند، ولی از هویت جدا می‌شوند. audit می‌ماند و نشست‌ها باطل می‌شوند.
@@ -27,7 +27,7 @@
   - مرجوعی باز (بعد از ORD-08)
 - حساب کارمند (هر نقشی غیر از customer) → 422 `STAFF_ACCOUNT`. اول super_admin باید نقش‌ها را بردارد.
 - **در یک تراکنش** (با lock ردیف user):
-  - user: `deleted_at` و status `deleted`؛ `phone`، `first_name`، `last_name`، `email` و `mobile_verified_at` → NULL. migration: `phone` nullable با CHECK «فقط حساب حذف‌شده بی‌موبایل است». partial unique ADR-015 بدون تغییر.
+  - user: `deleted_at` (status تغییر نمی‌کند؛ DECISIONS ACC-05)؛ `phone`، `first_name`، `last_name`، `email` و `mobile_verified_at` → NULL. migration: `phone` nullable با CHECK «فقط حساب حذف‌شده بی‌موبایل است». partial unique ADR-015 بدون تغییر.
   - addresses: حذف کامل ردیف‌ها. FK `RESTRICT` است و سفارش‌ها از `order_addresses` snapshot می‌خوانند، نه از addresses.
   - refresh tokenها revoke، سبد و آیتم‌هایش حذف، OTPهای همان موبایل حذف.
   - سفارش‌ها: `user_id` به همان ردیف ناشناس اشاره می‌کند (FK `RESTRICT` می‌ماند). مبالغ، اقلام و payments دست نمی‌خورند.
@@ -60,3 +60,7 @@ python -m ruff check . ; python -m ruff format --check . ; python -m mypy app te
 ## Log
 - 2026-11-13: سیاست D37 را کاربر تعیین کرد (ADR-062). پیش‌نویس جزئیات منتظر تأیید است.
 - 2026-11-13: کاربر تأیید کرد (A2 با HMAC → DSC-06). شکسته شد: ACC-05 (3h) و ACC-06 (OTP و endpointها، 2h). A2 دیگر بخشی از این task نیست.
+- 2026-11-26: implemented: migration `0036` (nullable identity columns with CHECKs), `app/modules/auth/deletion.py` (`lock_deletable`, `anonymize_locked`), error codes `ACCOUNT_HAS_ACTIVE_ORDERS` (409) and `STAFF_ACCOUNT` (422), response types nullable, FRONTEND.md note. Endpoints and the OTP `purpose` come in ACC-06.
+- 2026-11-26: opus diff review: no blockers. Fixed: lock order is now carts → orders → user (no deadlock with POST /orders, whose FK takes key-share on the user row after the cart), the user's orders are locked before the check and returns create re-checks `deleted_at` after its order lock (no return slips in), only an `active` account is deleted (a blocked one keeps its number, ADR-017), stored idempotency replies (address, mobile) are deleted. Tests added: refund_required payment blocks, blocked → 403, twice → 404, plaque/unit/source_address_id cleared, admin order list/detail and contact list render the anonymized rows, sales report unchanged. Not covered by a test: a timed race against POST /orders (the lock order is argued above). Residual free text kept by PRD scope: return `note`, contact `ip`.
+- 2026-11-26: a pre-existing flaky assertion in `test_metrics.py` (`"123" not in text` could match a duration sample) narrowed to the path `/123`.
+- 2026-11-26: COMPLETE. Full suite ۲۴۵۶ green; ruff, format, mypy green; OpenAPI regenerated (nullable fields).

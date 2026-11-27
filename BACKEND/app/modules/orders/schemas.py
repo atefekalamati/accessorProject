@@ -41,12 +41,13 @@ class OrderLineResponse(BaseModel):
 
 
 class OrderAddressResponse(BaseModel):
-    recipient_name: str
-    phone: str
+    # NULL once the customer deleted the account (ACC-05): show «حذف‌شده».
+    recipient_name: str | None
+    phone: str | None
     province: str
     city: str
-    postal_code: str
-    address_line: str
+    postal_code: str | None
+    address_line: str | None
     plaque: str | None
     unit: str | None
 

@@ -278,7 +278,7 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 | M6.6 Account deletion | DSC-06 | Redemption phone → HMAC with key rotation (opus) | COMPLETE | LOW | HIGH | 2.5 | ORD-07 |
 | M6.5 Notifications | CNT-08 | Rewrite «اعلان‌ها» requirements | POST_LAUNCH | LOW | HIGH | 2 | — |
 | M6.5 Notifications | CNT-09 | Notifications implementation | POST_LAUNCH | LOW | MEDIUM | 6 | CNT-08 |
-| M6.6 Account deletion | ACC-05 | Anonymization migration + service (D37, ADR-063; opus) | NOT_STARTED | LOW | HIGH | 3 | DSC-06 · ORD-08 |
+| M6.6 Account deletion | ACC-05 | Anonymization migration + service (D37, ADR-063; opus) | COMPLETE | LOW | HIGH | 3 | DSC-06 · ORD-08 |
 | M6.6 Account deletion | ACC-06 | Deletion OTP (`purpose`) + endpoints + tests (opus) | NOT_STARTED | LOW | HIGH | 2 | ACC-05 |
 
 **Phase 6:** 18h فعال (+28.5h POST_LAUNCH)

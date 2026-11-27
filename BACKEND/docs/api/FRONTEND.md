@@ -123,3 +123,4 @@
 - rate limitها بر اساس IP هستند. پشت proxy به پیکربندی trusted-proxy (OPS-04) نیاز دارند.
 - endpointهای `/admin/*` با مجوز (permission) کنترل می‌شوند. 403 یعنی مجوز نداری، نه اینکه وارد نشده‌ای.
 - نسخه‌های API (OPS-06): `docs/api/openapi.json` همیشه نسخه جاری شاخه است. در هر دروازه فاز یک snapshot ثابت در `docs/api/versions/openapi-phase-N.json` ساخته می‌شود. هیچ operation موجود در آخرین snapshot حذف نمی‌شود (تست CI). تغییر ناسازگار فقط با مسیر جدید و هماهنگی frontend انجام می‌شود.
+- حساب حذف‌شده (ACC-05): در سفارش آن حساب، `address.recipient_name`، `address.phone`، `address.postal_code` و `address.address_line` می‌توانند `null` باشند. همین‌طور `phone` سفارش در پنل ادمین و `name`/`mobile` پیام تماس. به‌جای مقدار خالی، «حذف‌شده» نشان بده. استان، شهر، اقلام و مبالغ همیشه هستند.

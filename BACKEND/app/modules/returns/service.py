@@ -28,6 +28,7 @@ from app.db.models import (
     ReturnStatus,
     ReturnStatusHistory,
     ShipmentStatus,
+    User,
 )
 from app.modules.orders.cancel import lock_order, order_advisory_lock
 from app.modules.returns.repository import ReturnRepository
@@ -155,6 +156,9 @@ class ReturnService:
             await self._session.execute(order_advisory_lock(order_id))
             order = await lock_order(self._session, order_id, user_id=user_id)
             if order is None:
+                raise _order_not_found()
+            # An account deleted meanwhile (ACC-05 locks the orders first): nothing to return.
+            if await self._session.scalar(select(User.deleted_at).where(User.id == user_id)):
                 raise _order_not_found()
             now = now or utc_now()
             delivered_at = _delivered(

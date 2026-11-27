@@ -394,16 +394,27 @@ def _replay(stored: StoredResponse) -> PlacedOrder:
 
 
 class AddressFields(Protocol):
-    """The delivery address of a quote, or its snapshot on a placed order."""
+    """The delivery address of a quote, or its snapshot on a placed order.
 
-    recipient_name: str
-    phone: str
-    province: str
-    city: str
-    postal_code: str
-    address_line: str
-    plaque: str | None
-    unit: str | None
+    Read-only, so a snapshot whose identity fields were anonymized (ACC-05: NULL) fits.
+    """
+
+    @property
+    def recipient_name(self) -> str | None: ...
+    @property
+    def phone(self) -> str | None: ...
+    @property
+    def province(self) -> str: ...
+    @property
+    def city(self) -> str: ...
+    @property
+    def postal_code(self) -> str | None: ...
+    @property
+    def address_line(self) -> str | None: ...
+    @property
+    def plaque(self) -> str | None: ...
+    @property
+    def unit(self) -> str | None: ...
 
 
 def order_fields(
