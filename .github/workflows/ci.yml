@@ -183,7 +183,7 @@ jobs:
           MEDIA_PUBLIC_BASE_URL=http://localhost:8000/media
           MEDIA_ALLOWED_HOSTS=localhost
           RESERVATION_SWEEP_SECONDS=0
-          PAYMENT_GATEWAY=fake
+          PAYMENT_PROVIDER=fake
           PAYMENT_CALLBACK_URL=http://localhost:8000/api/v1/payments/callback
           PAYMENT_RECONCILE_SECONDS=60
           POSTGRES_DB=project_ak_staging

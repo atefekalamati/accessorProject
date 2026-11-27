@@ -1,9 +1,10 @@
 """Contracts every external-provider adapter must meet (OPS-10, ADR-009, ADR-058).
 
 Payment gateway, SMS sender and file storage sit behind interfaces with fakes for
-development and tests. The real adapters (PAY-07, OPS-05, OPS-07) are deferred; when one
-is written it is added to the matching ``*_IMPLEMENTATIONS`` list and must pass the same
-tests. The last section locks what production does until then: it refuses the fakes.
+development and tests. Each real adapter is added to the matching ``*_IMPLEMENTATIONS``
+list and must pass the same tests: Zarinpal (PAY-07) runs against its mocked API; SMS and
+storage (OPS-05, OPS-07) are still deferred. The last section locks what production does
+until go-live: it refuses the fakes and every payment gateway (ADR-064).
 """
 
 from __future__ import annotations
@@ -19,11 +20,12 @@ import pytest
 import pytest_asyncio
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncEngine
+from zarinpal_mock import ZarinpalMock
 
 from app.core.config import Environment, MediaStorage, Settings
 from app.main import create_app
 from app.modules.auth.sms import FakeSmsSender, SmsSender, build_sms_sender
-from app.modules.payments.gateways import build_payment_gateway
+from app.modules.payments.gateways import build_payment_gateway, close_payment_gateway
 from app.modules.payments.gateways.base import PaymentGateway, VerifyOutcome, valid_reference
 from app.modules.payments.gateways.fake import FakeGateway
 from app.shared.storage import (
@@ -111,8 +113,22 @@ async def _fake(engine: AsyncEngine) -> GatewayUnderTest:
     return GatewayUnderTest(fake, lambda reference, paid: fake.complete(reference, paid=paid))
 
 
+async def _zarinpal(_engine: AsyncEngine) -> GatewayUnderTest:
+    """Zarinpal v4 against its mocked API (tests/zarinpal_mock.py; PAY-07)."""
+    mock = ZarinpalMock()
+
+    async def settle(reference: str, paid: bool) -> None:
+        if paid:
+            mock.pay(reference)
+        else:
+            mock.cancel(reference)
+
+    return GatewayUnderTest(mock.gateway(), settle)
+
+
 GATEWAY_IMPLEMENTATIONS: dict[str, Callable[[AsyncEngine], Awaitable[GatewayUnderTest]]] = {
     "fake": _fake,
+    "zarinpal": _zarinpal,
 }
 
 
@@ -120,7 +136,9 @@ GATEWAY_IMPLEMENTATIONS: dict[str, Callable[[AsyncEngine], Awaitable[GatewayUnde
 async def gateway(
     request: pytest.FixtureRequest, db_engine: AsyncEngine
 ) -> AsyncIterator[GatewayUnderTest]:
-    yield await GATEWAY_IMPLEMENTATIONS[request.param](db_engine)
+    under_test = await GATEWAY_IMPLEMENTATIONS[request.param](db_engine)
+    yield under_test
+    await close_payment_gateway(under_test.gateway)
 
 
 @pytest.mark.integration
@@ -185,7 +203,7 @@ async def test_gateway_callbacks_are_parsed_and_redacted_safely(
     assert all(isinstance(value, str | int | bool) or value is None for value in redacted.values())
 
 
-# --- production refuses the fakes (until PAY-07, OPS-05 and OPS-07; ADR-058) ------------------
+# --- production refuses the fakes (OPS-05, OPS-07) and every gateway until go-live (ADR-064) --
 
 
 def _production(settings: Settings) -> Settings:
@@ -193,7 +211,7 @@ def _production(settings: Settings) -> Settings:
 
 
 def test_production_builds_no_payment_gateway(settings: Settings) -> None:
-    with pytest.raises(RuntimeError, match="No real payment gateway"):
+    with pytest.raises(RuntimeError, match="disabled in production"):
         build_payment_gateway(_production(settings), None)  # type: ignore[arg-type]
 
 
@@ -203,7 +221,7 @@ async def test_production_does_not_start_while_reconciling_without_a_gateway(
     production = _production(settings).model_copy(update={"payment_reconcile_seconds": 60})
     application = create_app(production)
 
-    with pytest.raises(RuntimeError, match="No real payment gateway"):
+    with pytest.raises(RuntimeError, match="disabled in production"):
         async with application.router.lifespan_context(application):
             pass  # pragma: no cover - startup must fail
 

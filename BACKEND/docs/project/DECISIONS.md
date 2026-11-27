@@ -14,7 +14,7 @@
 | D5 | endpointهای validate | DEC-05 | — | resolved (ADR-006) |
 | D6 | لحظه رزرو | DEC-06 | — | resolved (ADR-007) |
 | D7 | HTTP 410 | DEC-07 | — | resolved (ADR-008) |
-| D8 | درگاه پرداخت | DEC-08 | PAY-07 | resolved: interface + fake (ADR-009)؛ انتخاب درگاه واقعی deferred به قبل از فاز ۵ |
+| D8 | درگاه پرداخت | DEC-08 | PAY-07 | resolved: Zarinpal v4، اول sandbox (ADR-064)؛ production تا go-live (D13) بسته |
 | D9 | سرویس SMS | DEC-09 | OPS-05 | resolved: interface + fake (ADR-009)؛ انتخاب provider deferred به قبل از فاز ۵ |
 | D10 | ذخیره فایل | DEC-10 | OPS-07 | resolved: interface + fake (ADR-009)؛ انتخاب storage deferred به قبل از فاز ۵ |
 | D11 | مالیات در v1 | DEC-11 | — | resolved (ADR-010) |
@@ -729,7 +729,7 @@
 - پیامدها: ADR-051 (شکل پاسخ، به‌روز شد)، PRD «پرداخت» (پاسخ callback)، FRONTEND.md §۷، smoke staging، snapshot OpenAPI فاز ۵.
 
 ### تصمیم‌های deferred
-- **D8، D9، D10، D13:** به تصمیم کاربر موکول شدند (ADR-058). production تا آن موقع مسدود است.
+- **D9، D10، D13:** به تصمیم کاربر موکول شدند (ADR-058). production تا آن موقع مسدود است. D8 در 2026-11-27 تصمیم گرفته شد (ADR-064).
 
 ### ADR-062 — scope فاز ۶: مرجوعی و حذف حساب؛ بقیه POST-LAUNCH (تصمیم کاربر)
 - تاریخ: 2026-11-13
@@ -792,6 +792,39 @@
   - قفل: ردیف user، سپس سبد (مثل `POST /orders` که اول سبد را قفل می‌کند). پس ثبت سفارش و حذف همزمان serialize می‌شوند.
   - متن آزاد درخواست مرجوعی (`note`) و `ip` پیام تماس دست نمی‌خورند. PRD فقط نام، موبایل و ایمیل را نام برده است.
   - 2026-11-27 (کاربر تأیید کرد، استثنای یک‌باره قاعده «ویرایش migration commit‌شده ممنوع»): downgrade migration `0036` به هر حساب حذف‌شده placeholder جدا (`+9890` و ۸ رقم) می‌دهد، چون revisionهای قدیمی‌تر unique کامل روی `users.phone` دارند. `0036` هنوز در `master` merge یا جایی اجرا نشده بود. تست regression در `tests/test_account_deletion.py` است.
+
+### ADR-064 — درگاه پرداخت: Zarinpal v4، اول sandbox (D8، DEC-08، PAY-07؛ تصمیم کاربر)
+- تاریخ: 2026-11-27
+- زمینه: D8 از ADR-058 موکول بود. کاربر Zarinpal v4 را انتخاب کرد، با شروع از sandbox. فقط DEC-08 و PAY-07 از DEFERRED خارج می‌شوند؛ D9، D10 و D13 موکول می‌مانند.
+- تصمیم (کاربر):
+  1. `ZarinpalGateway` پشت همان interface درگاه (OPS-10). مدل، statusها، رزرو، idempotency، reconciliation، rate limit و ترتیب lock (ADR-048) بدون تغییر. قراردادهای `POST /payments/init` و `POST /payments/callback {reference} → {outcome}` (SEC-08) ثابت می‌مانند. migration، endpoint یا status جدید ندارد.
+  2. **بازگشت از درگاه:** Zarinpal مرورگر را با GET به `PAYMENT_CALLBACK_URL` (صفحه نتیجه frontend) با `?Authority=…&Status=OK|NOK` برمی‌گرداند. صفحه `Authority` را به‌عنوان `reference` به `POST /payments/callback` می‌فرستد. این جایگزین جمله «پشتیبانی GET redirect در PAY-07» در ADR-051 (#5) و ADR-052 است. `Status` هرگز مبنای تصمیم نیست.
+  3. **-50 (مبلغ verify با مبلغ پرداخت فرق دارد):** payment → `failed` با `gateway_amount_rejected`، با log ERROR و audit (`payment.status_changed`). نه `refund_required`: پول settle نشده و Zarinpal خودش آن را برمی‌گرداند. ADR-051 #1 (mismatch) برای PAID با مبلغ اشتباه همچنان برقرار است.
+  4. **production:** guard می‌ماند. هر درگاهی، از جمله Zarinpal، در production تا go-live (D13) ساخته نمی‌شود (fail-closed، 503 و شکست startup). برداشتن آن در go-live checklist در README آمده است.
+  5. httpx از dev به runtime dependency منتقل شد (همان نسخه lock، 0.28.1). coverage فقط یک‌بار محلی با `uv run --with coverage` سنجیده می‌شود؛ dependency جدیدی اضافه نشد.
+- تصمیم‌های کم‌اثر (خودم؛ بازبین opus روی plan و diff):
+  - **واحد پول:** `request` همیشه `currency: "IRR"` و مبلغ ریالی (`toman_to_rial`) می‌فرستد، چون واحد پیش‌فرض در docs نیامده. `verify` طبق جدول docs ریال می‌گیرد و فیلد currency ندارد. تبدیل فقط داخل adapter انجام می‌شود (ADR-001).
+  - **verify:** همیشه با مبلغ ذخیره‌شده. پاسخ verify مبلغ ندارد، پس 100 یا 101 یعنی همان مبلغ گرفته شده است (وگرنه -50 برمی‌گشت). 101 مسیر عادی callback تکراری یا همزمان است.
+  - **نگاشت کدها:**
+    - -51 مبهم است (هنوز در بانک، یا ناموفق/لغو). inquiry تصمیم می‌گیرد: `FAILED` → failed `declined`؛ `REVERSED` → failed `reversed`؛ بقیه (`IN_BANK`، `PAID`، `VERIFIED`، خطا) → PENDING.
+    - -54 یا -55 → PENDING. نتیجه ساختگی نمی‌سازیم؛ reconciliation بعداً آن را `abandoned` می‌بندد.
+    - کدهای merchant/terminal (-10..-19، -53)، خطای شبکه، 5xx و 429 → `GatewayUnavailable`.
+    - بقیه (-9، -52، بدنه خراب) → PENDING با log ERROR، تا یک payment خراب دور reconciliation را متوقف نکند.
+  - **retry:** `request` هرگز retry نمی‌شود، چون idempotent نیست و ممکن است session دوم باز کند. `verify` و `inquiry` حداکثر ۳ تلاش دارند، فقط روی خطای شبکه، 5xx و 429، داخل بودجه `PAYMENT_GATEWAY_TIMEOUT_SECONDS`. تلاش اول بیشترین سهم زمان را دارد.
+  - **عمر authority:** در docs نیامده و ۱۵ دقیقه فرض شده (استنتاج؛ در E2E sandbox بررسی می‌شود).
+  - **secretها:** merchant id از نوع SecretStr است و فقط هنگام ساخت gateway بررسی می‌شود، چون خطای validation در Settings ورودی را echo می‌کرد. هرگز log یا ذخیره نمی‌شود. `card_hash` ذخیره نمی‌شود. `card_pan` فقط ماسک‌شده نگه داشته می‌شود. `ref_id` در `tracking_code` می‌رود. به درگاه فقط شناسه payment فرستاده می‌شود، بدون موبایل یا ایمیل.
+  - **تنظیمات:** `PAYMENT_PROVIDER` نام جدید است و `PAYMENT_GATEWAY` قدیمی هم خوانده می‌شود (env و kwarg). اگر هر دو با مقدار متفاوت تنظیم شوند → خطای Settings. `ZARINPAL_MERCHANT_ID` و `ZARINPAL_SANDBOX` (پیش‌فرض true) اضافه شدند.
+  - client HTTP در shutdown (lifespan و `jobs._main`) بسته می‌شود.
+  - **تکمیل بعد از cross-check با docs (تصمیم کاربر، 2026-11-27):**
+    - `_code` هر دو شکل `errors` را می‌خواند: object (`{"code": …}` یا `{"field": ["…", "-54"]}`) و آرایه‌ای از همین objectها. کد رشته‌ای (`"-54"`) هم پذیرفته می‌شود. پاسخ بدون کد قابل خواندن → `GatewayUnavailable`. شکل واقعی در E2E sandbox ثبت می‌شود.
+    - سقف مبلغ: init سفارشی را که `grand_total` آن از `PAYMENT_MAX_AMOUNT` (پیش‌فرض ۱۰۰٬۰۰۰٬۰۰۰ تومان، سقف Zarinpal یعنی -41) بیشتر است، قبل از ساخت payment و تماس با درگاه با 422 `PAYMENT_AMOUNT_TOO_LARGE` رد می‌کند. `details[0]` شامل `type: amount_too_large` و `maximum` است. این قاعده برای هر درگاه است. ترتیب: بعد از `order_not_payable` و `zero_amount` و قبل از بررسی انقضای رزرو و ادامه session باز. پس سفارش بالای سقف با رزرو منقضی 422 می‌گیرد، نه 409، و بعد از پایین آوردن سقف session باز قابل ادامه نیست. پذیرفته است، چون sweep انقضا و reconciliation هر دو را می‌بندند. حداقل مبلغ Zarinpal در docs نیامده؛ در E2E sandbox بررسی می‌شود (go-live checklist).
+    - کد خطا فقط وقتی از `errors` خوانده می‌شود که منفی باشد، فقط با رقم ASCII. 100 یا 101 فقط از `data.code` عددی پذیرفته می‌شود. پس بدنه خطا هرگز PAID نمی‌شود (بازبین opus).
+    - پذیرفته‌شده بدون تغییر: `currency: "IRR"` (فقط در صفحه currency مستند است)؛ verify روی `Status=NOK` (docs توصیه می‌کند فقط روی OK)؛ نفرستادن `auto_verify`، که تنظیم پنل اعمال می‌شود و در go-live checklist آمده است.
+- ریسک‌های پذیرفته‌شده:
+  - **موفقیت دیرهنگام روی سفارش لغوشده یا منقضی:** verify پول را settle می‌کند و به `refund_required` و بازپرداخت دستی می‌رسد (D32). جایگزین بعدی: verify نکردن تا Zarinpal خودش برگرداند.
+  - **پرداخت pending بعد از تعویض provider:** reconciliation آن را با درگاه جدید verify می‌کند؛ نتیجه -54، PENDING و در نهایت `abandoned` است. تعویض provider فقط وقتی payment pending وجود ندارد.
+  - **بعد از لغو مشتری:** اگر inquiry باز هم `IN_BANK` بدهد، تا `abandoned` (حدود ۲۰ دقیقه) init جدید 409 `session_open` می‌گیرد. در E2E sandbox بررسی می‌شود.
+- پیامدها: PAY-07، DEC-08، OPS-10 (Zarinpal در contract suite)، FRONTEND.md §۷، README (go-live checklist)، `.env.example`، OpenAPI (توضیح 422 در `POST /payments/init`؛ کد خطای جدید `PAYMENT_AMOUNT_TOO_LARGE`).
 
 ## PRD changes
 

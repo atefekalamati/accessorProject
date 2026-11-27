@@ -44,7 +44,8 @@ def build_spec() -> dict[str, Any]:
         media_storage=MediaStorage.MEMORY,
         media_public_base_url="http://localhost:8000/media",
         media_allowed_hosts=["localhost"],
-        payment_gateway=PaymentGatewayName.FAKE,
+        # The primary name, so a PAYMENT_PROVIDER in the shell never overrides it.
+        payment_provider=PaymentGatewayName.FAKE,
     )
     return create_app(settings).openapi()
 

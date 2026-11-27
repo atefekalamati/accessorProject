@@ -63,6 +63,8 @@ class ErrorCode(StrEnum):
     DISCOUNT_NOT_APPLICABLE = "DISCOUNT_NOT_APPLICABLE"
     IDEMPOTENCY_KEY_REUSED = "IDEMPOTENCY_KEY_REUSED"
     STAFF_ACCOUNT = "STAFF_ACCOUNT"
+    # Over the gateway's per-payment cap (PAYMENT_MAX_AMOUNT; Zarinpal -41, ADR-064).
+    PAYMENT_AMOUNT_TOO_LARGE = "PAYMENT_AMOUNT_TOO_LARGE"
     # 429 — rate limiting
     RATE_LIMITED = "RATE_LIMITED"
     OTP_RATE_LIMITED = "OTP_RATE_LIMITED"
@@ -97,6 +99,7 @@ ERROR_STATUS: Mapping[ErrorCode, int] = MappingProxyType(
         ErrorCode.DISCOUNT_NOT_APPLICABLE: 422,
         ErrorCode.IDEMPOTENCY_KEY_REUSED: 422,
         ErrorCode.STAFF_ACCOUNT: 422,
+        ErrorCode.PAYMENT_AMOUNT_TOO_LARGE: 422,
         ErrorCode.RATE_LIMITED: 429,
         ErrorCode.OTP_RATE_LIMITED: 429,
         ErrorCode.INTERNAL_SERVER_ERROR: 500,

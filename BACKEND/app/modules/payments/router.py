@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_app_settings
-from app.core.errors import NotFoundError
+from app.core.errors import ErrorResponse, NotFoundError
 from app.db.models import FakeGatewaySession
 from app.db.session import get_db_session
 from app.modules.auth.dependencies import get_current_user
@@ -46,6 +46,16 @@ def get_payment_service(
     response_model=PaymentInitResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Start paying your order; the amount is the order's total (Idempotency-Key)",
+    responses={
+        422: {
+            "model": ErrorResponse,
+            "description": (
+                "Not payable: INVALID_STATE_TRANSITION (order_not_payable), "
+                "BUSINESS_RULE_VIOLATION (zero_amount), PAYMENT_AMOUNT_TOO_LARGE (over "
+                "PAYMENT_MAX_AMOUNT; details[0].maximum in toman) or IDEMPOTENCY_KEY_REUSED"
+            ),
+        }
+    },
 )
 async def init_payment(
     payload: InitPaymentRequest,
