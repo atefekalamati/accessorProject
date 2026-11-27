@@ -2,7 +2,8 @@
 
 Separate from the order's ``payment_status`` (ORD-05), which follows the latest attempt
 and has cross-field guards; a payment row has none. ``refund_required`` means the
-gateway took money the shop must give back (late, duplicate or wrong amount).
+gateway took money the shop must give back (late, duplicate or wrong amount, or a
+paid order staff cancelled before shipping, ORD-11).
 """
 
 from __future__ import annotations
@@ -20,6 +21,9 @@ PAYMENT_TRANSITIONS: Final[Mapping[str, frozenset[str]]] = MappingProxyType(
         _P.PENDING: frozenset({_P.PAID, _P.FAILED, _P.REFUND_REQUIRED}),
         # A late verify of a payment closed as failed (lost callback, superseded).
         _P.FAILED: frozenset({_P.PAID, _P.REFUND_REQUIRED}),
+        # Staff cancelled the paid, unshipped order: the money is owed back. Only caller:
+        # orders/cancel_paid.py (ORD-11); the callback never moves a paid row.
+        _P.PAID: frozenset({_P.REFUND_REQUIRED}),
         # Staff recorded the manual refund (ADM-08, D35); refunded is final.
         _P.REFUND_REQUIRED: frozenset({_P.REFUNDED}),
     }

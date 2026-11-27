@@ -81,7 +81,7 @@ def test_references_are_printable_ascii() -> None:
         ("failed", "refund_required", True),
         ("failed", "pending", False),
         ("paid", "failed", False),
-        ("paid", "refund_required", False),
+        ("paid", "refund_required", True),  # staff cancel of a paid order (ORD-11)
         ("refund_required", "paid", False),
         ("pending", "pending", False),
     ],

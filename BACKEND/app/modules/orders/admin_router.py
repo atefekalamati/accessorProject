@@ -157,7 +157,7 @@ async def update_shipment(
 @orders_router.post(
     "/{order_id}/cancel",
     response_model=OrderStatusResponse,
-    summary="Cancel an unpaid order as staff: frees its stock and discount code use",
+    summary="Cancel an unpaid order, or a paid unshipped one (refund_required, stock back)",
 )
 async def cancel_order(
     actor: Annotated[CurrentUser, Depends(require_permission("orders:update_status"))],

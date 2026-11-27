@@ -772,6 +772,12 @@
   - بازپرداخت مرجوعی فقط وقتی ثبت می‌شود که payment سفارش هنوز `paid` باشد. در غیر این صورت 422 `order_not_paid`، تا یک پول دو بار برنگردد (مثلاً بعد از ORD-11).
   - inspect در همان تراکنش `inspected → refund_required` (مبلغ > 0) یا `→ closed` می‌رود. وضعیت `inspected` فقط در تاریخچه دیده می‌شود.
   - گزارش فروش `return_refunds {count, amount}` را بر اساس `refunded_at` (روز تهران) جدا نشان می‌دهد و از `totals` کم نمی‌کند.
+- تصمیم‌های کم‌اثر ORD-11 (خودم):
+  - لغو سفارش پرداخت‌شده همان `POST /admin/orders/{id}/cancel` و مجوز `orders:update_status` است. مشتری و job انقضا همچنان سفارش `confirmed` را لغو نمی‌کنند: 422 با نوع `not_allowed`، مثل قبل (بدون تغییر API).
+  - state machine: `confirmed → cancelled` فقط تا shipment `not_shipped|preparing` مجاز است (وگرنه `already_shipped`). `paid → refund_required` هم برای order payment (فقط سفارش لغوشده) و هم برای ردیف payment مجاز شد. shipment `shipped` و `delivered` حالا order `confirmed` لازم دارند، پس سفارش لغوشده هرگز ارسال نمی‌شود.
+  - موجودی commit‌شده با یک movement `return` برای هر خط رزرو (reference `('order', id)`) برمی‌گردد، حتی برای variant حذف‌شده. ردیف رزرو و movementهای `commit` دست نمی‌خورند (سرویس رزرو تغییر نکرد).
+  - audit تغییر payment مثل callback با actor سیستم ثبت می‌شود. actor کارمند روی audit سفارش است.
+  - سفارش لغوشده از فروش روزهای گذشته در گزارش‌ها حذف می‌شود (`successful_order`)، مثل هر سفارش لغوشده دیگر.
 
 ## PRD changes
 

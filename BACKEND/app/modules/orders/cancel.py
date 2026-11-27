@@ -85,7 +85,15 @@ class OrderCancellation:
         self._session = session
 
     def check(self, order: Order) -> None:
-        """422 ``INVALID_STATE_TRANSITION`` if the locked order cannot be cancelled."""
+        """422 ``INVALID_STATE_TRANSITION`` if the locked order cannot be cancelled.
+
+        Only an unpaid order is cancelled here. A ``confirmed`` (paid) one is refused with
+        ``not_allowed`` as before ORD-11: only staff cancel it, via ``PaidOrderCancellation``.
+        """
+        if order.status == OrderStatus.CONFIRMED:
+            raise invalid_transition(
+                StatusField.ORDER, order.status, OrderStatus.CANCELLED, "not_allowed"
+            )
         why = check_transition(state_of(order), StatusField.ORDER, OrderStatus.CANCELLED)
         if why is not None:
             raise invalid_transition(StatusField.ORDER, order.status, OrderStatus.CANCELLED, why)

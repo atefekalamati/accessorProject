@@ -13924,7 +13924,7 @@
         "tags": [
           "admin-orders"
         ],
-        "summary": "Cancel an unpaid order as staff: frees its stock and discount code use",
+        "summary": "Cancel an unpaid order, or a paid unshipped one (refund_required, stock back)",
         "operationId": "cancel_order_api_v1_admin_orders__order_id__cancel_post",
         "security": [
           {
