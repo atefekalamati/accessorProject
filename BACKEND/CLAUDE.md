@@ -103,6 +103,7 @@ Migration جدید: `alembic revision --autogenerate --rev-id YYYYMMDD_NNNN -m "
 
 - شاخه اصلی `master` است. یک شاخه برای هر فاز، مثل `feat/phase-2-core-domain`. در پایان فاز، شاخه از طریق PR در `master` merge می‌شود. استثنا: فاز ۱ روی `feat/m1.1-repo-foundation` است (M1.1 و M1.2 مشترک).
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`).
+- هرگز در commit message، عنوان و بدنه PR، کامنت کد یا مستندات به Claude، Claude Code یا AI اشاره نکن (بدون خط `Co-Authored-By` و بدون امضای ابزار).
 - بدون درخواست صریح: هرگز push (به‌جز push بعد از `/done`، بخش ۱۱)، force-push، `reset --hard`، rebase روی `master`، یا ویرایش migration commit‌شده.
 - تغییر schema فقط با migration جدید.
 
