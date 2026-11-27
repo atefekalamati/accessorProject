@@ -4,11 +4,11 @@
 
 ## Current / Next
 - **Phase › Milestone:** 6 Post-core › M6.4 Returns
-- **Current Task:** DSC-06 (HMAC موبایل در redemption با چرخش کلید؛ HIGH، opus) — NOT_STARTED. ORD-11 COMPLETE (M6.4 مرجوعی کامل).
+- **Current Task:** ACC-05 (ناشناس‌سازی حساب حذف‌شده؛ HIGH، opus) — IN_PROGRESS. DSC-06 COMPLETE.
 - **Status:** ORD-07 COMPLETE: PRD «مرجوعی» ✓ و حذف حساب در «پروفایل» ✓؛ ADR-063 (R1، R2، A1، A3، و A2 با تغییر کاربر: HMAC موبایل در redemption). scope فاز ۶ (ADR-062): فقط مرجوعی و حذف حساب؛ CAT-13/14، CAT-15/16، ACC-03/04 و CNT-08/09 `POST_LAUNCH` هستند.
-- **Progress:** 140/143 task فعال COMPLETE · وزنی 97.6% (388h / 397.5h؛ 9 task و 19h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
+- **Progress:** 141/143 task فعال COMPLETE · وزنی 98.2% (390.5h / 397.5h؛ 9 task و 19h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
 - **Blockers:** هیچ مانعی برای فاز ۶ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058). **قبل از launch:** بررسی حقوقی بازپرداخت هزینه ارسال در مرجوعی (D44، ADR-063).
-- **Next Action:** `/phase` ادامه پیدا می‌کند: DSC-06 → ACC-05 → ACC-06 (دستور کاربر 2026-11-13).
+- **Next Action:** `/phase` ادامه پیدا می‌کند: ACC-05 → ACC-06 (دستور کاربر 2026-11-13).
   - ترتیب: ORD-08 → ORD-09 → ORD-10 → ORD-11 → DSC-06 → ACC-05 → ACC-06؛ سپس دروازه فاز ۶.
   - بازبین opus برای ORD-09، ORD-10، ORD-11، DSC-06، ACC-05 و ACC-06 (موجودی، پول، مصرف کد، auth). ORD-08 هم HIGH است و بازبین مستقل دارد. بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-6-post-core` (از `master` در `3d68122`؛ طبق دستور کاربر همان می‌ماند). حفاظت `master`: `strict` خاموش می‌ماند.
@@ -21,7 +21,7 @@
 ---
 
 ## Overall Progress
-**97.6%** = 388h COMPLETE / 397.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED، DEFERRED و POST_LAUNCH حذف می‌شوند؛ 19h DEFERRED، ADR-058؛ 28.5h POST_LAUNCH، ADR-062).
+**98.2%** = 390.5h COMPLETE / 397.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED، DEFERRED و POST_LAUNCH حذف می‌شوند؛ 19h DEFERRED، ADR-058؛ 28.5h POST_LAUNCH، ADR-062).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -31,14 +31,15 @@
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | COMPLETE | 67h | 67h | 100% | 2026-11-13 (واقعی) |
 | 5 Release | COMPLETE (merge شد، tag `phase-5`) | 30h (+19h DEFERRED) | 30h | 100% | 2026-11-13 (واقعی) |
-| 6 Post-core | IN_PROGRESS | 18h (+28.5h POST_LAUNCH) | 10.5h | 58% | 2026-12-01 |
+| 6 Post-core | IN_PROGRESS | 18h (+28.5h POST_LAUNCH) | 13h | 72% | 2026-12-01 |
 
 ## Deadlines & Schedule
 - فرض (قابل تغییر): تنها، پاره‌وقت، ۱۵ ساعت در هفته، بدون ددلاین سخت. همه ددلاین‌ها **پیش‌بینی** هستند.
-- باقی‌مانده: 7.5h فعال (فاز ۶) ≈ 0.5 هفته از 2026-11-26 (forecast 2026-12-01؛ قبلاً 2026-11-27؛ Docker چند روز در دسترس نبود). MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
+- باقی‌مانده: 5h فعال (فاز ۶) ≈ 0.3 هفته از 2026-11-26 (forecast 2026-12-01؛ قبلاً 2026-11-27؛ Docker چند روز در دسترس نبود). MVP کامل است. production go-live جداست و به تصمیم‌های DEFERRED بستگی دارد.
 - **Verdict:** on track نسبت به forecast (بدون buffer).
 
 ## Completed Recently
+- 2026-11-26: DSC-06 (redemption کد تخفیف دیگر موبایل خام ندارد: `phone_hmac` و `phone_key_id` با `PHONE_HMAC_KEYS` (چند کلید، اولی می‌نویسد، همه می‌شمارند)؛ migration `0035` با backfill و downgrade از snapshot سفارش؛ الزامی در production؛ runbook چرخش در docs/ops/PHONE-HMAC-KEYS.md؛ بازبین opus؛ suite ۲۴۳۸ سبز).
 - 2026-11-26: ORD-11 (لغو سفارش پرداخت‌شده و ارسال‌نشده توسط ادمین با همان `POST /admin/orders/{id}/cancel`: order `cancelled` (admin)، payment و order payment `refund_required`، موجودی commit‌شده با movement `return` برگشت، redemption آزاد؛ shipment برای سفارش لغوشده ممنوع؛ مشتری و job انقضا مثل قبل 422؛ سرویس رزرو تغییر نکرد؛ بازبین opus روی plan و diff؛ suite ۲۴۲۱ سبز).
 - 2026-11-26: ORD-10 (مبلغ بازپرداخت مرجوعی سمت سرور: `floor(final_line_total × n ÷ تعداد خرید)`، قلم کامل دقیق، هزینه ارسال نه؛ inspect → `refund_required` یا `closed`؛ `POST /admin/returns/{id}/refund` با `payments:refund`، idempotent، reference یکتا در مرجوعی و payment (دو جهت)، فقط وقتی سفارش `paid` است؛ وضعیت payment سفارش تغییر نمی‌کند؛ `return_refunds` جدا در گزارش فروش؛ بازبین opus؛ suite ۲۴۰۹ سبز).
 - 2026-11-20: ORD-09 (بررسی، دریافت و بازرسی مرجوعی توسط پشتیبانی و ادمین: `returns:manage`، فهرست و جزئیات کامل بدون موبایل، approve/reject/receive idempotent، inspect فقط از `received` با بررسی همه اقلام، برگشت موجودی فقط برای `sellable` با یک movement `return` برای هر قلم، variant حذف‌شده → `restock_skipped`، سقف موجودی 422؛ قفل‌ها به ترتیب ADR-048 و ADR-034؛ بازبین opus (blocker نداشت، یافته‌ها رفع شد)؛ suite ۲۳۹۷ سبز).
@@ -289,6 +290,9 @@ D8، D9، D10 و D13 موکول شدند. PAY-07، OPS-04، OPS-05، OPS-07 و D
 - INF-06 اضافه شد. کارهای قبلی به‌صورت FND-01، FND-02، FND-04 و FND-05 (COMPLETE با شواهد) ثبت شدند.
 
 ## Log (جدیدترین بالا)
+### 2026-11-26 — DSC-06 COMPLETE
+HMAC موبایل در redemption با چرخش کلید؛ migration 0035؛ تست‌های تخفیف قبلی حالا زیر کلید قدیمی ثبت می‌شوند؛ بازبین opus؛ suite کامل سبز.
+
 ### 2026-11-26 — ORD-11 COMPLETE
 لغو سفارش پرداخت‌شده و ارسال‌نشده، بازگشت موجودی و آزادسازی کد؛ دو تست قدیمی که قاعده قبلی را می‌سنجیدند عمداً به‌روز شدند؛ بازبین opus؛ suite کامل ۲۴۲۱ سبز.
 

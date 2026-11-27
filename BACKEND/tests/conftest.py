@@ -25,6 +25,10 @@ os.environ.setdefault(
 )
 os.environ.setdefault("JWT_SECRET", "test-secret-that-is-at-least-32-characters")
 os.environ.setdefault("OTP_HASH_SECRET", "test-otp-hash-secret-at-least-32-characters")
+os.environ.setdefault(
+    "PHONE_HMAC_KEYS",
+    "t2:test-phone-key-two-at-least-32-characters,t1:test-phone-key-one-at-least-32-chars",
+)
 
 from alembic import command
 from app.core.config import Environment, MediaStorage, Settings

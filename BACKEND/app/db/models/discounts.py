@@ -22,7 +22,7 @@ from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.dialects.postgresql import UUID as PostgreSQLUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.phone import MOBILE_E164_PATTERN
+from app.core.phone_hmac import DIGEST_PATTERN, KEY_ID_PATTERN
 from app.db.base import Base
 from app.db.models.common import (
     CreatedAtMixin,
@@ -132,7 +132,8 @@ class DiscountRedemption(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "discount_redemptions"
     __table_args__ = (
         CheckConstraint(f"status IN ({_STATUSES_SQL})", name="valid_status"),
-        CheckConstraint(f"phone ~ '{MOBILE_E164_PATTERN}'", name="phone_format"),
+        CheckConstraint(f"phone_hmac ~ '{DIGEST_PATTERN}'", name="phone_hmac_format"),
+        CheckConstraint(f"phone_key_id ~ '{KEY_ID_PATTERN}'", name="phone_key_id_format"),
         CheckConstraint(f"code ~ '{CODE_PATTERN_SQL}'", name="code_format"),
         # Zero is valid: a small percentage can round to nothing (ADR-031).
         CheckConstraint(f"amount BETWEEN 0 AND {MAX_PRICE_TOMAN}", name="amount_range"),
@@ -155,11 +156,12 @@ class DiscountRedemption(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             unique=True,
             postgresql_where=text(LIVE_REDEMPTION_SQL),
         ),
-        # Serves both counts: total (leading column) and per mobile number.
+        # Serves both counts: total (leading column) and per mobile digest.
         Index(
-            "ix_discount_redemptions_live_code_phone",
+            "ix_discount_redemptions_live_code_phone_hmac",
             "discount_code_id",
-            "phone",
+            "phone_hmac",
+            "phone_key_id",
             postgresql_where=text(LIVE_REDEMPTION_SQL),
         ),
         Index("ix_discount_redemptions_order_id", "order_id"),
@@ -178,8 +180,10 @@ class DiscountRedemption(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     user_id: Mapped[UUID | None] = mapped_column(
         PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    # The per-user limit key: the normalized mobile number (ADR-017).
-    phone: Mapped[str] = mapped_column(String(16), nullable=False)
+    # The per-customer limit key: HMAC-SHA256 of the normalized mobile (ADR-017) under the
+    # key ``phone_key_id``; never the raw number (DSC-06, ADR-063 A2).
+    phone_hmac: Mapped[str] = mapped_column(String(64), nullable=False)
+    phone_key_id: Mapped[str] = mapped_column(String(16), nullable=False)
     # Snapshot of the code as typed for this order; later edits of the code never touch it.
     code: Mapped[str] = mapped_column(String(MAX_CODE_LENGTH), nullable=False)
     amount: Mapped[int] = mapped_column(BigInteger, nullable=False)

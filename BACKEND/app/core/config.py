@@ -12,6 +12,8 @@ from fastapi import Request
 from pydantic import BeforeValidator, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
+from app.core.phone_hmac import PhoneKeys, parse_phone_keys
+
 
 class Environment(StrEnum):
     DEVELOPMENT = "development"
@@ -66,6 +68,9 @@ class Settings(BaseSettings):
     otp_ttl_seconds: int = Field(default=120, ge=30, le=600)
     # HMAC key for OTP hashes; required in production, kept separate from JWT_SECRET.
     otp_hash_secret: SecretStr | None = Field(default=None, min_length=32)
+    # Discount redemption phone digests (DSC-06): "id:secret,..." newest first; required in
+    # production. Rotation: docs/ops/PHONE-HMAC-KEYS.md.
+    phone_hmac_keys: SecretStr | None = None
     # OTP request limits; counted from otp_codes over a rolling one-hour window.
     otp_resend_cooldown_seconds: int = Field(default=60, ge=1, le=600)
     otp_max_per_mobile_per_hour: int = Field(default=5, ge=1)
@@ -133,6 +138,19 @@ class Settings(BaseSettings):
     contact_max_per_ip: int = Field(default=5, ge=1)
     contact_max_per_phone: int = Field(default=3, ge=1)
 
+    @field_validator("phone_hmac_keys")
+    @classmethod
+    def validate_phone_hmac_keys(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is not None:
+            parse_phone_keys(value.get_secret_value())  # fail at startup, not at checkout
+        return value
+
+    def phone_keys(self) -> PhoneKeys:
+        """The redemption phone keys; fail closed when PHONE_HMAC_KEYS is not set."""
+        if self.phone_hmac_keys is None:
+            raise RuntimeError("PHONE_HMAC_KEYS is not configured")
+        return parse_phone_keys(self.phone_hmac_keys.get_secret_value())
+
     @field_validator("database_url")
     @classmethod
     def validate_database_url(cls, value: str) -> str:
@@ -172,6 +190,8 @@ class Settings(BaseSettings):
                 raise ValueError("Mock OTP must be disabled in production")
             if self.otp_hash_secret is None:
                 raise ValueError("OTP_HASH_SECRET is required in production")
+            if self.phone_hmac_keys is None:
+                raise ValueError("PHONE_HMAC_KEYS is required in production")
             if self.media_storage is MediaStorage.MEMORY:
                 raise ValueError("MEDIA_STORAGE=memory is forbidden in production")
         if self.payment_pending_stale_seconds < 3 * self.payment_gateway_timeout_seconds:

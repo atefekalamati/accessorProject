@@ -275,7 +275,7 @@ taskهای بزرگ‌تر از ۴ ساعت در task نیازمندی به task
 | M6.4 Returns | ORD-09 | Admin review, receive, inspect; stock only for sellable (opus) | COMPLETE | LOW | HIGH | 2.5 | ORD-08 |
 | M6.4 Returns | ORD-10 | Return refund amount + manual refund record (opus) | COMPLETE | LOW | HIGH | 1.5 | ORD-09 |
 | M6.4 Returns | ORD-11 | Admin cancel of paid, unshipped order → refund_required + stock back (opus) | COMPLETE | LOW | HIGH | 2 | ORD-07 |
-| M6.6 Account deletion | DSC-06 | Redemption phone → HMAC with key rotation (opus) | NOT_STARTED | LOW | HIGH | 2.5 | ORD-07 |
+| M6.6 Account deletion | DSC-06 | Redemption phone → HMAC with key rotation (opus) | COMPLETE | LOW | HIGH | 2.5 | ORD-07 |
 | M6.5 Notifications | CNT-08 | Rewrite «اعلان‌ها» requirements | POST_LAUNCH | LOW | HIGH | 2 | — |
 | M6.5 Notifications | CNT-09 | Notifications implementation | POST_LAUNCH | LOW | MEDIUM | 6 | CNT-08 |
 | M6.6 Account deletion | ACC-05 | Anonymization migration + service (D37, ADR-063; opus) | NOT_STARTED | LOW | HIGH | 3 | DSC-06 · ORD-08 |

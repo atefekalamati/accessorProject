@@ -15,7 +15,7 @@ from httpx import AsyncClient, Response
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from app.core.config import Settings, get_app_settings
+from app.core.config import Settings, get_app_settings, get_settings
 from app.core.time import utc_now
 from app.db.models import (
     Cart,
@@ -95,13 +95,23 @@ def limits(auth_client: AsyncClient, settings: Settings) -> Iterator[Callable[..
     app.dependency_overrides.pop(get_app_settings, None)
 
 
+# Earlier uses are stored under the older key: the per-customer count must still see them
+# after a rotation (DSC-06; conftest configures t2 to write, t1 to count).
+_KEY = get_settings().phone_keys().keys[-1]
+
+
+def _digest(phone: str) -> str:
+    return _KEY.digest(phone)
+
+
 async def _redeem(engine: AsyncEngine, code: DiscountCode, phone: str = "+989120000000") -> None:
     async with AsyncSession(engine) as session, session.begin():
         session.add(
             DiscountRedemption(
                 discount_code_id=code.id,
                 order_id=await new_order(),
-                phone=phone,
+                phone_hmac=_digest(phone),
+                phone_key_id=_KEY.key_id,
                 code=code.code,
                 amount=1,
             )
