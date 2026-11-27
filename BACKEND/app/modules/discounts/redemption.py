@@ -27,6 +27,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.errors import ConflictError, ErrorCode
 from app.core.phone import MOBILE_E164_PATTERN
 from app.core.time import utc_now
@@ -122,14 +123,19 @@ class RedemptionService:
         _check_inputs(phone, amount, subtotal)
         now = now or utc_now()
         code = await self.lock_code(code_id)
+        keys = get_settings().phone_keys()
         previous = await self._of_order(order_id)
         if previous is not None:
-            if previous.status != RedemptionStatus.RELEASED and (
-                previous.discount_code_id,
-                previous.amount,
-                previous.phone,
-                previous.user_id,
-            ) == (code_id, amount, phone, user_id):
+            previous_key = keys.get(previous.phone_key_id)
+            same_phone = previous_key is not None and previous.phone_hmac == previous_key.digest(
+                phone
+            )
+            if (
+                previous.status != RedemptionStatus.RELEASED
+                and same_phone
+                and (previous.discount_code_id, previous.amount, previous.user_id)
+                == (code_id, amount, user_id)
+            ):
                 return previous
             raise _already_redeemed()
         rules = None if code is None else rules_of(code)
@@ -147,7 +153,9 @@ class RedemptionService:
             discount_code_id=code.id,
             order_id=order_id,
             user_id=user_id,
-            phone=phone,
+            # Never the raw number (DSC-06): the write key's digest and its id.
+            phone_hmac=keys.write.digest(phone),
+            phone_key_id=keys.write.key_id,
             code=code.code,
             amount=amount,
             status=RedemptionStatus.PENDING,

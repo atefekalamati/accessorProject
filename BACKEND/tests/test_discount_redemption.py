@@ -14,6 +14,7 @@ from conftest import new_order
 from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
+from app.core.config import get_settings
 from app.core.errors import AppError, ErrorCode
 from app.core.time import utc_now
 from app.db.models import DiscountCode, DiscountRedemption, RedemptionStatus
@@ -334,3 +335,38 @@ async def test_methods_need_the_callers_transaction(engine: AsyncEngine, codes: 
             await service.confirm(uuid4())
         with pytest.raises(RuntimeError):
             await service.release(uuid4())
+
+
+# --- phone digests (DSC-06) ------------------------------------------------------------
+
+
+async def test_redeem_stores_the_write_key_digest_and_retries_under_older_keys(
+    engine: AsyncEngine, codes: Any, db_engine: AsyncEngine
+) -> None:
+    keys = get_settings().phone_keys()
+    code = await codes()
+    order_id = await new_order()
+    first = await _redeem(engine, code, order_id=order_id)
+    assert isinstance(first, DiscountRedemption)
+    assert (first.phone_key_id, first.phone_hmac) == (keys.write.key_id, keys.write.digest(PHONE))
+
+    # Written before a rotation: the same retry still finds it under the older key.
+    older = keys.keys[-1]
+    async with AsyncSession(db_engine) as session, session.begin():
+        await session.execute(
+            update(DiscountRedemption)
+            .where(DiscountRedemption.id == first.id)
+            .values(phone_key_id=older.key_id, phone_hmac=older.digest(PHONE))
+        )
+    again = await _redeem(engine, code, order_id=order_id)
+    assert isinstance(again, DiscountRedemption) and again.id == first.id
+
+    # Its key was removed since: no match is guessed, the retry is refused.
+    async with AsyncSession(db_engine) as session, session.begin():
+        await session.execute(
+            update(DiscountRedemption)
+            .where(DiscountRedemption.id == first.id)
+            .values(phone_key_id="gone")
+        )
+    refused = await _redeem(engine, code, order_id=order_id)
+    assert isinstance(refused, AppError) and refused.status_code == 409

@@ -303,8 +303,9 @@ class AdminContactSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
-    name: str
-    mobile: str = Field(validation_alias="phone")
+    # NULL once the sender deleted their account (ACC-05); the message stays.
+    name: str | None
+    mobile: str | None = Field(validation_alias="phone")
     subject: str
     status: str
     created_at: datetime

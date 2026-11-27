@@ -39,6 +39,14 @@ class VerifyOtpRequest(BaseModel):
         return normalize_phone(value)
 
 
+class DeleteAccountRequest(BaseModel):
+    """The ``account_delete`` code sent to the account's own mobile (ACC-06)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(pattern=r"^\d{6}$")
+
+
 class TokenResponse(BaseModel):
     """Access token only; the refresh token travels in an HttpOnly cookie (ADR-012)."""
 

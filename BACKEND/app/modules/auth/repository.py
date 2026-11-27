@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import (
     OtpCode,
+    OtpPurpose,
     Permission,
     Role,
     RolePermission,
@@ -60,12 +61,15 @@ class OtpRepository:
         count, oldest = (await self._session.execute(statement)).one()
         return WindowUsage(count=count, oldest=oldest)
 
-    async def expire_active(self, mobile: str, now: datetime) -> None:
-        """Invalidate unconsumed, unexpired codes of ``mobile`` by expiring them now."""
+    async def expire_active(
+        self, mobile: str, now: datetime, purpose: OtpPurpose = OtpPurpose.LOGIN
+    ) -> None:
+        """Invalidate unconsumed, unexpired codes of ``mobile`` for ``purpose``."""
         await self._session.execute(
             update(OtpCode)
             .where(
                 OtpCode.mobile == mobile,
+                OtpCode.purpose == purpose,
                 OtpCode.consumed_at.is_(None),
                 OtpCode.expires_at > now,
             )
@@ -76,14 +80,21 @@ class OtpRepository:
         self._session.add(otp)
         await self._session.flush()
 
-    async def lock_latest_unconsumed(self, mobile: str) -> OtpCode | None:
-        """The newest unconsumed code of ``mobile``, row-locked until the transaction ends.
+    async def lock_latest_unconsumed(
+        self, mobile: str, purpose: OtpPurpose = OtpPurpose.LOGIN
+    ) -> OtpCode | None:
+        """The newest unconsumed ``purpose`` code of ``mobile``, row-locked (transaction).
 
-        Request-otp expires older codes, so only the newest one can still be valid.
+        Request-otp expires older codes of the same purpose, so only the newest one can
+        still be valid; a code of the other purpose is never found here (ACC-06).
         """
         statement = (
             select(OtpCode)
-            .where(OtpCode.mobile == mobile, OtpCode.consumed_at.is_(None))
+            .where(
+                OtpCode.mobile == mobile,
+                OtpCode.purpose == purpose,
+                OtpCode.consumed_at.is_(None),
+            )
             .order_by(OtpCode.created_at.desc())
             .limit(1)
             .with_for_update()

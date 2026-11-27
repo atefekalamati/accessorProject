@@ -21,13 +21,16 @@ TRANSITIONS: Final[Mapping[StatusField, Mapping[str, frozenset[str]]]] = Mapping
         StatusField.ORDER: MappingProxyType(
             {
                 _O.PENDING_PAYMENT: frozenset({_O.CONFIRMED, _O.CANCELLED}),
-                _O.CONFIRMED: frozenset({_O.COMPLETED}),
+                # Cancelled by staff while not yet shipped (ORD-11): refund_required follows.
+                _O.CONFIRMED: frozenset({_O.COMPLETED, _O.CANCELLED}),
             }
         ),
         StatusField.PAYMENT: MappingProxyType(
             {
                 _P.UNPAID: frozenset({_P.PENDING}),
                 _P.PENDING: frozenset({_P.PAID, _P.FAILED, _P.REFUND_REQUIRED}),
+                # A paid order cancelled by staff before shipping owes the money (ORD-11).
+                _P.PAID: frozenset({_P.REFUND_REQUIRED}),
                 # Retry, a late verify of the failed attempt, or a late success after cancel.
                 _P.FAILED: frozenset({_P.PENDING, _P.PAID, _P.REFUND_REQUIRED}),
                 # Staff recorded the manual refund (ADM-08, D35).
@@ -85,12 +88,21 @@ def check_transition(state: OrderState, field: StatusField, new: str) -> str | N
             return "requires_payment_paid"
         case StatusField.ORDER, _O.COMPLETED if state.shipment_status != _S.DELIVERED:
             return "requires_shipment_delivered"
-        case StatusField.ORDER, _O.CANCELLED if state.payment_status == _P.PAID:
+        case StatusField.ORDER, _O.CANCELLED if (
+            state.status == _O.PENDING_PAYMENT and state.payment_status == _P.PAID
+        ):
             return "already_paid"
+        case StatusField.ORDER, _O.CANCELLED if state.status == _O.CONFIRMED and (
+            state.shipment_status not in (_S.NOT_SHIPPED, _S.PREPARING)
+        ):
+            return "already_shipped"
         case StatusField.PAYMENT, (_P.PENDING | _P.PAID) if state.status != _O.PENDING_PAYMENT:
             return "requires_order_pending_payment"
         case StatusField.PAYMENT, _P.REFUND_REQUIRED if state.status != _O.CANCELLED:
             return "requires_order_cancelled"
-        case StatusField.SHIPMENT, _S.PREPARING if state.status != _O.CONFIRMED:
+        # A cancelled order is never prepared, shipped or delivered (ORD-11).
+        case StatusField.SHIPMENT, (_S.PREPARING | _S.SHIPPED | _S.DELIVERED) if (
+            state.status != _O.CONFIRMED
+        ):
             return "requires_order_confirmed"
     return None

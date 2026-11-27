@@ -37,6 +37,7 @@ from app.modules.orders.schemas import (
 )
 from app.modules.orders.service import order_fields
 from app.modules.orders.shipments import shipment_of
+from app.modules.returns.service import return_facts
 from app.shared.pagination import Page, PageParams, paginate
 from app.shared.storage import FileStorage
 
@@ -50,9 +51,12 @@ def _not_found() -> NotFoundError:
 
 
 class AccountOrderService:
-    def __init__(self, session: AsyncSession, storage: FileStorage) -> None:
+    def __init__(
+        self, session: AsyncSession, storage: FileStorage, *, return_window_days: int = 7
+    ) -> None:
         self._session = session
         self._storage = storage
+        self._return_window_days = return_window_days
 
     async def list_orders(
         self,
@@ -151,6 +155,14 @@ class AccountOrderService:
                 )
             )
             shipment = await shipment_of(self._session, order.id)
+            returns = await return_facts(
+                self._session,
+                order_id=order.id,
+                shipment_status=order.shipment_status,
+                items=items,
+                window_days=self._return_window_days,
+                now=now,
+            )
         if address is None or reservation is None:  # ORD-04 writes both with the order
             raise RuntimeError("order is missing its address or reservation snapshot")
         live = (
@@ -188,5 +200,8 @@ class AccountOrderService:
                 ),
                 "can_pay": live,
                 "can_cancel": live and order.payment_status in _CANCELLABLE_PAYMENTS,
+                "return_deadline": returns.deadline,
+                "can_return": returns.can_return,
+                "returnable_items": returns.items,
             }
         )

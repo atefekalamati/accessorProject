@@ -116,6 +116,7 @@ async def test_a_customer_cannot_send_privileged_fields(
 # --- 2. every id a customer sends is ownership- or visibility-checked (IDOR) ---------------
 
 OWNERSHIP = "test_account_ownership.py::test_another_customers_resources_are_404_and_untouched"
+_RETURN_OWNERSHIP = "test_returns.py::test_auth_and_ownership"
 # Path parameters of non-admin routes: how each is protected, and the test that proves it.
 PATH_PARAMETERS: dict[tuple[str, str], str] = {
     ("GET", "/categories/{slug}"): "public",
@@ -132,6 +133,9 @@ PATH_PARAMETERS: dict[tuple[str, str], str] = {
     ("DELETE", "/addresses/{address_id}"): OWNERSHIP,
     ("GET", "/orders/{order_number}"): OWNERSHIP,
     ("POST", "/orders/{order_id}/cancel"): OWNERSHIP,
+    ("POST", "/orders/{order_number}/returns"): _RETURN_OWNERSHIP,
+    ("GET", "/returns/{return_id}"): _RETURN_OWNERSHIP,
+    ("POST", "/returns/{return_id}/cancel"): _RETURN_OWNERSHIP,
     # Development and CI only; never mounted in production (test below).
     ("GET", "/payments/fake/{reference}"): "dev-only",
     ("POST", "/payments/fake/{reference}/complete"): "dev-only",
@@ -154,6 +158,9 @@ BODY_IDS: dict[tuple[str, str, str], str] = {
         "test_orders_create.py::test_business_errors_leave_nothing_behind"
     ),
     ("POST", "/payments/init", "order_id"): OWNERSHIP,
+    ("POST", "/orders/{order_number}/returns", "order_item_id"): (
+        "test_returns.py::test_quantity_rules"
+    ),
 }
 # Ids in query strings of non-admin routes.
 QUERY_IDS: dict[tuple[str, str, str], str] = {
@@ -250,6 +257,11 @@ AUDITED_ADMIN_WRITES: dict[tuple[str, str], tuple[str, ...]] = {
     ("PATCH", "/orders/{order_id}/shipment"): ("shipment.updated", "order.status_changed"),
     ("POST", "/orders/{order_id}/cancel"): ("order.status_changed",),
     ("POST", "/payments/{payment_id}/refund"): ("payment.refunded",),
+    ("POST", "/returns/{return_id}/approve"): ("return.approved",),
+    ("POST", "/returns/{return_id}/reject"): ("return.rejected",),
+    ("POST", "/returns/{return_id}/receive"): ("return.received",),
+    ("POST", "/returns/{return_id}/inspect"): ("return.inspected",),
+    ("POST", "/returns/{return_id}/refund"): ("return.refunded",),
     ("POST", "/pages"): ("static_page.created",),
     ("PATCH", "/pages/{page_id}"): ("static_page.updated",),
     ("DELETE", "/pages/{page_id}"): ("static_page.deleted",),

@@ -55,6 +55,7 @@ from app.modules.checkout.service import CheckoutService, Quote, render
 from app.modules.discounts.redemption import RedemptionService
 from app.modules.inventory.reservation import ReservationService, ReserveLine
 from app.modules.orders.cancel import OrderCancellation, lock_order, order_advisory_lock
+from app.modules.orders.cancel_paid import PaidOrderCancellation
 from app.modules.orders.schemas import CreateOrderRequest, OrderResponse, OrderStatusResponse
 from app.shared.audit import record_audit
 from app.shared.idempotency import (
@@ -199,8 +200,8 @@ class OrderService:
         ``user_id`` limits it to the customer's own order; None is a staff cancel by
         ``actor_id`` (cancel reason ``admin``). Idempotent: an order already cancelled
         answers its current state and changes nothing. A payment at the gateway
-        (``pending``) is 409 ``PAYMENT_IN_PROGRESS``, so a cancel never ends in
-        ``refund_required``; a paid order cannot be cancelled (422).
+        (``pending``) is 409 ``PAYMENT_IN_PROGRESS``. A paid (``confirmed``) order: the
+        customer gets 422; staff cancel it while unshipped (ORD-11, ``refund_required``).
         """
         staff = user_id is None
         if staff == (actor_id is None):
@@ -218,7 +219,14 @@ class OrderService:
             order = await lock_order(self._session, order_id, user_id=user_id)
             if order is None:
                 raise NotFoundError(message="Order not found")
-            if order.status != OrderStatus.CANCELLED:
+            if order.status == OrderStatus.CONFIRMED and actor_id is not None:
+                # Paid and not yet shipped (ORD-11): refund_required, stock back.
+                await PaidOrderCancellation(self._session).cancel_locked(
+                    order, actor_user_id=actor_id, request=request
+                )
+                await self._session.flush()
+                await self._session.refresh(order)
+            elif order.status != OrderStatus.CANCELLED:
                 cancellation = OrderCancellation(self._session)
                 cancellation.check(order)
                 if order.payment_status == PaymentStatus.PENDING:
@@ -386,16 +394,27 @@ def _replay(stored: StoredResponse) -> PlacedOrder:
 
 
 class AddressFields(Protocol):
-    """The delivery address of a quote, or its snapshot on a placed order."""
+    """The delivery address of a quote, or its snapshot on a placed order.
 
-    recipient_name: str
-    phone: str
-    province: str
-    city: str
-    postal_code: str
-    address_line: str
-    plaque: str | None
-    unit: str | None
+    Read-only, so a snapshot whose identity fields were anonymized (ACC-05: NULL) fits.
+    """
+
+    @property
+    def recipient_name(self) -> str | None: ...
+    @property
+    def phone(self) -> str | None: ...
+    @property
+    def province(self) -> str: ...
+    @property
+    def city(self) -> str: ...
+    @property
+    def postal_code(self) -> str | None: ...
+    @property
+    def address_line(self) -> str | None: ...
+    @property
+    def plaque(self) -> str | None: ...
+    @property
+    def unit(self) -> str | None: ...
 
 
 def order_fields(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import StrEnum
 from uuid import UUID
 
 from sqlalchemy import (
@@ -21,6 +22,13 @@ from app.db.base import Base
 from app.db.models.common import CreatedAtMixin, UUIDPrimaryKeyMixin
 
 
+class OtpPurpose(StrEnum):
+    """What a code may be used for: never one for the other (ACC-06)."""
+
+    LOGIN = "login"
+    ACCOUNT_DELETE = "account_delete"
+
+
 class OtpCode(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     """One issued OTP; only its HMAC is stored (app.modules.auth.otp.hash_otp_code)."""
 
@@ -30,6 +38,7 @@ class OtpCode(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         # A hex HMAC-SHA256 digest; rejects any attempt to store a plaintext code.
         CheckConstraint("code_hash ~ '^[0-9a-f]{64}$'", name="code_hash_format"),
         CheckConstraint("attempt_count >= 0", name="attempt_count_non_negative"),
+        CheckConstraint("purpose IN ('login', 'account_delete')", name="valid_purpose"),
         Index("ix_otp_codes_mobile_created_at", "mobile", "created_at"),
     )
 
@@ -41,6 +50,9 @@ class OtpCode(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
         Integer, nullable=False, default=0, server_default="0"
     )
     ip: Mapped[str | None] = mapped_column(INET, nullable=True)
+    purpose: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=OtpPurpose.LOGIN, server_default="login"
+    )
 
 
 class UserSession(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):

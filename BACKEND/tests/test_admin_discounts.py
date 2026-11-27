@@ -73,7 +73,8 @@ async def _redeem(engine: AsyncEngine, code_id: str, status: str = "pending") ->
             DiscountRedemption(
                 discount_code_id=code.id,
                 order_id=await new_order(),
-                phone="+989120000000",
+                phone_hmac="0" * 64,
+                phone_key_id="t2",
                 code=code.code,
                 amount=1,
                 status=status,

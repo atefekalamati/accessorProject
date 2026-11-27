@@ -33,7 +33,8 @@ SECRET_KEYS = {"refresh_token_hash", "code_hash", "otp", "token", "session", "se
 
 async def _phone(engine: AsyncEngine, user_id: Any) -> str:
     async with AsyncSession(engine) as session:
-        phone: str = (await session.scalars(select(User.phone).where(User.id == user_id))).one()
+        phone = (await session.scalars(select(User.phone).where(User.id == user_id))).one()
+        assert phone is not None
         return phone
 
 

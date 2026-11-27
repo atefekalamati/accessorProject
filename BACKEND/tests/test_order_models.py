@@ -392,7 +392,8 @@ async def test_reservations_and_redemptions_must_reference_an_order(
                 DiscountRedemption(
                     discount_code_id=code_id,
                     order_id=uuid4(),
-                    phone="+989121234567",
+                    phone_hmac="b" * 64,
+                    phone_key_id="t2",
                     code=text,
                     amount=0,
                 ),

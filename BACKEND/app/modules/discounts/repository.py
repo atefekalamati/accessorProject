@@ -6,9 +6,10 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, delete, func, select, text
+from sqlalchemy import ColumnElement, delete, false, func, select, text, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.db.models import (
     DiscountAttempt,
     DiscountCode,
@@ -45,9 +46,19 @@ class DiscountRepository:
         return (await self._session.scalars(statement)).one_or_none()
 
     async def usage(self, code_id: UUID, phone: str | None) -> Usage:
-        """Live redemptions of a code, in total and for ``phone``, in one query."""
+        """Live redemptions of a code, in total and for ``phone``, in one query.
+
+        ``phone`` matches its digest under every configured key, so a rotated key still
+        counts the uses it recorded (DSC-06).
+        """
         live = DiscountRedemption.status.in_(_LIVE)
-        mine: ColumnElement[bool] = DiscountRedemption.phone == phone
+        mine: ColumnElement[bool] = (
+            false()
+            if phone is None
+            else tuple_(DiscountRedemption.phone_key_id, DiscountRedemption.phone_hmac).in_(
+                get_settings().phone_keys().digests(phone)
+            )
+        )
         statement = select(
             func.count().filter(live),
             func.count().filter(live, mine),

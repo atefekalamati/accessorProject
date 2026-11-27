@@ -98,7 +98,8 @@ async def test_requests_are_counted_by_route_template_without_ids(settings: Sett
         'http_requests_total{method="GET",route="/api/v1/items/{item_id}",status="200"} 2' in text
     )
     assert 'route="unmatched",status="404"' in text
-    assert "989121234567" not in text and "/42" not in text and "123" not in text
+    # Path ids only: a duration sample may contain the digits "123" by chance.
+    assert "989121234567" not in text and "/42" not in text and "/123" not in text
     assert "database_up 0" in text  # this client has no database
 
 

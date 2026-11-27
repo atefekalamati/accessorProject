@@ -25,6 +25,10 @@ os.environ.setdefault(
 )
 os.environ.setdefault("JWT_SECRET", "test-secret-that-is-at-least-32-characters")
 os.environ.setdefault("OTP_HASH_SECRET", "test-otp-hash-secret-at-least-32-characters")
+os.environ.setdefault(
+    "PHONE_HMAC_KEYS",
+    "t2:test-phone-key-two-at-least-32-characters,t1:test-phone-key-one-at-least-32-chars",
+)
 
 from alembic import command
 from app.core.config import Environment, MediaStorage, Settings
@@ -52,6 +56,7 @@ from app.db.models import (
     ProductMedia,
     ProductStatus,
     ProductVariant,
+    ReturnRequest,
     Shipment,
     ShippingMethod,
     User,
@@ -359,6 +364,8 @@ async def delete_orders(session: AsyncSession, order_ids: list[UUID]) -> None:
     """Remove orders and everything that references them (RESTRICT everywhere)."""
     if not order_ids:
         return
+    # Items and history go with their request (CASCADE).
+    await session.execute(delete(ReturnRequest).where(ReturnRequest.order_id.in_(order_ids)))
     await session.execute(delete(Payment).where(Payment.order_id.in_(order_ids)))
     reservations = select(InventoryReservation.id).where(
         InventoryReservation.order_id.in_(order_ids)

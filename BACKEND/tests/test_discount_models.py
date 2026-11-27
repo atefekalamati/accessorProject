@@ -125,7 +125,8 @@ async def _redemption(discount: DiscountCode, **values: Any) -> DiscountRedempti
     base: dict[str, Any] = {
         "discount_code_id": discount.id,
         "order_id": values.pop("order_id", None) or await new_order(),
-        "phone": "+989121234567",
+        "phone_hmac": "a" * 64,
+        "phone_key_id": "t2",
         "code": discount.code,
         "amount": 5_000,
     }
@@ -138,7 +139,8 @@ async def _redemption(discount: DiscountCode, **values: Any) -> DiscountRedempti
     ("values", "constraint"),
     [
         ({"status": "used"}, "valid_status"),
-        ({"phone": "09121234567"}, "phone_format"),
+        ({"phone_hmac": "+989121234567"}, "phone_hmac_format"),
+        ({"phone_key_id": "Key 1"}, "phone_key_id_format"),
         ({"code": "lower"}, "code_format"),
         ({"amount": -1}, "amount_range"),
         ({"status": "released"}, "released_has_time"),

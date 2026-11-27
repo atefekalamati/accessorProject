@@ -57,6 +57,12 @@ class SalesBucketResponse(SalesFigures):
     ends_before: date
 
 
+class ReturnRefundsResponse(BaseModel):
+    # Return requests refunded in the range (by refund time); not subtracted from totals.
+    count: int
+    amount: int
+
+
 class SalesReportResponse(BaseModel):
     from_date: date = Field(serialization_alias="from")
     to_date: date = Field(serialization_alias="to")
@@ -65,6 +71,7 @@ class SalesReportResponse(BaseModel):
     calendar: str
     buckets: list[SalesBucketResponse]
     totals: SalesFigures
+    return_refunds: ReturnRefundsResponse
 
 
 class LineSalesResponse(BaseModel):

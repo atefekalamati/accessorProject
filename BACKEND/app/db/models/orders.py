@@ -164,8 +164,9 @@ class Order(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
     )
-    # The verified mobile the order was placed with (redemption limits count it, D31).
-    phone: Mapped[str] = mapped_column(String(16), nullable=False)
+    # The verified mobile the order was placed with; NULL once the account is deleted
+    # (ACC-05: the order stays for accounting, its identity goes).
+    phone: Mapped[str | None] = mapped_column(String(16), nullable=True)
     status: Mapped[str] = mapped_column(
         String(16),
         nullable=False,
@@ -335,6 +336,13 @@ class OrderAddress(Base):
         CheckConstraint(f"phone ~ '{MOBILE_E164_PATTERN}'", name="phone_format"),
         CheckConstraint("postal_code ~ '^[0-9]{10}$'", name="postal_code_format"),
         CheckConstraint("length(btrim(recipient_name)) > 0", name="recipient_name_not_blank"),
+        # Anonymized together when the account is deleted (ACC-05); province and city stay.
+        CheckConstraint(
+            "(recipient_name IS NULL) = (phone IS NULL)"
+            " AND (recipient_name IS NULL) = (postal_code IS NULL)"
+            " AND (recipient_name IS NULL) = (address_line IS NULL)",
+            name="anonymized_together",
+        ),
     )
 
     order_id: Mapped[UUID] = mapped_column(
@@ -345,12 +353,12 @@ class OrderAddress(Base):
     source_address_id: Mapped[UUID | None] = mapped_column(
         PostgreSQLUUID(as_uuid=True), nullable=True
     )
-    recipient_name: Mapped[str] = mapped_column(String(200), nullable=False)
-    phone: Mapped[str] = mapped_column(String(16), nullable=False)
+    recipient_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(16), nullable=True)
     province: Mapped[str] = mapped_column(String(100), nullable=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False)
-    postal_code: Mapped[str] = mapped_column(String(20), nullable=False)
-    address_line: Mapped[str] = mapped_column(String(500), nullable=False)
+    postal_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    address_line: Mapped[str | None] = mapped_column(String(500), nullable=True)
     plaque: Mapped[str | None] = mapped_column(String(20), nullable=True)
     unit: Mapped[str | None] = mapped_column(String(20), nullable=True)
 

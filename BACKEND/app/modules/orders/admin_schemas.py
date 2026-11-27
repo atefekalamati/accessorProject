@@ -18,8 +18,8 @@ class AdminOrderSummaryResponse(BaseModel):
     id: UUID
     order_number: str
     user_id: UUID
-    # Masked in lists (D38); the detail shows it in full.
-    phone: str
+    # Masked in lists (D38); the detail shows it in full. NULL: account deleted (ACC-05).
+    phone: str | None
     status: str
     payment_status: str
     shipment_status: str
@@ -65,7 +65,7 @@ class AdminHistoryResponse(BaseModel):
 
 class AdminOrderDetailResponse(OrderResponse):
     user_id: UUID
-    phone: str
+    phone: str | None
     cancel_reason: str | None
     updated_at: datetime
     payments: list[AdminPaymentResponse]

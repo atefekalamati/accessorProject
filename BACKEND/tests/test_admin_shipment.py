@@ -212,11 +212,15 @@ async def test_staff_cancel_frees_stock_and_code_with_the_admin_reason(
     assert (cancel.actor_user_id, cancel.reason) == (admin.id, "cancelled by staff")
 
 
-async def test_staff_cancel_refuses_paid_and_paying_orders(
+async def test_staff_cancel_refuses_shipped_and_paying_orders(
     auth_client: AsyncClient, catalog: Catalog, buyer: MakeBuyer, make_account: MakeAccount
 ) -> None:
     admin = await make_account("admin")
     _ready, paid = await _paid(auth_client, catalog, buyer)
+    # A paid order is cancelled while unshipped (ORD-11, test_admin_cancel_paid.py); once
+    # shipped the return path applies.
+    await _ship(auth_client, admin, paid, "preparing")
+    await _ship(auth_client, admin, paid, "shipped", tracking_code="IR9")
     _error(
         await auth_client.post(f"{ADMIN_ORDERS}/{paid}/cancel", headers=admin.headers),
         422,

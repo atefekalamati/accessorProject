@@ -3,9 +3,14 @@ from typing import Annotated, Final
 from uuid import UUID
 
 from fastapi import APIRouter, Cookie, Depends, Request, Response, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import Settings, get_app_settings
 from app.core.errors import UnauthorizedError
 from app.core.time import utc_now
+from app.db.models import OtpPurpose
+from app.db.session import get_db_session
+from app.modules.auth.deletion import AccountDeletionService
 from app.modules.auth.dependencies import (
     get_auth_service,
     get_current_user,
@@ -13,6 +18,7 @@ from app.modules.auth.dependencies import (
     get_profile_service,
 )
 from app.modules.auth.schemas import (
+    DeleteAccountRequest,
     ProfileResponse,
     RequestOtpRequest,
     RequestOtpResponse,
@@ -133,6 +139,17 @@ async def refresh(
     return _token_response(response, tokens)
 
 
+def _clear_refresh_cookie(response: Response) -> None:
+    # Same name and attributes as when set, or the browser keeps the cookie.
+    response.delete_cookie(
+        REFRESH_COOKIE_NAME,
+        path=REFRESH_COOKIE_PATH,
+        secure=True,
+        httponly=True,
+        samesite="strict",
+    )
+
+
 @router.post(
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -188,3 +205,45 @@ async def update_me(
     # Only fields the client sent; omitted ones stay unchanged.
     changes = payload.model_dump(include=payload.model_fields_set)
     return await service.update_profile(user, changes, request)
+
+
+def get_account_deletion_service(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> AccountDeletionService:
+    return AccountDeletionService(session)
+
+
+@users_router.post(
+    "/me/deletion/request-otp",
+    response_model=RequestOtpResponse,
+    summary="Send an account-deletion code to your own mobile (same limits as login)",
+)
+async def request_deletion_otp(
+    request: Request,
+    response: Response,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    deletion: Annotated[AccountDeletionService, Depends(get_account_deletion_service)],
+    otp: Annotated[OtpService, Depends(get_otp_service)],
+) -> RequestOtpResponse:
+    response.headers["Cache-Control"] = "no-store"
+    # Refused deletions (409/422) are told before any code is sent.
+    mobile = await deletion.precheck(user.id)
+    return await otp.request_otp(mobile, client_ip(request), OtpPurpose.ACCOUNT_DELETE)
+
+
+@users_router.post(
+    "/me/deletion",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete your account with the deletion code; clears the refresh cookie",
+)
+async def delete_account(
+    payload: DeleteAccountRequest,
+    request: Request,
+    response: Response,
+    user: Annotated[CurrentUser, Depends(get_current_user)],
+    deletion: Annotated[AccountDeletionService, Depends(get_account_deletion_service)],
+    settings: Annotated[Settings, Depends(get_app_settings)],
+) -> None:
+    await deletion.confirm(user.id, payload.code, settings, request)
+    _clear_refresh_cookie(response)
+    response.headers["Cache-Control"] = "no-store"

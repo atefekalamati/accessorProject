@@ -175,6 +175,7 @@ jobs:
           ENVIRONMENT=staging
           JWT_SECRET=$(openssl rand -hex 32)
           OTP_HASH_SECRET=$(openssl rand -hex 32)
+          PHONE_HMAC_KEYS=k1:$(openssl rand -hex 32)
           OTP_MOCK_ENABLED=true
           OTP_MOCK_CODE=123456
           CORS_ORIGINS=http://localhost:3000

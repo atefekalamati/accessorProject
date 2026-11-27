@@ -21,6 +21,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "users"
     __table_args__ = (
         CheckConstraint(f"phone ~ '{MOBILE_E164_PATTERN}'", name="phone_format"),
+        # Only a deleted (anonymized) account has no mobile (ACC-05, D37).
+        CheckConstraint("phone IS NOT NULL OR deleted_at IS NOT NULL", name="phone_unless_deleted"),
         CheckConstraint(
             "first_name IS NULL OR length(trim(first_name)) > 0",
             name="first_name_not_blank",
@@ -44,8 +46,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     )
 
     # Stored only in normalized E.164 form (app.core.phone.normalize_phone); exposed as
-    # `mobile` in the API.
-    phone: Mapped[str] = mapped_column(String(16), nullable=False)
+    # `mobile` in the API. NULL only once the account is deleted (ACC-05).
+    phone: Mapped[str | None] = mapped_column(String(16), nullable=True)
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, default=UserStatus.ACTIVE, server_default="active"
     )

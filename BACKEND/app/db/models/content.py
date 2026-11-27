@@ -131,6 +131,8 @@ class ContactMessage(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             name="note_length",
         ),
         CheckConstraint("status IN ('new', 'in_progress', 'closed')", name="valid_status"),
+        # The sender's identity goes when their account is deleted (ACC-05); the text stays.
+        CheckConstraint("(name IS NULL) = (phone IS NULL)", name="anonymized_together"),
         Index("ix_contact_messages_ip_created_at", "ip", "created_at"),
         Index("ix_contact_messages_phone_created_at", "phone", "created_at"),
         Index("ix_contact_messages_status_created_at", "status", "created_at"),
@@ -139,8 +141,8 @@ class ContactMessage(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     user_id: Mapped[UUID | None] = mapped_column(
         PostgreSQLUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     email: Mapped[str | None] = mapped_column(String(254), nullable=True)
     subject: Mapped[str] = mapped_column(String(200), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)

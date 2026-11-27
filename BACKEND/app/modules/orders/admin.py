@@ -162,7 +162,7 @@ class AdminOrderService:
                 id=order.id,
                 order_number=order.order_number,
                 user_id=order.user_id,
-                phone=mask_phone(order.phone),
+                phone=None if order.phone is None else mask_phone(order.phone),
                 status=order.status,
                 payment_status=order.payment_status,
                 shipment_status=order.shipment_status,
