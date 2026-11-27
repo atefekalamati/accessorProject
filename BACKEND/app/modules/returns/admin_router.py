@@ -1,4 +1,4 @@
-"""Staff return requests: review, receipt and inspection (ORD-09, PRD «مرجوعی» ✓)."""
+"""Staff return requests: review, receipt, inspection, refund (ORD-09, ORD-10)."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from app.modules.returns.admin_schemas import (
     AdminReturnResponse,
     AdminReturnSummaryResponse,
     InspectReturnRequest,
+    RecordReturnRefundRequest,
     RejectReturnRequest,
     ReturnNoteRequest,
 )
@@ -143,3 +144,19 @@ async def inspect_return(
     service: Annotated[AdminReturnService, Depends(get_admin_return_service)],
 ) -> JSONResponse:
     return _json(await service.inspect(actor, return_id, payload, request))
+
+
+@router.post(
+    "/{return_id}/refund",
+    response_model=AdminReturnResponse,
+    summary="Record the manual refund of a refund_required return (idempotent per reference)",
+)
+async def refund_return(
+    actor: Annotated[CurrentUser, Depends(require_permission("payments:refund"))],
+    _: Annotated[None, Depends(allowed_query_params())],
+    return_id: UUID,
+    payload: RecordReturnRefundRequest,
+    request: Request,
+    service: Annotated[AdminReturnService, Depends(get_admin_return_service)],
+) -> JSONResponse:
+    return _json(await service.refund(actor, return_id, payload, request))

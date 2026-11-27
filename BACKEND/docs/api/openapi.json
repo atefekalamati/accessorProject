@@ -15363,6 +15363,154 @@
         }
       }
     },
+    "/api/v1/admin/returns/{return_id}/refund": {
+      "post": {
+        "tags": [
+          "admin-returns"
+        ],
+        "summary": "Record the manual refund of a refund_required return (idempotent per reference)",
+        "operationId": "refund_return_api_v1_admin_returns__return_id__refund_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "return_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Return Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordReturnRefundRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReturnResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permission denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (see Retry-After header)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/payments/init": {
       "post": {
         "tags": [
@@ -27594,6 +27742,37 @@
         "title": "RecordRefundRequest",
         "description": "The bank reference of a full manual refund (ADM-08, D35).\n\n``amount`` is only for a payment whose gateway figure is unknown (``paid_amount``\nnull): then it is required, in Toman, at most the order total. ``note`` is kept in\nthe audit log: never put customer data in it (card number, IBAN, mobile)."
       },
+      "RecordReturnRefundRequest": {
+        "properties": {
+          "refund_reference": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]+$",
+            "title": "Refund Reference"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "refund_reference"
+        ],
+        "title": "RecordReturnRefundRequest",
+        "description": "The bank reference of the manual refund (ORD-10). The amount is the server's.\n\n``note`` is kept in the audit log: never put customer data in it (card, IBAN, mobile)."
+      },
       "RejectReturnRequest": {
         "properties": {
           "reject_reason": {
@@ -27935,6 +28114,24 @@
           "other"
         ],
         "title": "ReturnReason"
+      },
+      "ReturnRefundsResponse": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "amount"
+        ],
+        "title": "ReturnRefundsResponse"
       },
       "ReturnResponse": {
         "properties": {
@@ -28278,6 +28475,9 @@
           },
           "totals": {
             "$ref": "#/components/schemas/SalesFigures"
+          },
+          "return_refunds": {
+            "$ref": "#/components/schemas/ReturnRefundsResponse"
           }
         },
         "type": "object",
@@ -28288,7 +28488,8 @@
           "timezone",
           "calendar",
           "buckets",
-          "totals"
+          "totals",
+          "return_refunds"
         ],
         "title": "SalesReportResponse"
       },

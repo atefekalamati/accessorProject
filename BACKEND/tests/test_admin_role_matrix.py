@@ -127,6 +127,7 @@ MATRIX: Final[dict[tuple[str, str], frozenset[str]]] = {
     ("POST", "/admin/returns/{return_id}/reject"): _one("returns:manage"),
     ("POST", "/admin/returns/{return_id}/receive"): _one("returns:manage"),
     ("POST", "/admin/returns/{return_id}/inspect"): _one("returns:manage"),
+    ("POST", "/admin/returns/{return_id}/refund"): _one("payments:refund"),
 }
 
 # The seed mapping, written out independently (PRD «هویت و دسترسی» ✓, ADR-019, D35).

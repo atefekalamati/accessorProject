@@ -261,6 +261,7 @@ AUDITED_ADMIN_WRITES: dict[tuple[str, str], tuple[str, ...]] = {
     ("POST", "/returns/{return_id}/reject"): ("return.rejected",),
     ("POST", "/returns/{return_id}/receive"): ("return.received",),
     ("POST", "/returns/{return_id}/inspect"): ("return.inspected",),
+    ("POST", "/returns/{return_id}/refund"): ("return.refunded",),
     ("POST", "/pages"): ("static_page.created",),
     ("PATCH", "/pages/{page_id}"): ("static_page.updated",),
     ("DELETE", "/pages/{page_id}"): ("static_page.deleted",),

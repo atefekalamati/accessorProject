@@ -18,6 +18,7 @@ from app.modules.reports.schemas import (
     LineSalesReportResponse,
     LineSalesResponse,
     LineTotalsResponse,
+    ReturnRefundsResponse,
     SalesBucketResponse,
     SalesFigures,
     SalesReportResponse,
@@ -111,6 +112,7 @@ class ReportService:
     async def sales(self, start: date, end: date, group_by: GroupBy) -> SalesReportResponse:
         check_range(start, end)
         by_day = {row.day: row for row in await self._repository.sales_by_day(start, end)}
+        refunds = await self._repository.return_refunds(start, end)
         result: list[SalesBucketResponse] = []
         for bucket in buckets(start, end, group_by):
             figures = _sum(by_day[day] for day in bucket.days() if day in by_day)
@@ -130,6 +132,7 @@ class ReportService:
             calendar=CALENDAR,
             buckets=result,
             totals=_sum(by_day.values()),
+            return_refunds=ReturnRefundsResponse(count=refunds.count, amount=refunds.amount),
         )
 
     async def products(self, start: date, end: date, limit: int) -> LineSalesReportResponse:

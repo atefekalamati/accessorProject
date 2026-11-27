@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints
 
 from app.db.models import ItemCondition
 from app.db.models.returns import MAX_RETURN_ADMIN_NOTE_LENGTH, MAX_RETURN_NOTE_LENGTH
+from app.modules.orders.admin_schemas import RefundReference
 from app.modules.returns.schemas import MAX_RETURN_LINES
 from app.shared.inventory import MAX_STOCK_QUANTITY
 
@@ -82,6 +83,21 @@ class InspectReturnRequest(BaseModel):
         if len(ids) != len(set(ids)):
             raise ValueError("each order item may appear only once")
         return self
+
+
+class RecordReturnRefundRequest(BaseModel):
+    """The bank reference of the manual refund (ORD-10). The amount is the server's.
+
+    ``note`` is kept in the audit log: never put customer data in it (card, IBAN, mobile).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    refund_reference: RefundReference
+    note: (
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+        | None
+    ) = None
 
 
 class AdminReturnItemResponse(BaseModel):

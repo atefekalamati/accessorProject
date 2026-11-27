@@ -43,6 +43,7 @@ from app.modules.returns.state import (
     TRANSITIONS,
     can_transition,
     check_transition,
+    line_refund,
     return_deadline,
     returnable_quantity,
     window_open,
@@ -189,6 +190,44 @@ def test_window_and_quantity_helpers() -> None:
     assert returnable_quantity(3, 5) == 0
     with pytest.raises(ValueError):
         returnable_quantity(-1, 0)
+
+
+def test_line_refund() -> None:
+    assert line_refund(100_000, 3, 1) == 33_333  # floor
+    assert line_refund(100_000, 3, 2) == 66_666
+    assert line_refund(100_000, 3, 3) == 100_000  # the whole line, exactly
+    assert line_refund(100_000, 3, 0) == 0
+    assert line_refund(0, 2, 1) == 0
+    bad: list[tuple[Any, ...]] = [
+        (100, 0, 0),
+        (100, 2, 3),
+        (100, 2, -1),
+        (-1, 2, 1),
+        (100, True, 1),
+    ]
+    for args in bad:
+        with pytest.raises(ValueError):
+            line_refund(*args)
+    with pytest.raises(ValueError):
+        line_refund(100.0, 2, 1)  # type: ignore[arg-type]
+
+
+def test_partial_refunds_of_one_line_never_exceed_it() -> None:
+    """Every split of a line over several requests sums to at most its total."""
+
+    def splits(quantity: int) -> list[list[int]]:
+        if quantity == 0:
+            return [[]]
+        return [[a, *rest] for a in range(1, quantity + 1) for rest in splits(quantity - a)]
+
+    for total in (0, 1, 99_999, 100_000, 123_457):
+        for purchased in range(1, 7):
+            for parts in splits(purchased):
+                refunds = [line_refund(total, purchased, part) for part in parts]
+                assert sum(refunds) <= total
+                assert total - sum(refunds) < len(parts)  # under 1 toman lost per request
+    # The documented under-refund: three single-unit requests of a 100-toman line.
+    assert sum(line_refund(100, 3, 1) for _ in range(3)) == 99
 
 
 # --- create ----------------------------------------------------------------------------

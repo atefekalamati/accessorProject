@@ -68,3 +68,20 @@ def returnable_quantity(purchased: int, claimed: int) -> int:
     if purchased < 0 or claimed < 0:
         raise ValueError("quantities must not be negative")
     return max(0, purchased - claimed)
+
+
+def line_refund(final_line_total: int, purchased: int, quantity: int) -> int:
+    """The refund for ``quantity`` of ``purchased`` units of one order line, in toman.
+
+    ``floor(final_line_total × quantity ÷ purchased)``: integer only, rounded once, down.
+    The whole line gives back exactly ``final_line_total``. Shipping is never part of it
+    (ADR-063 R1).
+    """
+    for value in (final_line_total, purchased, quantity):
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValueError("amounts and quantities must be int")
+    if final_line_total < 0 or purchased < 1 or not 0 <= quantity <= purchased:
+        raise ValueError("need final_line_total >= 0 and 0 <= quantity <= purchased >= 1")
+    if quantity == purchased:
+        return final_line_total
+    return final_line_total * quantity // purchased

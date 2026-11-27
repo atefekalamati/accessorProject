@@ -37,6 +37,8 @@ from app.db.models import (
     Product,
     ProductVariant,
     ReservationStatus,
+    ReturnRequest,
+    ReturnStatus,
     Role,
     ShipmentStatus,
     User,
@@ -123,6 +125,14 @@ def _midnight(day: date) -> ColumnElement[datetime]:
 
 def _count(criteria: ColumnElement[bool]) -> ColumnElement[int]:
     return func.count().filter(criteria)
+
+
+@dataclass(frozen=True, slots=True)
+class ReturnRefunds:
+    """Return refunds recorded in a range (ORD-10): partial, kept out of sales totals."""
+
+    count: int
+    amount: int
 
 
 class ReportRepository:
@@ -238,6 +248,22 @@ class ReportRepository:
         """Paid orders of Tehran days ``[start, end)``: the subquery and its join filter."""
         paid = paid_at_by_order(_midnight(start), _midnight(end))
         return paid, successful_order()
+
+    async def return_refunds(self, start: date, end: date) -> ReturnRefunds:
+        """Requests refunded on Tehran days ``[start, end)``, by ``refunded_at``."""
+        row = (
+            await self._session.execute(
+                select(
+                    func.count().label("count"),
+                    func.coalesce(func.sum(ReturnRequest.refund_amount), 0).label("amount"),
+                ).where(
+                    ReturnRequest.status == ReturnStatus.REFUNDED,
+                    ReturnRequest.refunded_at >= _midnight(start),
+                    ReturnRequest.refunded_at < _midnight(end),
+                )
+            )
+        ).one()
+        return ReturnRefunds(count=int(row._mapping["count"]), amount=int(row.amount))
 
     async def sales_by_day(self, start: date, end: date) -> list[DaySales]:
         paid, criteria = self._paid_between(start, end)

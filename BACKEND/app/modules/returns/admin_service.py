@@ -1,4 +1,4 @@
-"""Staff side of return requests up to inspection (ORD-09, PRD «مرجوعی» ✓, ADR-063).
+"""Staff side of return requests: review, inspection, refund (ORD-09, ORD-10, ADR-063).
 
 Every write takes the global lock order (see ``state``): order advisory lock → order row
 ``FOR UPDATE`` → return request row ``FOR UPDATE``; inspection then share-locks the
@@ -16,11 +16,12 @@ from typing import Any, Final
 from uuid import UUID
 
 from fastapi import Request
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import UnaryExpression
 
-from app.core.errors import BadRequestError, BusinessRuleError, NotFoundError
+from app.core.errors import BadRequestError, BusinessRuleError, ConflictError, NotFoundError
 from app.core.time import utc_now
 from app.db.models import (
     InventoryItem,
@@ -28,6 +29,8 @@ from app.db.models import (
     MovementType,
     Order,
     OrderItem,
+    Payment,
+    PaymentStatus,
     ProductVariant,
     ReturnItem,
     ReturnRequest,
@@ -45,11 +48,12 @@ from app.modules.returns.admin_schemas import (
     AdminReturnResponse,
     AdminReturnSummaryResponse,
     InspectReturnRequest,
+    RecordReturnRefundRequest,
     RejectReturnRequest,
     ReturnNoteRequest,
 )
 from app.modules.returns.repository import ReturnRepository
-from app.modules.returns.state import check_transition
+from app.modules.returns.state import check_transition, line_refund
 from app.shared.audit import record_audit
 from app.shared.inventory import MAX_STOCK_QUANTITY
 from app.shared.pagination import Page, PageParams, paginate
@@ -57,6 +61,14 @@ from app.shared.pagination import Page, PageParams, paginate
 logger = logging.getLogger(__name__)
 
 RETURN_REFERENCE: Final = "return"
+_UNIQUE_REFERENCE: Final = "uq_return_requests_refund_reference"
+
+
+def _reference_taken() -> ConflictError:
+    return ConflictError(
+        message="This refund reference is already recorded elsewhere",
+        details=[{"field": "refund_reference", "type": "refund_reference_taken"}],
+    )
 
 
 def _not_found() -> NotFoundError:
@@ -211,6 +223,7 @@ class AdminReturnService:
             # One movement per restocked line (the link column is unique), applied in a
             # stable order; the stock limit above was checked on the per-variant total.
             audit_lines = []
+            total_refund = 0
             for order_item_id, entry in sorted(sent.items(), key=lambda pair: str(pair[0])):
                 item_row, line = by_line[order_item_id]
                 item_row.condition = entry.condition.value
@@ -218,6 +231,14 @@ class AdminReturnService:
                 item_row.refundable = entry.refundable
                 item_row.inspection_note = entry.note
                 wants = entry.condition is ItemCondition.SELLABLE and entry.accepted_quantity > 0
+                # Server-side from the order snapshot (ADR-063 R1); shipping never refunded.
+                refund = line_refund(
+                    line.final_line_total,
+                    line.quantity,
+                    entry.accepted_quantity if entry.refundable else 0,
+                )
+                item_row.refund_amount = refund
+                total_refund += refund
                 restocked = 0
                 if wants and line.variant_id in live:
                     item = items[line.variant_id]
@@ -241,13 +262,18 @@ class AdminReturnService:
                         "accepted_quantity": entry.accepted_quantity,
                         "refundable": entry.refundable,
                         "restocked": restocked,
+                        "refund_amount": refund,
                         "restock_skipped": wants and line.variant_id not in live,
                     }
                 )
             found.inspected_at = utc_now()
             if payload.admin_note is not None:
                 found.admin_note = payload.admin_note
+            found.refund_amount = total_refund
             await self._move(found, ReturnStatus.INSPECTED, actor.id)
+            # Something owed → refund_required (recorded by ``refund``); nothing → closed.
+            outcome = ReturnStatus.REFUND_REQUIRED if total_refund > 0 else ReturnStatus.CLOSED
+            await self._move(found, outcome, actor.id)
             await record_audit(
                 self._session,
                 actor_id=actor.id,
@@ -255,7 +281,11 @@ class AdminReturnService:
                 entity_type="return_request",
                 entity_id=found.id,
                 before={"status": ReturnStatus.RECEIVED.value},
-                after={"status": ReturnStatus.INSPECTED.value, "lines": audit_lines},
+                after={
+                    "status": outcome.value,
+                    "lines": audit_lines,
+                    "refund_amount": total_refund,
+                },
                 request=request,
             )
             view = await self._fresh_view(found)
@@ -265,6 +295,97 @@ class AdminReturnService:
                 "return_id": str(found.id),
                 "restocked": {str(k): restock[k] for k in sorted(live)},
             },
+        )
+        return view
+
+    async def refund(
+        self,
+        actor: CurrentUser,
+        return_id: UUID,
+        payload: RecordReturnRefundRequest,
+        request: Request,
+    ) -> AdminReturnResponse:
+        """Record the manual refund of the server's amount; idempotent per reference.
+
+        Partial: the order's payment status stays as it is (PRD «مرجوعی» ✓).
+        """
+        reference = payload.refund_reference
+        async with self._session.begin():
+            found = await self.lock(return_id)
+            if found.status == ReturnStatus.REFUNDED:
+                if found.refund_reference == reference:
+                    return await self._fresh_view(found)  # the same request again
+                raise ConflictError(
+                    message="This return is already refunded under another reference",
+                    details=[{"type": "already_refunded"}],
+                )
+            check_transition(found.status, ReturnStatus.REFUNDED)
+            order = await self._session.get(Order, found.order_id)  # locked by ``lock``
+            if order is None or order.payment_status != PaymentStatus.PAID:
+                # E.g. the whole order was refunded since: never give the money back twice.
+                raise BusinessRuleError(
+                    message="The order is no longer paid; this return cannot be refunded",
+                    details=[
+                        {
+                            "type": "order_not_paid",
+                            "payment_status": getattr(order, "payment_status", None),
+                        }
+                    ],
+                )
+            on_return = await self._session.scalar(
+                select(
+                    exists().where(
+                        ReturnRequest.refund_reference == reference, ReturnRequest.id != found.id
+                    )
+                )
+            )
+            on_payment = await self._session.scalar(
+                select(exists().where(Payment.refund_reference == reference))
+            )
+            if on_return or on_payment:
+                raise _reference_taken()
+            # Every field of the refund record and the new status in one UPDATE: the
+            # CHECK ``refund_record_complete`` sees them together.
+            found.refund_reference = reference
+            found.refunded_at, found.refunded_by = utc_now(), actor.id
+            found.status = ReturnStatus.REFUNDED
+            self._session.add(
+                ReturnStatusHistory(
+                    return_request_id=found.id,
+                    old_status=ReturnStatus.REFUND_REQUIRED,
+                    new_status=ReturnStatus.REFUNDED,
+                    actor_user_id=actor.id,
+                )
+            )
+            try:
+                # A concurrent use of the same reference on another return fails here, on
+                # the unique index; the 409 then rolls the whole transaction back.
+                async with self._session.begin_nested():
+                    await self._session.flush()
+            except IntegrityError as error:
+                if _UNIQUE_REFERENCE in str(error.orig):
+                    raise _reference_taken() from error
+                raise
+            after: dict[str, Any] = {
+                "status": ReturnStatus.REFUNDED.value,
+                "refund_reference": reference,
+                "refund_amount": found.refund_amount,
+            }
+            if payload.note is not None:
+                after["note"] = payload.note
+            await record_audit(
+                self._session,
+                actor_id=actor.id,
+                action="return.refunded",
+                entity_type="return_request",
+                entity_id=found.id,
+                before={"status": ReturnStatus.REFUND_REQUIRED.value},
+                after=after,
+                request=request,
+            )
+            view = await self._fresh_view(found)
+        logger.info(
+            "return.refunded", extra={"return_id": str(found.id), "amount": found.refund_amount}
         )
         return view
 

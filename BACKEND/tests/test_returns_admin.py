@@ -1,8 +1,9 @@
-"""Staff return review, receipt and inspection (ORD-09, PRD «مرجوعی» ✓, ADR-063)."""
+"""Staff return review, inspection and refund (ORD-09, ORD-10, PRD «مرجوعی» ✓, ADR-063)."""
 
 from __future__ import annotations
 
 import asyncio
+from datetime import timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -11,6 +12,7 @@ from conftest import Account, Catalog, MakeAccount
 from httpx import AsyncClient, Response
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from test_admin_refunds import _late_paid
 from test_orders_create import (
     MakeBuyer,
     _error,
@@ -27,6 +29,7 @@ from app.db.models import (
     AuditLog,
     InventoryItem,
     InventoryMovement,
+    Order,
     OrderItem,
     ProductVariant,
     ReturnItem,
@@ -42,7 +45,7 @@ __all__ = ["_orders_go_first", "buyer", "codes", "methods", "shopper"]  # shared
 
 ADMIN = "/api/v1/admin/returns"
 RETURNS = "/api/v1/returns"
-ACTIONS = ("approve", "reject", "receive", "inspect")
+ACTIONS = ("approve", "reject", "receive", "inspect", "refund")
 
 
 class Staff:
@@ -53,7 +56,10 @@ class Staff:
         self, return_id: str, action: str, body: dict[str, Any] | None = None
     ) -> Response:
         if body is None:
-            body = {"reject_reason": "Outside policy"} if action == "reject" else {}
+            body = {
+                "reject": {"reject_reason": "Outside policy"},
+                "refund": {"refund_reference": f"BANK-{uuid4().hex[:12]}"},
+            }.get(action, {})
         return await self.client.post(
             f"{ADMIN}/{return_id}/{action}", json=body, headers=self.account.headers
         )
@@ -190,7 +196,7 @@ async def test_approve_receive_inspect_restocks_sellable_units(
     )
     assert inspected.status_code == 200, inspected.text
     detail = inspected.json()
-    assert detail["status"] == "inspected" and detail["inspected_at"] is not None
+    assert detail["status"] == "refund_required" and detail["inspected_at"] is not None
     [item] = detail["items"]
     assert (item["condition"], item["accepted_quantity"], item["refundable"]) == (
         "sellable",
@@ -214,6 +220,7 @@ async def test_approve_receive_inspect_restocks_sellable_units(
             "accepted_quantity": 2,
             "refundable": True,
             "restocked": 2,
+            "refund_amount": item["refund_amount"],
             "restock_skipped": False,
         }
     ]
@@ -228,13 +235,13 @@ async def test_approve_receive_inspect_restocks_sellable_units(
 
     # The customer sees the outcome but none of the staff fields.
     mine = await order.ready.client.get(f"{RETURNS}/{return_id}", headers=order.headers)
-    assert mine.json()["status"] == "inspected"
+    assert mine.json()["status"] == "refund_required"
     assert not {"admin_note", "inspection_note", "decided_by"} & _keys(mine.json())
     staff_view = await staff.get(f"/{return_id}")
     assert staff_view.status_code == 200 and staff_view.headers["cache-control"] == "no-store"
     assert staff_view.json() == detail
     assert not {"phone", "mobile"} & _keys(detail)
-    assert [row["actor_user_id"] for row in detail["history"]][1:] == [str(staff.account.id)] * 3
+    assert [row["actor_user_id"] for row in detail["history"]][1:] == [str(staff.account.id)] * 4
 
 
 async def test_reject_and_invalid_transitions(
@@ -558,7 +565,7 @@ async def test_auth_and_permissions(
             _error(response, 403, "FORBIDDEN")
     missing = str(uuid4())
     _error(await staff.get(f"/{missing}"), 404, "NOT_FOUND")
-    for action in ACTIONS:
+    for action in ACTIONS[:-1]:  # refund needs payments:refund (support: 403 above)
         body = {"items": [_line(order)]} if action == "inspect" else None
         _error(await staff.act(missing, action, body), 404, "NOT_FOUND")
     # Admin and super admin act too.
@@ -595,3 +602,271 @@ async def test_list_filters_and_sort(
     for params in ({"sort": "price"}, {"status": "lost"}, {"limit": 1000}, {"foo": "1"}):
         _error(await staff.get(**params), 400, "VALIDATION_ERROR")
     _error(await staff.get(f"/{first}", x="1"), 400, "VALIDATION_ERROR")
+
+
+# --- refund (ORD-10) -------------------------------------------------------------------
+
+
+async def _lines_of(engine: AsyncEngine, order: Delivered) -> dict[str, OrderItem]:
+    async with AsyncSession(engine) as session:
+        rows = await session.scalars(select(OrderItem).where(OrderItem.order_id == order.order_id))
+        return {str(line.id): line for line in rows}
+
+
+async def test_inspection_sets_server_refund_amounts(
+    staff: Staff, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
+) -> None:
+    order, return_id = await _received(
+        staff, catalog, buyer, db_engine, quantities=(3, 2), claim=(2, 2)
+    )
+    lines = await _lines_of(db_engine, order)
+
+    inspected = await staff.act(
+        return_id,
+        "inspect",
+        {
+            "items": [
+                _line(order, 0, accepted_quantity=2),
+                _line(order, 1, condition="damaged", accepted_quantity=2, refundable=True),
+            ]
+        },
+    )
+
+    assert inspected.status_code == 200, inspected.text
+    body = inspected.json()
+    # floor(final_line_total × 2 ÷ purchased): a partial line rounds down, a whole one is exact.
+    expected = {
+        line_id: line.final_line_total * 2 // line.quantity for line_id, line in lines.items()
+    }
+    assert sorted(line.quantity for line in lines.values()) == [2, 3]
+    assert {item["order_item_id"]: item["refund_amount"] for item in body["items"]} == expected
+    whole = next(line for line in lines.values() if line.quantity == 2)
+    assert expected[str(whole.id)] == whole.final_line_total
+    expected_total = sum(expected.values())
+    assert (body["status"], body["refund_amount"]) == ("refund_required", expected_total)
+    assert [row["new_status"] for row in body["history"]][-2:] == ["inspected", "refund_required"]
+    [audit] = await _audits(db_engine, return_id, "return.inspected")
+    assert audit.metadata_["diff"]["refund_amount"]["after"] == expected_total
+    mine = await order.ready.client.get(f"{RETURNS}/{return_id}", headers=order.headers)
+    assert mine.json()["refund_amount"] == expected_total
+
+
+async def test_nothing_refundable_closes_the_request(
+    staff: Staff, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
+) -> None:
+    order, return_id = await _received(staff, catalog, buyer, db_engine)
+
+    inspected = await staff.act(
+        return_id, "inspect", {"items": [_line(order, condition="damaged", refundable=False)]}
+    )
+
+    assert inspected.status_code == 200, inspected.text
+    assert (inspected.json()["status"], inspected.json()["refund_amount"]) == ("closed", 0)
+
+
+@pytest.fixture
+async def treasurer(auth_client: AsyncClient, make_account: MakeAccount) -> Staff:
+    return Staff(auth_client, await make_account("admin"))
+
+
+async def _refund_required(
+    staff: Staff, catalog: Catalog, buyer: MakeBuyer, engine: AsyncEngine
+) -> tuple[Delivered, str]:
+    order, return_id = await _received(staff, catalog, buyer, engine)
+    inspected = await staff.act(return_id, "inspect", {"items": [_line(order)]})
+    assert inspected.json()["status"] == "refund_required", inspected.text
+    return order, return_id
+
+
+async def test_refund_record_is_idempotent_and_keeps_the_payment(
+    staff: Staff, treasurer: Staff, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
+) -> None:
+    order, return_id = await _refund_required(staff, catalog, buyer, db_engine)
+    reference = f"BANK-{uuid4().hex[:10]}"
+
+    # Support reviews returns but cannot record money (payments:refund).
+    _error(await staff.act(return_id, "refund"), 403, "FORBIDDEN")
+    bad: list[dict[str, Any]] = [
+        {},
+        {"refund_reference": " "},
+        {"refund_reference": "x" * 101},
+        {"refund_reference": "BAD\x00"},
+        {"refund_reference": reference, "amount": 1},  # the amount is the server's
+        {"refund_reference": reference, "note": "n" * 501},
+    ]
+    for body in bad:
+        _error(await treasurer.act(return_id, "refund", body), 400, "VALIDATION_ERROR")
+
+    refunded = await treasurer.act(return_id, "refund", {"refund_reference": f" {reference} "})
+    assert refunded.status_code == 200, refunded.text
+    body = refunded.json()
+    assert (body["status"], body["refund_reference"], body["refunded_by"]) == (
+        "refunded",
+        reference,
+        str(treasurer.account.id),
+    )
+    assert body["refunded_at"] is not None and body["refund_amount"] > 0
+    again = await treasurer.act(return_id, "refund", {"refund_reference": reference})
+    assert again.status_code == 200 and again.json() == body
+    other = await treasurer.act(return_id, "refund", {"refund_reference": "BANK-OTHER"})
+    _error(other, 409, "CONFLICT")
+    assert other.json()["error"]["details"][0]["type"] == "already_refunded"
+    assert len(await _audits(db_engine, return_id, "return.refunded")) == 1
+
+    async with AsyncSession(db_engine) as session:
+        found = await session.get(Order, order.order_id)
+    assert found is not None and found.payment_status == "paid"  # partial: unchanged
+    mine = await order.ready.client.get(f"{RETURNS}/{return_id}", headers=order.headers)
+    assert (mine.json()["status"], mine.json()["refund_amount"]) == (
+        "refunded",
+        body["refund_amount"],
+    )
+    assert "refund_reference" not in _keys(mine.json())
+
+
+async def test_refund_from_other_statuses_is_422(
+    staff: Staff, treasurer: Staff, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
+) -> None:
+    order, return_id = await _received(staff, catalog, buyer, db_engine)
+    _error(await treasurer.act(return_id, "refund"), 422, "INVALID_STATE_TRANSITION")
+    await staff.act(
+        return_id, "inspect", {"items": [_line(order, condition="damaged", refundable=False)]}
+    )
+    _error(await treasurer.act(return_id, "refund"), 422, "INVALID_STATE_TRANSITION")
+    _error(await treasurer.act(str(uuid4()), "refund"), 404, "NOT_FOUND")
+
+
+async def test_refund_reference_is_unique(
+    staff: Staff, treasurer: Staff, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
+) -> None:
+    _, first = await _refund_required(staff, catalog, buyer, db_engine)
+    _, second = await _refund_required(staff, catalog, buyer, db_engine)
+    reference = f"BANK-{uuid4().hex[:10]}"
+    assert (
+        await treasurer.act(first, "refund", {"refund_reference": reference})
+    ).status_code == 200
+
+    taken = await treasurer.act(second, "refund", {"refund_reference": reference})
+
+    _error(taken, 409, "CONFLICT")
+    assert taken.json()["error"]["details"][0]["type"] == "refund_reference_taken"
+    assert len(await _audits(db_engine, second, "return.refunded")) == 0
+
+
+async def test_concurrent_refund_records_change_once(
+    staff: Staff, treasurer: Staff, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
+) -> None:
+    _, return_id = await _refund_required(staff, catalog, buyer, db_engine)
+    _, other_id = await _refund_required(staff, catalog, buyer, db_engine)
+    same = f"BANK-{uuid4().hex[:10]}"
+
+    different = await asyncio.gather(
+        *(
+            treasurer.act(return_id, "refund", {"refund_reference": f"BANK-{uuid4().hex[:10]}"})
+            for _ in range(3)
+        )
+    )
+    shared = await asyncio.gather(
+        *(treasurer.act(other_id, "refund", {"refund_reference": same}) for _ in range(2))
+    )
+
+    assert sorted(r.status_code for r in different) == [200, 409, 409]
+    assert [r.status_code for r in shared] == [200, 200]
+    for request_id in (return_id, other_id):
+        assert len(await _audits(db_engine, request_id, "return.refunded")) == 1
+
+
+async def test_one_reference_on_two_returns_at_once(
+    staff: Staff, treasurer: Staff, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
+) -> None:
+    """Two orders, so no shared lock: the unique index decides (savepoint path)."""
+    _, first = await _refund_required(staff, catalog, buyer, db_engine)
+    _, second = await _refund_required(staff, catalog, buyer, db_engine)
+    reference = f"BANK-{uuid4().hex[:10]}"
+
+    responses = await asyncio.gather(
+        *(treasurer.act(i, "refund", {"refund_reference": reference}) for i in (first, second))
+    )
+
+    assert sorted(r.status_code for r in responses) == [200, 409]
+    lost = next(r for r in responses if r.status_code == 409)
+    assert lost.json()["error"]["details"][0]["type"] == "refund_reference_taken"
+    audits = [len(await _audits(db_engine, i, "return.refunded")) for i in (first, second)]
+    assert sorted(audits) == [0, 1]
+
+
+async def test_a_reference_is_one_refund_across_payments_and_returns(
+    staff: Staff,
+    treasurer: Staff,
+    auth_client: AsyncClient,
+    catalog: Catalog,
+    buyer: MakeBuyer,
+    db_engine: AsyncEngine,
+) -> None:
+    _, first = await _refund_required(staff, catalog, buyer, db_engine)
+    _, second = await _refund_required(staff, catalog, buyer, db_engine)
+    _ready, _order_id, payment = await _late_paid(auth_client, catalog, buyer, db_engine)
+    _r2, _o2, other_payment = await _late_paid(auth_client, catalog, buyer, db_engine)
+    on_payment, on_return = f"BANK-{uuid4().hex[:10]}", f"BANK-{uuid4().hex[:10]}"
+
+    async def refund_payment(payment_id: UUID, reference: str) -> Response:
+        return await auth_client.post(
+            f"/api/v1/admin/payments/{payment_id}/refund",
+            json={"refund_reference": reference},
+            headers=treasurer.account.headers,
+        )
+
+    assert (await refund_payment(payment.id, on_payment)).status_code == 200
+    taken = await treasurer.act(first, "refund", {"refund_reference": on_payment})
+    _error(taken, 409, "CONFLICT")
+    assert taken.json()["error"]["details"][0]["type"] == "refund_reference_taken"
+
+    assert (
+        await treasurer.act(second, "refund", {"refund_reference": on_return})
+    ).status_code == 200
+    reverse = await refund_payment(other_payment.id, on_return)
+    _error(reverse, 409, "CONFLICT")
+    assert reverse.json()["error"]["details"][0]["type"] == "refund_reference_taken"
+
+
+async def test_no_return_refund_once_the_order_is_refunded(
+    staff: Staff, treasurer: Staff, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
+) -> None:
+    order, return_id = await _refund_required(staff, catalog, buyer, db_engine)
+    async with AsyncSession(db_engine) as session, session.begin():
+        await session.execute(
+            update(Order).where(Order.id == order.order_id).values(payment_status="refunded")
+        )
+
+    response = await treasurer.act(return_id, "refund")
+
+    _error(response, 422, "BUSINESS_RULE_VIOLATION")
+    assert response.json()["error"]["details"][0]["type"] == "order_not_paid"
+    assert len(await _audits(db_engine, return_id, "return.refunded")) == 0
+
+
+async def test_sales_report_shows_return_refunds_apart(
+    staff: Staff, treasurer: Staff, catalog: Catalog, buyer: MakeBuyer, db_engine: AsyncEngine
+) -> None:
+    today = utc_now().date()
+    params = {"from": str(today - timedelta(days=1)), "to": str(today + timedelta(days=2))}
+
+    async def report() -> dict[str, Any]:
+        response = await treasurer.client.get(
+            "/api/v1/admin/reports/sales", params=params, headers=treasurer.account.headers
+        )
+        assert response.status_code == 200, response.text
+        result: dict[str, Any] = response.json()
+        return result
+
+    before = await report()
+    _, return_id = await _refund_required(staff, catalog, buyer, db_engine)
+    refunded = await treasurer.act(return_id, "refund")
+    assert refunded.status_code == 200, refunded.text
+    after = await report()
+
+    assert after["return_refunds"] == {
+        "count": before["return_refunds"]["count"] + 1,
+        "amount": before["return_refunds"]["amount"] + refunded.json()["refund_amount"],
+    }
+    assert after["totals"] == before["totals"]  # sales are not reduced

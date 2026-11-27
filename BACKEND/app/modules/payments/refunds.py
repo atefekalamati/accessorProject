@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import BusinessRuleError, ConflictError, NotFoundError
 from app.core.time import utc_now
-from app.db.models import Order, Payment, PaymentStatus, StatusField
+from app.db.models import Order, Payment, PaymentStatus, ReturnRequest, StatusField
 from app.db.models.payments import RefundAmountSource
 from app.modules.orders.state_service import invalid_transition
 from app.modules.payments.common import lock_order_row, lock_payment, move_order_payment
@@ -86,7 +86,12 @@ class RefundService:
                     exists().where(Payment.refund_reference == reference, Payment.id != payment.id)
                 )
             )
-            if taken:
+            # One bank reference is one refund: a return refund's reference is taken too
+            # (ORD-10). A simultaneous use across the two tables is accepted (DECISIONS).
+            on_return = await self._session.scalar(
+                select(exists().where(ReturnRequest.refund_reference == reference))
+            )
+            if taken or on_return:
                 raise _reference_taken()
 
             now = utc_now()
