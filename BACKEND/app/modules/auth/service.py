@@ -16,7 +16,7 @@ from app.core.config import Settings
 from app.core.errors import ErrorCode, ForbiddenError, RateLimitedError, UnauthorizedError
 from app.core.redaction import mask_email, mask_phone
 from app.core.time import utc_now
-from app.db.models import OtpCode, User, UserSession, UserStatus
+from app.db.models import OtpCode, OtpPurpose, User, UserSession, UserStatus
 from app.modules.auth.otp import (
     generate_otp_code,
     hash_otp_code,
@@ -77,10 +77,13 @@ class OtpService:
         self._sms_sender = sms_sender
         self._settings = settings
 
-    async def request_otp(self, mobile: str, ip: str | None) -> RequestOtpResponse:
+    async def request_otp(
+        self, mobile: str, ip: str | None, purpose: OtpPurpose = OtpPurpose.LOGIN
+    ) -> RequestOtpResponse:
         """Issue and send a new OTP for an already-normalized mobile.
 
-        The response never depends on whether a user exists for ``mobile``.
+        The response never depends on whether a user exists for ``mobile``. The limits
+        count codes of every purpose together; only codes of ``purpose`` are replaced.
         """
         settings = self._settings
         key = otp_hash_key(settings)
@@ -90,10 +93,11 @@ class OtpService:
             await self._repository.lock_mobile(mobile)
             now = utc_now()
             await self._enforce_limits(mobile, ip, now)
-            await self._repository.expire_active(mobile, now)
+            await self._repository.expire_active(mobile, now, purpose)
             await self._repository.add(
                 OtpCode(
                     mobile=mobile,
+                    purpose=purpose,
                     code_hash=hash_otp_code(code, mobile, key),
                     expires_at=now + timedelta(seconds=settings.otp_ttl_seconds),
                     ip=ip,
