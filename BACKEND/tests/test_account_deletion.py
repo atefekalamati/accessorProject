@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 from uuid import UUID
 
 import pytest
+from alembic.config import Config
 from conftest import Catalog, MakeAccount
 from httpx import AsyncClient
 from sqlalchemy import delete, func, select, update
@@ -22,7 +24,9 @@ from test_orders_create import (
 )
 from test_returns import Delivered, _order
 
+from alembic import command
 from app.core.errors import AppError
+from app.core.time import utc_now
 from app.db.models import (
     Address,
     AuditLog,
@@ -271,3 +275,29 @@ async def test_a_blocked_account_is_not_deleted(
 
     assert error is not None and (error.status_code, error.code) == (403, "FORBIDDEN")
     assert (await _user(db_engine, user_id)).phone is not None
+
+
+async def _alembic(database_url: str, action: str, revision: str) -> None:
+    config = Config("alembic.ini")
+    config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
+    await asyncio.to_thread(getattr(command, action), config, revision)
+
+
+async def test_downgrade_gives_each_deleted_account_its_own_placeholder(
+    db_engine: AsyncEngine, migrated_database: str
+) -> None:
+    """Older revisions have a non-partial unique phone: placeholders must differ."""
+    users = [User(phone=None, deleted_at=utc_now()) for _ in range(2)]
+    async with AsyncSession(db_engine, expire_on_commit=False) as session, session.begin():
+        session.add_all(users)
+    ids = [user.id for user in users]
+    try:
+        await _alembic(migrated_database, "downgrade", "20261126_0035")
+        async with AsyncSession(db_engine) as session:
+            phones = list(await session.scalars(select(User.phone).where(User.id.in_(ids))))
+        assert len(set(phones)) == 2
+        assert all(phone is not None and phone.startswith("+9890") for phone in phones)
+    finally:
+        await _alembic(migrated_database, "upgrade", "head")
+        async with AsyncSession(db_engine) as session, session.begin():
+            await session.execute(delete(User).where(User.id.in_(ids)))

@@ -4,11 +4,11 @@
 
 ## Current / Next
 - **Phase › Milestone:** 6 Post-core › M6.4 Returns
-- **Current Task:** دروازه فاز ۶ — منتظر تصمیم کاربر درباره downgrade migration `0036` (Blockers). همه taskهای فعال فاز ۶ COMPLETE.
+- **Current Task:** دروازه فاز ۶ — IN_PROGRESS. همه taskهای فعال فاز ۶ COMPLETE؛ downgrade `0036` با تأیید کاربر اصلاح شد.
 - **Status:** ORD-07 COMPLETE: PRD «مرجوعی» ✓ و حذف حساب در «پروفایل» ✓؛ ADR-063 (R1، R2، A1، A3، و A2 با تغییر کاربر: HMAC موبایل در redemption). scope فاز ۶ (ADR-062): فقط مرجوعی و حذف حساب؛ CAT-13/14، CAT-15/16، ACC-03/04 و CNT-08/09 `POST_LAUNCH` هستند.
 - **Progress:** 143/143 task فعال COMPLETE · وزنی 100% (397.5h / 397.5h؛ 9 task و 19h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
 - **Blockers:** هیچ مانعی برای فاز ۶ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058). **قبل از launch:** بررسی حقوقی بازپرداخت هزینه ارسال در مرجوعی (D44، ADR-063).
-- **Next Action:** بعد از تصمیم درباره `0036`: دروازه فاز ۶ (snapshot `phase-6`، PR به `master`، CI با staging-smoke، merge توسط کاربر) → ACC-06 (دستور کاربر 2026-11-13).
+- **Next Action:** دروازه فاز ۶: snapshot `phase-6`، PR به `master`، CI با staging-smoke، merge توسط کاربر، سپس CD و tag `phase-6`. → ACC-06 (دستور کاربر 2026-11-13).
   - ترتیب: ORD-08 → ORD-09 → ORD-10 → ORD-11 → DSC-06 → ACC-05 → ACC-06؛ سپس دروازه فاز ۶.
   - بازبین opus برای ORD-09، ORD-10، ORD-11، DSC-06، ACC-05 و ACC-06 (موجودی، پول، مصرف کد، auth). ORD-08 هم HIGH است و بازبین مستقل دارد. بازبین‌ها همزمان با اجرای کامل suite روی دیتابیس پایه تست pytest اجرا نکنند.
 - **Branch:** `feat/phase-6-post-core` (از `master` در `3d68122`؛ طبق دستور کاربر همان می‌ماند). حفاظت `master`: `strict` خاموش می‌ماند.
@@ -162,7 +162,6 @@
 | OPS-05 | DEFERRED — D9 SMS provider (ADR-058) |
 | OPS-07 | DEFERRED — D10 file storage (ADR-058) |
 | OPS-04 | DEFERRED — D13 محیط production (ADR-058) |
-| دروازه فاز ۶ | downgrade migration `0036` (commit‌شده) با ۲+ حساب حذف‌شده شکست می‌خورد؛ اصلاح آن ویرایش migration commit‌شده است و تأیید کاربر می‌خواهد (ACC-06 Log) |
 | production go-live | تا تصمیم D8، D9، D10، D13 و اتمام چهار task بالا (ADR-058) |
 
 ---

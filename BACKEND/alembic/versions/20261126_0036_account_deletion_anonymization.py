@@ -5,8 +5,8 @@ identity fields of the order's address snapshot (recipient, mobile, postal code,
 line, anonymized together) may be NULL, as may a contact message's name and mobile
 (together). Province, city, items and amounts are never removed.
 
-Downgrade fills anonymized rows with fixed placeholders, so the NOT NULL columns can be
-restored; it never brings the data back.
+Downgrade fills anonymized rows with placeholders (a distinct one per deleted account), so
+the NOT NULL columns can be restored; it never brings the data back.
 
 Revision ID: 20261126_0036
 Revises: 20261126_0035
@@ -94,6 +94,17 @@ def downgrade() -> None:
     op.alter_column("orders", "phone", existing_type=sa.String(length=16), nullable=False)
 
     op.drop_constraint(op.f("ck_users_phone_unless_deleted"), "users", type_="check")
-    # A deleted account keeps no number; the old schema needs one (still free: deleted).
-    op.execute(f"UPDATE users SET phone = '{PLACEHOLDER_PHONE}' WHERE phone IS NULL")
+    # A deleted account keeps no number; the old schema needs one. Each gets its own
+    # placeholder (+9890 and 8 digits): older revisions have a non-partial unique phone.
+    op.execute(
+        """
+        UPDATE users AS u
+        SET phone = '+9890' || lpad(n.rank::text, 8, '0')
+        FROM (
+            SELECT id, row_number() OVER (ORDER BY id) AS rank
+            FROM users WHERE phone IS NULL
+        ) AS n
+        WHERE u.id = n.id
+        """
+    )
     op.alter_column("users", "phone", existing_type=sa.String(length=16), nullable=False)
