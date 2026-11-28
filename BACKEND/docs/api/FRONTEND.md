@@ -80,7 +80,7 @@
 
 ## ۷. پرداخت
 1. `POST /payments/init {order_id}` (با `Idempotency-Key`) → 201 `{payment_id, order_id, order_number, amount, currency, redirect_url, gateway_expires_at, reservation_expires_at}`. قبل از رفتن به `redirect_url`، `order_number` را در `sessionStorage` نگه دار. مبلغ را فقط نمایش بده.
-2. درگاه مرورگر را به صفحه نتیجه frontend برمی‌گرداند (`PAYMENT_CALLBACK_URL` بک‌اند به این صفحه اشاره می‌کند). صفحه نتیجه reference را برمی‌دارد، `POST /payments/callback {"reference": "..."}` را صدا می‌زند و پیام را از `outcome` می‌سازد. این endpoint عمومی است و token نمی‌خواهد. پارامترهای درگاه هیچ اثری ندارند، چون سرور خودش با درگاه verify می‌کند.
+2. درگاه مرورگر را به صفحه نتیجه frontend برمی‌گرداند (`PAYMENT_CALLBACK_URL` بک‌اند به این صفحه اشاره می‌کند). صفحه نتیجه reference را برمی‌دارد (با Zarinpal: پارامتر query `Authority`؛ پایین این بخش)، `POST /payments/callback {"reference": "..."}` را صدا می‌زند و پیام را از `outcome` می‌سازد. این endpoint عمومی است و token نمی‌خواهد. پارامترهای درگاه هیچ اثری ندارند، چون سرور خودش با درگاه verify می‌کند.
 3. پاسخ callback پردازش‌شده همیشه 200 و **فقط** `{outcome}` است، با یکی از سه مقدار `success`، `failed` یا `pending` (ADR-061). reference در تاریخچه مرورگر می‌ماند، پس پاسخ عمومی شماره سفارش، مبلغ، وضعیت یا جزئیات (مثل بازپرداخت) را ندارد. جزئیات فقط در گام ۴ با token.
 4. جزئیات سفارش با token: access token فقط در حافظه است و با رفتن به درگاه از بین می‌رود. صفحه نتیجه بعد از load، **در سمت client** (نه SSR) همان refresh single-flight بخش ۳ را اجرا می‌کند و بعد `GET /orders/{order_number}` (از `sessionStorage`) را می‌خواند: `status`، `payment_status` و شماره سفارش. refresh cookie (`SameSite=Strict`) روی خود redirect درگاه فرستاده نمی‌شود، ولی روی fetchهای بعد از load فرستاده می‌شود.
    - کاربر وارد نیست (refresh با 401، یا بازگشت در مرورگر دیگری باز شد، که با اپ بانک موبایل رایج است): پیام کلی `outcome` را نشان بده و کاربر را به ورود بفرست. بعد از ورود او را به صفحه همان سفارش (`/orders/{order_number}`) برگردان.
@@ -112,10 +112,15 @@
   - پرداخت قبلی پرداخت شده بود: init بعدی 422 `INVALID_STATE_TRANSITION` (`order_not_payable`) می‌گیرد.
 - خطاهای init:
   - 409 `RESERVATION_EXPIRED`: مهلت سفارش تمام شده یا کمتر از ۶۰ ثانیه مانده است (`details[0].type = reservation_expired | too_late`). سفارش باید از سبد دوباره ثبت شود.
-  - 422 `INVALID_STATE_TRANSITION`: سفارش قابل پرداخت نیست (`order_not_payable`، `zero_amount`).
+  - 422 `INVALID_STATE_TRANSITION` (`order_not_payable`) یا `BUSINESS_RULE_VIOLATION` (`zero_amount`): سفارش قابل پرداخت نیست.
+  - 422 `PAYMENT_AMOUNT_TOO_LARGE`: مبلغ سفارش از سقف یک پرداخت آنلاین بیشتر است (`details[0].maximum` به تومان؛ پیش‌فرض ۱۰۰٬۰۰۰٬۰۰۰، سقف Zarinpal). retry فایده ندارد: «مبلغ سفارش از سقف پرداخت آنلاین بیشتر است؛ سفارش را کوچک‌تر کنید یا با پشتیبانی تماس بگیرید». چیزی ساخته نمی‌شود و رزرو تا پایان مهلت می‌ماند.
   - 503 `PAYMENT_GATEWAY_UNAVAILABLE`: درگاه در دسترس نیست؛ «چند لحظه بعد تلاش کنید».
   - 404: سفارش دیگران یا ناموجود.
 - درگاه fake (فقط development و staging): `redirect_url` به `GET /api/v1/payments/fake/{reference}` اشاره می‌کند که JSON است، نه صفحه. در dev یک صفحه ساده بساز که `POST /api/v1/payments/fake/{reference}/complete {"result": "paid" | "failed"}` را صدا بزند (`amount_rial` اختیاری برای شبیه‌سازی مبلغ اشتباه)، سپس به صفحه نتیجه با همان reference برود.
+- درگاه Zarinpal (PAY-07، ADR-064؛ `PAYMENT_PROVIDER=zarinpal`): `redirect_url` صفحه پرداخت Zarinpal است (`…/pg/StartPay/{authority}`؛ در sandbox روی `sandbox.zarinpal.com`). Zarinpal مرورگر را با GET به صفحه نتیجه برمی‌گرداند: `?Authority=…&Status=OK|NOK`.
+  - صفحه نتیجه مقدار `Authority` را عیناً به‌عنوان `reference` بفرستد: `POST /payments/callback {"reference": "<Authority>"}`. اگر `Authority` نبود، callback نزن و «پرداخت انجام نشد» نشان بده.
+  - با `Status=NOK` هم callback را بفرست. `Status` را مبنای پیام نکن، چون جعل‌پذیر است و فقط `outcome` سرور معتبر است. حداکثر می‌توانی تا رسیدن پاسخ «در حال بررسی» نشان دهی.
+  - بقیه جریان (outcomeها، retry روی `pending` و 503، جزئیات با token) با fake یکی است. قرارداد API تغییر نکرده است.
 
 ## ۸. سایر نکات
 - هیچ endpointی عدد موجودی عمومی برنمی‌گرداند. فقط `availability` (`in_stock`، `low_stock`، `out_of_stock`) و `purchasable` برمی‌گردد.

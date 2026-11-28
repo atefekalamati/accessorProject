@@ -221,6 +221,14 @@ class PaymentService:
                 message="This order has nothing to pay",
                 details=[{"field": "order", "type": "zero_amount"}],
             )
+        maximum = self._settings.payment_max_amount
+        if order.grand_total > maximum:
+            # The gateway would refuse it (Zarinpal -41): say so, rather than "try again".
+            raise BusinessRuleError(
+                code=ErrorCode.PAYMENT_AMOUNT_TOO_LARGE,
+                message="The order total is above what one online payment may be",
+                details=[{"field": "order", "type": "amount_too_large", "maximum": maximum}],
+            )
         return order
 
     async def _live_reservation(self, order: Order) -> InventoryReservation | None:

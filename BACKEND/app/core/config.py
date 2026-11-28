@@ -9,7 +9,14 @@ from typing import Annotated, Any, cast
 from urllib.parse import urlsplit
 
 from fastapi import Request
-from pydantic import BeforeValidator, Field, SecretStr, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BeforeValidator,
+    Field,
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from app.core.phone_hmac import PhoneKeys, parse_phone_keys
@@ -40,8 +47,10 @@ _HOSTNAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$")
 
 class PaymentGatewayName(StrEnum):
     # Dev, test and staging only: building it in production fails closed (ADR-049, like
-    # SMS). The real adapter comes with PAY-07 (D8).
+    # SMS).
     FAKE = "fake"
+    # Zarinpal v4 (PAY-07, ADR-064); production stays refused until go-live (D13).
+    ZARINPAL = "zarinpal"
 
 
 class MediaStorage(StrEnum):
@@ -99,7 +108,21 @@ class Settings(BaseSettings):
     # Store-wide switch against a distributed flood; high, since reaching it blocks everyone.
     discount_max_failed_global: int = Field(default=10_000, ge=1)
     # Payments (PAY-01..06, ADR-049, ADR-051).
-    payment_gateway: PaymentGatewayName = PaymentGatewayName.FAKE
+    # PAYMENT_PROVIDER; the older PAYMENT_GATEWAY is still read (ADR-064). In code, pass
+    # payment_provider=: it is the key an environment PAYMENT_PROVIDER would override.
+    payment_gateway: PaymentGatewayName = Field(
+        default=PaymentGatewayName.FAKE,
+        validation_alias=AliasChoices("payment_provider", "payment_gateway"),
+    )
+    # Only to refuse PAYMENT_PROVIDER and PAYMENT_GATEWAY set to different gateways.
+    legacy_payment_gateway: PaymentGatewayName | None = Field(
+        default=None, validation_alias="payment_gateway", exclude=True, repr=False
+    )
+    # Zarinpal (PAY-07): the 36-character merchant id; never logged or stored. Checked when
+    # the gateway is built, so a validation error never echoes it (ADR-064).
+    zarinpal_merchant_id: SecretStr | None = None
+    # The sandbox host; to be refused in production at go-live (README checklist).
+    zarinpal_sandbox: bool = True
     # Where the gateway sends the customer back; passed to the gateway with each request.
     payment_callback_url: str = "http://localhost:8000/api/v1/payments/callback"
     # Longest wait for one gateway call; far below the stale age (checked below).
@@ -114,6 +137,9 @@ class Settings(BaseSettings):
     payment_callback_window_seconds: int = Field(default=60, ge=10, le=3600)
     payment_callback_max_per_ip: int = Field(default=30, ge=1)
     payment_event_retention_days: int = Field(default=90, ge=7, le=3650)
+    # The most one payment may be, in toman; init refuses more (422) before calling the
+    # gateway. Zarinpal's cap is 100,000,000 toman (code -41, ADR-064).
+    payment_max_amount: int = Field(default=100_000_000, ge=1)
     # How long a fake gateway session accepts the customer.
     payment_fake_session_seconds: int = Field(default=900, ge=60, le=3600)
     # Request bodies over this many bytes get 413 (SEC-02); multipart uploads have their
@@ -194,6 +220,11 @@ class Settings(BaseSettings):
                 raise ValueError("PHONE_HMAC_KEYS is required in production")
             if self.media_storage is MediaStorage.MEMORY:
                 raise ValueError("MEDIA_STORAGE=memory is forbidden in production")
+        if (
+            self.legacy_payment_gateway is not None
+            and self.legacy_payment_gateway is not self.payment_gateway
+        ):
+            raise ValueError("PAYMENT_PROVIDER and PAYMENT_GATEWAY name different gateways")
         if self.payment_pending_stale_seconds < 3 * self.payment_gateway_timeout_seconds:
             raise ValueError("PAYMENT_PENDING_STALE_SECONDS must be >= 3x the gateway timeout")
         self._check_media_base_url()

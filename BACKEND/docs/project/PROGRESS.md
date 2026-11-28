@@ -3,12 +3,12 @@
 **Last Updated:** 2026-11-27
 
 ## Current / Next
-- **Phase › Milestone:** 6 Post-core — COMPLETE (دروازه بسته شد 2026-11-27)
-- **Current Task:** هیچ. دروازه فاز ۶ بسته شد: PR #11 merge شد (`e741fe6`)، CD image را با tagهای `<sha>` و `phase-6` در GHCR گذاشت، و git tag `phase-6` push شد. به دستور کاربر (2026-11-27) فاز ۷ باز نمی‌شود.
+- **Phase › Milestone:** go-live › M5.2 › PAY-07 Zarinpal — IN_PROGRESS (فاز ۶ COMPLETE، دروازه بسته شد 2026-11-27)
+- **Current Task:** PAY-07 (Zarinpal v4، ADR-064) روی شاخه `feat/pay-07-zarinpal`؛ DEC-08 COMPLETE. قبلی: دروازه فاز ۶ بسته شد: PR #11 merge شد (`e741fe6`)، CD image را با tagهای `<sha>` و `phase-6` در GHCR گذاشت، و git tag `phase-6` push شد. به دستور کاربر (2026-11-27) فاز ۷ باز نمی‌شود.
 - **Status:** ORD-07 COMPLETE: PRD «مرجوعی» ✓ و حذف حساب در «پروفایل» ✓؛ ADR-063 (R1، R2، A1، A3، و A2 با تغییر کاربر: HMAC موبایل در redemption). scope فاز ۶ (ADR-062): فقط مرجوعی و حذف حساب؛ CAT-13/14، CAT-15/16، ACC-03/04 و CNT-08/09 `POST_LAUNCH` هستند.
-- **Progress:** 143/143 task فعال COMPLETE · وزنی 100% (397.5h / 397.5h؛ 9 task و 19h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
-- **Blockers:** هیچ مانعی برای فاز ۶ نیست. **استقرار production** تا D8، D9، D10 و D13 و taskهای PAY-07، OPS-04، OPS-05 و OPS-07 مسدود است (DEFERRED، ADR-058). **قبل از launch:** بررسی حقوقی بازپرداخت هزینه ارسال در مرجوعی (D44، ADR-063).
-- **Next Action:** منتظر تصمیم کاربر. PLAN.md فاز ۷ ندارد. گزینه‌ها: (۱) go-live: تصمیم‌های D8، D9، D10 و D13، سپس taskهای DEFERRED (PAY-07، OPS-04، OPS-05، OPS-07، OPS-11)؛ (۲) taskهای POST_LAUNCH (CAT-13..16، ACC-03/04، CNT-08/09).
+- **Progress:** 144/145 task فعال COMPLETE · وزنی 98.8% (398h / 403h؛ 7 task و 13.5h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
+- **Blockers:** هیچ مانعی برای فاز ۶ نیست. **استقرار production** تا D9، D10 و D13 و taskهای OPS-04، OPS-05 و OPS-07 (DEFERRED، ADR-058) و اتمام PAY-07 مسدود است؛ guard درگاه در production تا go-live می‌ماند (ADR-064). **قبل از launch:** بررسی حقوقی بازپرداخت هزینه ارسال در مرجوعی (D44، ADR-063).
+- **Next Action:** PAY-07: CI سبز و PR به master (merge فقط با کاربر)، سپس E2E دستی sandbox توسط کاربر. بعد از آن: تصمیم‌های D9، D10 و D13 یا taskهای POST_LAUNCH (CAT-13..16، ACC-03/04، CNT-08/09).
 - **Branch:** `master` (شاخه فاز ۶ merge شد). حفاظت `master`: `strict` خاموش می‌ماند.
 - **Repo layout:** monorepo از 2026-10-26 (commit `ebcfbd5`).
   - بک‌اند در `BACKEND/` و فرانت در `FRONTEND/` است. CI در `.github/` ریشه است و داخل `BACKEND/` اجرا می‌شود.
@@ -19,7 +19,7 @@
 ---
 
 ## Overall Progress
-**100%** = 397.5h COMPLETE / 397.5h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED، DEFERRED و POST_LAUNCH حذف می‌شوند؛ 19h DEFERRED، ADR-058؛ 28.5h POST_LAUNCH، ADR-062).
+**98.8%** = 398h COMPLETE / 403h planned (estimate). **روش:** وزن‌دهی بر اساس ساعت برآوردی (CANCELLED، DEFERRED و POST_LAUNCH حذف می‌شوند؛ 13.5h DEFERRED، ADR-058، ADR-064؛ 28.5h POST_LAUNCH، ADR-062).
 
 ## Phase Progress
 | Phase | Status | Est. | Complete | % | Deadline (پیش‌بینی) |
@@ -28,7 +28,7 @@
 | 2 Core domain | COMPLETE | 142h | 142h | 100% | 2026-12-07 |
 | 3 Purchase flow | COMPLETE | 101.5h | 101.5h | 100% | 2027-01-23 |
 | 4 Account & admin | COMPLETE | 67h | 67h | 100% | 2026-11-13 (واقعی) |
-| 5 Release | COMPLETE (merge شد، tag `phase-5`) | 30h (+19h DEFERRED) | 30h | 100% | 2026-11-13 (واقعی) |
+| 5 Release | IN_PROGRESS (دروازه 2026-11-13 بسته شد، tag `phase-5`؛ DEC-08 و PAY-07 از DEFERRED خارج شدند) | 35.5h (+13.5h DEFERRED) | 30.5h | 86% | PAY-07: 2026-11-28 (پیش‌بینی) |
 | 6 Post-core | COMPLETE (merge شد، tag `phase-6`) | 18h (+28.5h POST_LAUNCH) | 18h | 100% | 2026-11-27 (واقعی) |
 
 ## Deadlines & Schedule
@@ -156,15 +156,17 @@
 ## Blockers
 | Blocked task | Cause |
 |---|---|
-| PAY-07 | DEFERRED — D8 درگاه واقعی (ADR-058) |
 | OPS-05 | DEFERRED — D9 SMS provider (ADR-058) |
 | OPS-07 | DEFERRED — D10 file storage (ADR-058) |
 | OPS-04 | DEFERRED — D13 محیط production (ADR-058) |
-| production go-live | تا تصمیم D8، D9، D10، D13 و اتمام چهار task بالا (ADR-058) |
+| production go-live | تا تصمیم D9، D10، D13، اتمام سه task بالا و PAY-07، و E2E دستی sandbox (ADR-058، ADR-064) |
 
 ---
 
 ## Plan changes
+### 2026-11-27 — D8: Zarinpal v4 (تصمیم کاربر، ADR-064)
+DEC-08 (0.5h) COMPLETE و PAY-07 (5h) از DEFERRED به IN_PROGRESS؛ بقیه DEFERRED ماندند (13.5h). فعال 397.5h → 403h. httpx به runtime dependency منتقل شد. guard درگاه در production تا go-live می‌ماند.
+
 ### 2026-11-13 — نیازمندی مرجوعی و حذف حساب (تصمیم کاربر، ADR-063)
 ORD-08 به ORD-08..ORD-10 شکسته شد؛ ORD-11 (لغو سفارش پرداخت‌شده توسط ادمین، 2h) و DSC-06 (HMAC موبایل در redemption، 2.5h) اضافه شدند؛ ACC-05 به ACC-05 (3h) و ACC-06 (2h) شکسته شد. فاز ۶ از 12h به 18h فعال رسید و forecast به 2026-11-21. یادداشت PRD: سیاست هزینه ارسال مرجوعی قبل از launch با قانون تجارت الکترونیکی تطبیق داده شود.
 

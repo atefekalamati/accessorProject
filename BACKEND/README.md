@@ -86,6 +86,25 @@ docker run --rm -v "${PWD}:/repo" -w /repo ghcr.io/gitleaks/gitleaks:v8.30.1 git
 - Readiness: `http://localhost:8000/ready` و `http://localhost:8000/api/v1/ready`
 - وضعیت دیتابیس development/test: `http://localhost:8000/api/v1/dev/database-status`
 
+## پرداخت و go-live checklist
+
+درگاه با `PAYMENT_PROVIDER` انتخاب می‌شود: `fake` (development و staging) یا `zarinpal` (Zarinpal v4، ADR-064). تنظیمات Zarinpal: `ZARINPAL_MERCHANT_ID` (secret؛ فقط در `.env`) و `ZARINPAL_SANDBOX` (پیش‌فرض `true`). `PAYMENT_CALLBACK_URL` به صفحه نتیجه frontend اشاره می‌کند (`docs/api/FRONTEND.md` §۷). در production هر درگاهی، از جمله Zarinpal، تا go-live رد می‌شود (fail-closed).
+
+قبل از فعال‌کردن پرداخت واقعی در production:
+
+- [ ] D13 (محیط production) تصمیم گرفته شده و OPS-04 (proxy مورد اعتماد، IP واقعی برای rate limit callback) COMPLETE است. D9 و D10 (SMS و storage واقعی) هم جداگانه لازم‌اند.
+- [ ] E2E دستی sandbox یک‌بار اجرا و نتیجه در Log فایل `tasks/phase-05/PAY-07-zarinpal-gateway.md` ثبت شده است: پرداخت موفق، لغو، reload صفحه نتیجه (101)، و عمر authority (فرض ۱۵ دقیقه).
+- [ ] merchant id واقعی از پنل Zarinpal فقط در secret store یا `.env` سرور است، نه در repo، log یا image.
+- [ ] دامنه `PAYMENT_CALLBACK_URL` همان دامنه ثبت‌شده در پنل Zarinpal است (وگرنه کد -14) و `https` است.
+- [ ] `ZARINPAL_SANDBOX=false` و `PAYMENT_PROVIDER=zarinpal`.
+- [ ] تنظیم auto-verify در پنل Zarinpal بررسی و ثبت شده است. بک‌اند `metadata.auto_verify` نمی‌فرستد، پس تنظیم پنل اعمال می‌شود. با auto-verify روشن، verify ما 101 می‌گیرد، که همچنان PAID است، ولی اگر callback و reconciliation هر دو گم شوند پول بدون سفارش settle می‌ماند و فقط با `unVerified` یا پنل پیدا می‌شود. پیشنهاد: خاموش.
+- [ ] `PAYMENT_MAX_AMOUNT` (پیش‌فرض ۱۰۰٬۰۰۰٬۰۰۰ تومان) با سقف واقعی terminal در پنل Zarinpal یکی است.
+- [ ] حداقل مبلغ Zarinpal (در docs نیامده؛ در E2E sandbox با یک سفارش کم‌مبلغ بررسی شود) ثبت شده است. اگر سفارشی زیر آن ممکن است، یک حداقل در init لازم است، وگرنه request جواب 503 می‌گیرد.
+- [ ] guard production در `build_payment_gateway` (`app/modules/payments/gateways/__init__.py`) با یک task جدا و بازبین opus برداشته شده است. آن task باید `ZARINPAL_SANDBOX=true` و callback غیر https را در production رد کند، و تست قرارداد production (`tests/test_provider_contracts.py`) را هم به‌روز کند.
+- [ ] هنگام تعویض provider هیچ payment در وضعیت `pending` باز نیست (reconciliation آن‌ها را با درگاه جدید verify می‌کند و فقط `abandoned` می‌شوند).
+- [ ] alert روی logهای `payment.zarinpal_merchant_refused`، `payment.zarinpal_amount_rejected` و `payment.zarinpal_unexpected_answer` (OPS-02) و روند بازپرداخت دستی `refund_required` (ADM-08) آماده است.
+- [ ] بررسی حقوقی بازپرداخت هزینه ارسال در مرجوعی (D44) انجام شده است.
+
 ## تنظیمات و امنیت
 
 تمام تنظیمات runtime از environment یا `.env` خوانده می‌شوند. `JWT_SECRET` حداقل ۳۲ کاراکتر است، wildcard در CORS محیط production رد می‌شود و OTP mock نیز در production مجاز نیست. فایل `.env` در `.gitignore` قرار دارد؛ `.env.example` فقط placeholderهای غیرمحرمانه دارد.

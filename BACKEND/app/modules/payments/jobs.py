@@ -259,13 +259,16 @@ async def run_reconciler(
 async def _main() -> None:
     from app.core.config import get_settings
     from app.db.session import create_database_engine
-    from app.modules.payments.gateways import build_payment_gateway
+    from app.modules.payments.gateways import build_payment_gateway, close_payment_gateway
 
     settings = get_settings()
     engine = create_database_engine(settings)
     try:
         gateway = build_payment_gateway(settings, engine)
-        print(await reconcile_pending_payments(engine, gateway, settings))  # noqa: T201
+        try:
+            print(await reconcile_pending_payments(engine, gateway, settings))  # noqa: T201
+        finally:
+            await close_payment_gateway(gateway)
     finally:
         await engine.dispose()
 

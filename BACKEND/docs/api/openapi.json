@@ -15878,7 +15878,7 @@
             }
           },
           "422": {
-            "description": "Business rule violation",
+            "description": "Not payable: INVALID_STATE_TRANSITION (order_not_payable), BUSINESS_RULE_VIOLATION (zero_amount), PAYMENT_AMOUNT_TOO_LARGE (over PAYMENT_MAX_AMOUNT; details[0].maximum in toman) or IDEMPOTENCY_KEY_REUSED",
             "content": {
               "application/json": {
                 "schema": {

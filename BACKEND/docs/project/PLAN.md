@@ -221,7 +221,7 @@
 
 ## Phase 5 — Release · forecast: 2026-11-27
 
-D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). taskهای وابسته `DEFERRED` هستند، دروازه فاز ۵ با بقیه taskها بسته می‌شود و **استقرار production تا آن تصمیم‌ها مسدود است**.
+D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). taskهای وابسته `DEFERRED` هستند، دروازه فاز ۵ با بقیه taskها بسته می‌شود و **استقرار production تا آن تصمیم‌ها مسدود است**. D8 در 2026-11-27 تصمیم گرفته شد (Zarinpal v4، ADR-064): DEC-08 و PAY-07 فعال شدند. production همچنان تا D13 بسته است.
 
 ### M5.1 Security — PRD «امنیت»، «تست و پذیرش»، «حالت‌های رابط» (قالبی)
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
@@ -237,7 +237,7 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | ID | Title | Status | Pri | Level | Est | Deps | Done when |
 |---|---|---|---|---|---|---|---|
 | OPS-00 | Rewrite monitoring & incidents requirements | COMPLETE | MEDIUM | HIGH | 1 | — | PRD section ✓ بازبینی‌شده + approved |
-| DEC-08 | Choose real payment gateway (D8) | DEFERRED | HIGH | HIGH | 0.5 | — | ADR written |
+| DEC-08 | Choose real payment gateway (D8) | COMPLETE | HIGH | HIGH | 0.5 | — | ADR written |
 | DEC-09 | Choose real SMS provider (D9) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
 | DEC-10 | Choose real file storage (D10) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
 | DEC-13 | Production target (D13) | DEFERRED | HIGH | LOW | 0.5 | — | ADR written |
@@ -250,9 +250,9 @@ D8، D9، D10 و D13 را کاربر به بعد موکول کرد (ADR-058). ta
 | OPS-11 | Persistent staging hardening: no dev routes, fake gateway or mock OTP (SECURITY-REVIEW F5) | DEFERRED | MEDIUM | MEDIUM | 2 | D13 | staging server refuses dev-only features unless explicitly ephemeral |
 | OPS-10 | Provider contract tests (payment, SMS, storage) | COMPLETE | HIGH | MEDIUM | 2 | PAY-01, AUTH-04, CAT-05 | one suite every adapter must pass; fakes pass it; production fails closed |
 | OPS-07 | Real file storage adapter | DEFERRED | HIGH | MEDIUM | 3 | CAT-05, D10 | works behind interface |
-| PAY-07 | Real payment gateway adapter (Toman→Rial here) | DEFERRED | HIGH | HIGH | 5 | PAY-01, D8 | verify + callback on sandbox |
+| PAY-07 | Real payment gateway adapter: Zarinpal v4 (Toman→Rial here; ADR-064) | IN_PROGRESS | HIGH | HIGH | 5 | PAY-01, D8 | verify + callback against the mocked v4 API in CI; one manual sandbox E2E |
 
-**Phase 5:** 49h (فعال 30h؛ DEFERRED 19h)
+**Phase 5:** 49h (فعال 35.5h؛ DEFERRED 13.5h؛ DEC-08 و PAY-07 در 2026-11-27 از DEFERRED خارج شدند، ADR-064)
 
 ---
 

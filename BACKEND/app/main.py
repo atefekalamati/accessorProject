@@ -27,7 +27,7 @@ from app.core.middleware import RequestContextMiddleware
 from app.core.rate_limit import RateLimitMiddleware
 from app.db.session import create_database_engine, create_session_factory
 from app.modules.inventory.jobs import run_sweeper
-from app.modules.payments.gateways import build_payment_gateway
+from app.modules.payments.gateways import build_payment_gateway, close_payment_gateway
 from app.modules.payments.jobs import reconcile_pending_payments, run_reconciler
 from app.modules.payments.router import fake_gateway_router
 from app.shared.database.router import dev_router, readiness_router
@@ -96,6 +96,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     task.cancel()
                     with suppress(asyncio.CancelledError):
                         await task
+            # Built here or lazily by the first payment request (its HTTP client).
+            await close_payment_gateway(getattr(app.state, "payment_gateway", None))
+            app.state.payment_gateway = None  # a later lifespan builds a fresh one
             await engine.dispose()
 
     production = app_settings.environment is Environment.PRODUCTION
