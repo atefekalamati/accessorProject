@@ -1,6 +1,6 @@
 # PAY-07 — Real payment gateway adapter: Zarinpal v4
 
-**Status:** IN_PROGRESS · **Priority:** HIGH · **Estimate:** 5h (estimate) · **Deadline:** — · **Dependencies:** PAY-01, DEC-08 (D8) · **Level:** HIGH
+**Status:** IN_PROGRESS (کد در PR #13؛ منتظر merge کاربر و E2E دستی sandbox) · **Priority:** HIGH · **Estimate:** 5h (estimate) · **Deadline:** — · **Dependencies:** PAY-01, DEC-08 (D8) · **Level:** HIGH
 
 ## Objective
 `ZarinpalGateway` پشت همان interface درگاه (OPS-10)؛ تبدیل تومان↔ریال فقط داخل adapter؛ قراردادهای `init` و `callback` ثابت.
@@ -24,7 +24,7 @@ plan تأییدشده کاربر (2026-11-27) با پاسخ چهار سؤال: h
 - [x] `_code` هر دو شکل `errors` (object و آرایه) را می‌خواند؛ تست برای هر کدام.
 - [x] init بالای `PAYMENT_MAX_AMOUNT` (پیش‌فرض ۱۰۰٬۰۰۰٬۰۰۰ تومان) → 422 `PAYMENT_AMOUNT_TOO_LARGE` قبل از درگاه؛ تست مرزی.
 - [x] docs: go-live checklist در README (با auto_verify و سقف مبلغ)، FRONTEND.md §۷، OpenAPI (توضیح 422 روی init).
-- [ ] بازبین opus روی plan و diff؛ CI سبز؛ PR به master (بدون merge).
+- [x] بازبین opus روی plan و diff (دو دور)؛ CI سبز (checks، staging-smoke، secret-scan)؛ PR #13 به master (بدون merge).
 - [ ] E2E دستی sandbox (کاربر، یک‌بار؛ قبل از go-live)؛ شکل واقعی `errors` و عمر authority ثبت شود.
 
 ## Implementation Notes
@@ -59,3 +59,4 @@ python -m ruff check . ; python -m ruff format --check . ; python -m mypy app te
   - NITها: `BusinessRuleError` برای سقف مبلغ؛ ترتیب بررسی‌ها و حداقل مبلغ در ADR و checklist؛ `RuntimeError` فقط وقتی client بسته است.
 - 2026-11-27: suite کامل روی دیتابیس تست تازه: 2567 passed (۱ warning قدیمی در ACC-06). ruff، format و mypy سبز.
   - اجرای قبلی روی container تست ۲۴ ساعته 263 خطای setup داشت (`uq_users_phone`). علت: downgrade migration `0036` روی دیتابیسی که placeholderهای downgrade قبلی را دارد دوباره قابل اجرا نیست. باگ قدیمی و جدا از PAY-07 است؛ CI همیشه دیتابیس تازه دارد. به کاربر گزارش شد.
+- 2026-11-27: commit `66d63ff`، PR #13. CI run `46048288786` (pull_request) و `46048246811` (push) سبز: checks، staging-smoke و secret-scan pass؛ publish-image skipped (فقط روی master).

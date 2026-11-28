@@ -8,7 +8,7 @@
 - **Status:** ORD-07 COMPLETE: PRD «مرجوعی» ✓ و حذف حساب در «پروفایل» ✓؛ ADR-063 (R1، R2، A1، A3، و A2 با تغییر کاربر: HMAC موبایل در redemption). scope فاز ۶ (ADR-062): فقط مرجوعی و حذف حساب؛ CAT-13/14، CAT-15/16، ACC-03/04 و CNT-08/09 `POST_LAUNCH` هستند.
 - **Progress:** 144/145 task فعال COMPLETE · وزنی 98.8% (398h / 403h؛ 7 task و 13.5h DEFERRED و 8 task و 28.5h POST_LAUNCH جدا) · MVP 100%
 - **Blockers:** هیچ مانعی برای فاز ۶ نیست. **استقرار production** تا D9، D10 و D13 و taskهای OPS-04، OPS-05 و OPS-07 (DEFERRED، ADR-058) و اتمام PAY-07 مسدود است؛ guard درگاه در production تا go-live می‌ماند (ADR-064). **قبل از launch:** بررسی حقوقی بازپرداخت هزینه ارسال در مرجوعی (D44، ADR-063).
-- **Next Action:** PAY-07: CI سبز و PR به master (merge فقط با کاربر)، سپس E2E دستی sandbox توسط کاربر. بعد از آن: تصمیم‌های D9، D10 و D13 یا taskهای POST_LAUNCH (CAT-13..16، ACC-03/04، CNT-08/09).
+- **Next Action:** PAY-07: PR #13 (CI سبز) منتظر merge کاربر؛ سپس E2E دستی sandbox توسط کاربر و ثبت نتیجه در فایل task. باگ جدا: downgrade migration `0036` روی دیتابیس تست قدیمی دوباره قابل اجرا نیست (`uq_users_phone`؛ CI تأثیر نمی‌گیرد)، منتظر تصمیم کاربر. بعد از آن: تصمیم‌های D9، D10 و D13 یا taskهای POST_LAUNCH (CAT-13..16، ACC-03/04، CNT-08/09).
 - **Branch:** `master` (شاخه فاز ۶ merge شد). حفاظت `master`: `strict` خاموش می‌ماند.
 - **Repo layout:** monorepo از 2026-10-26 (commit `ebcfbd5`).
   - بک‌اند در `BACKEND/` و فرانت در `FRONTEND/` است. CI در `.github/` ریشه است و داخل `BACKEND/` اجرا می‌شود.
